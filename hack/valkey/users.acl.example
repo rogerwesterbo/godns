@@ -1,0 +1,80 @@
+# Valkey ACL Configuration Examples
+# 
+# IMPORTANT: Valkey ACL files do NOT support comment-only lines with #
+# All lines must be valid ACL rules (user definitions)
+# 
+# Format: user <username> <status> >password ~<keypattern> &<channelpattern> +<command>
+#
+# Components:
+#   <username>         - Username for authentication
+#   <status>          - 'on' (enabled) or 'off' (disabled)
+#   >password         - Password (use 'nopass' for no password, can have multiple passwords)
+#   ~<keypattern>     - Key access pattern (~* = all keys, ~app:* = keys starting with app:)
+#   &<channelpattern> - Pub/Sub channel pattern (&* = all channels)
+#   +<command>        - Allowed commands (+@all = all commands, +@read = read-only)
+
+# ============================================================================
+# ACTIVE CONFIGURATION
+# ============================================================================
+
+# Default user with full permissions (required - do not comment out)
+user default on >mysecretpassword ~* &* +@all
+
+# ============================================================================
+# EXAMPLE USERS (uncomment and modify as needed)
+# ============================================================================
+
+# GoDNS application user with full permissions
+# user godns on >godnspassword ~* &* +@all
+
+# Read-only user (can only execute read commands)
+# user readonly on >readonlypass ~* &* +@read
+
+# User with access only to keys starting with "app:"
+# user appuser on >apppass ~app:* &* +@all
+
+# User with multiple passwords
+# user multipass on >password1 >password2 ~* &* +@all
+
+# Disabled user (for temporary access revocation)
+# user tempuser off >temppass ~* &* +@all
+
+# User without password (not recommended for production)
+# user nopassuser on nopass ~* &* +@all
+
+# User with specific command permissions
+# user limiteduser on >limitedpass ~* &* +get +set +del
+
+# ============================================================================
+# SECURITY BEST PRACTICES
+# ============================================================================
+# 
+# 1. Change default password immediately
+# 2. Create specific users for different applications
+# 3. Use principle of least privilege (minimal permissions needed)
+# 4. Use strong passwords (long, random, complex)
+# 5. Rotate passwords regularly
+# 6. Monitor access with ACL LOG
+# 7. Use key patterns to restrict access (~app:* instead of ~*)
+# 8. Disable users instead of deleting (for audit trail)
+#
+# ============================================================================
+# COMMON ACL COMMAND CATEGORIES
+# ============================================================================
+#
+# +@all        - All commands
+# +@read       - Read-only commands (GET, SCAN, etc.)
+# +@write      - Write commands (SET, DEL, etc.)
+# +@admin      - Administrative commands
+# +@dangerous  - Potentially dangerous commands (FLUSHDB, KEYS, etc.)
+# +@keyspace   - Commands that interact with key space
+# +@string     - String commands
+# +@list       - List commands
+# +@set        - Set commands
+# +@sortedset  - Sorted set commands
+# +@hash       - Hash commands
+# +@pubsub     - Pub/Sub commands
+#
+# To deny a category: -@dangerous
+# To allow specific command: +get +set
+# To deny specific command: -flushdb

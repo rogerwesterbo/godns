@@ -30,3 +30,12 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+bin/
+.env
+!.env.example
+
+# Valkey data directory (but keep structure with .gitkeep)
+hack/data/*
+!hack/data/valkey/
+hack/data/valkey/*
+!hack/data/valkey/.gitkeep

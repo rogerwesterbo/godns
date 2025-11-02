@@ -1,0 +1,21 @@
+services:
+  valkey:
+    image: valkey/valkey:latest
+    container_name: valkey
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./hack/data/valkey:/data
+      - ./hack/valkey/users.acl:/etc/valkey/users.acl:ro
+    # Use ACL file for username-based authentication
+    command: valkey-server --appendonly yes --aclfile /etc/valkey/users.acl
+    restart: unless-stopped
+    networks:
+      - godns-network
+    environment:
+      - VALKEY_USERNAME=${VALKEY_USERNAME:-default}
+      - VALKEY_PASSWORD=${VALKEY_PASSWORD:-mysecretpassword}
+
+networks:
+  godns-network:
+    driver: bridge

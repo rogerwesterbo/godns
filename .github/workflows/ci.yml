@@ -1,0 +1,52 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - '**' # Run on all branches
+    pull_request:
+        branches:
+            - main
+            - develop
+
+jobs:
+    build-and-test:
+        name: Build, Test, and Lint
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: '1.25' # Updated to stable version
+                  cache: true
+
+            - name: Install dependencies
+              run: go mod download
+
+            - name: Build
+              run: make build
+
+            - name: Run tests
+              run: make test
+
+            - name: Run go vet
+              run: make vet
+
+            - name: Check formatting
+              run: |
+                  make fmt
+                  if [ -n "$(git status --porcelain)" ]; then
+                    echo "Code is not formatted. Please run 'make fmt'"
+                    git diff
+                    exit 1
+                  fi
+
+            - name: Run linter
+              run: make lint
+
+            - name: Run security scan
+              run: make go-security-scan
