@@ -24,7 +24,8 @@ func runDiscover(cmd *cobra.Command, args []string) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
 	fmt.Println("🔍 GoDNS Server Discovery")
-	fmt.Println("==========================\n")
+	fmt.Println("==========================")
+	fmt.Println()
 
 	// Show configured server
 	fmt.Printf("Configured Server: %s\n\n", server)
