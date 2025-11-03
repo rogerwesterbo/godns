@@ -55,6 +55,32 @@ build-cli: ## Build the godnscli tool
 .PHONY: build-all
 build-all: build build-cli ## Build all binaries
 
+##@ Docker
+.PHONY: docker-build
+docker-build: ## Build docker image
+	docker build -t ghcr.io/rogerwesterbo/godns:latest \
+		--build-arg VERSION=$(shell git describe --tags --always --dirty) \
+		--build-arg BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ") \
+		--build-arg GIT_COMMIT=$(shell git rev-parse HEAD) \
+		.
+
+.PHONY: docker-build-multiarch
+docker-build-multiarch: ## Build multi-arch docker image (requires buildx)
+	docker buildx build --platform linux/amd64,linux/arm64 \
+		-t ghcr.io/rogerwesterbo/godns:latest \
+		--build-arg VERSION=$(shell git describe --tags --always --dirty) \
+		--build-arg BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ") \
+		--build-arg GIT_COMMIT=$(shell git rev-parse HEAD) \
+		.
+
+.PHONY: docker-push
+docker-push: ## Push docker image to registry
+	docker push ghcr.io/rogerwesterbo/godns:latest
+
+.PHONY: docker-run
+docker-run: ## Run docker container locally
+	docker run --rm -p 53:53/tcp -p 53:53/udp -p 8080:8080 ghcr.io/rogerwesterbo/godns:latest
+
 ##@ Code sanity
 
 .PHONY: fmt

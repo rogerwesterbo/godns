@@ -22,3 +22,25 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
+
+# Icon for the chart (shown in Helm repositories and UIs)
+icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/coredns/icon/color/coredns-icon-color.svg
+
+# Keywords for easier discovery
+keywords:
+  - dns
+  - nameserver
+  - networking
+  - valkey
+  - redis
+
+# Home page
+home: https://github.com/rogerwesterbo/godns
+
+# Source code
+sources:
+  - https://github.com/rogerwesterbo/godns
+
+# Maintainers
+maintainers:
+  - name: rogerwesterbo

@@ -1,0 +1,53 @@
+# Git files
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+docs/
+LICENSE
+
+# Development files
+.vscode/
+.env
+.env.example
+*.local
+
+# Build artifacts
+bin/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+coverage.out
+coverage.html
+testdata/
+
+# Dependencies (will be downloaded in container)
+vendor/
+
+# Helm charts (not needed in container)
+charts/
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Hack scripts
+hack/
+
+# CI/CD
+.github/
+
+# IDE
+*.swp
+*.swo
+*~
+.idea/
+*.iml

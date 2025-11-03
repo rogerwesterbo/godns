@@ -1,0 +1,290 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.3'
+          cache: true
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          # Remove 'v' prefix if present
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "Build version: $VERSION"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable=${{ github.event.release.prerelease == false }}
+
+      - name: Build and push Docker image
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            BUILD_TIME=${{ github.event.release.created_at }}
+            GIT_COMMIT=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Update Helm Chart
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          DIGEST=${{ steps.docker_build.outputs.digest }}
+
+          # Update Chart.yaml version
+          sed -i "s/^version:.*/version: ${VERSION}/" charts/godns/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" charts/godns/Chart.yaml
+
+          # Update values.yaml with new image tag and digest
+          sed -i "s|tag:.*|tag: \"${VERSION}@${DIGEST}\"|" charts/godns/values.yaml
+
+          echo "Updated Helm chart to version ${VERSION}"
+          cat charts/godns/Chart.yaml
+
+      - name: Package Helm Chart
+        run: |
+          helm package charts/godns -d .helm-releases
+
+      - name: Log in to Helm registry
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
+
+      - name: Push Helm Chart
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          helm push .helm-releases/godns-${VERSION}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
+
+      - name: Build CLI binaries
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_TIME: ${{ github.event.release.created_at }}
+          GIT_COMMIT: ${{ github.sha }}
+        run: |
+          mkdir -p dist
+
+          # Build for multiple platforms
+          platforms=(
+            "linux/amd64"
+            "linux/arm64"
+            "darwin/amd64"
+            "darwin/arm64"
+            "windows/amd64"
+          )
+
+          for platform in "${platforms[@]}"; do
+            IFS='/' read -r -a array <<< "$platform"
+            GOOS="${array[0]}"
+            GOARCH="${array[1]}"
+            
+            output_name="godnscli-${VERSION}-${GOOS}-${GOARCH}"
+            if [ "$GOOS" = "windows" ]; then
+              output_name="${output_name}.exe"
+            fi
+            
+            echo "Building for $GOOS/$GOARCH..."
+            CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build \
+              -trimpath \
+              -ldflags="-s -w -X main.version=${VERSION} -X main.buildTime=${BUILD_TIME} -X main.gitCommit=${GIT_COMMIT}" \
+              -o "dist/${output_name}" \
+              ./cmd/godnscli
+            
+            # Create checksums
+            if [ "$GOOS" = "windows" ]; then
+              (cd dist && sha256sum "${output_name}" > "${output_name}.sha256")
+            else
+              # Create tar.gz for non-Windows platforms
+              tar -czf "dist/${output_name}.tar.gz" -C dist "${output_name}"
+              rm "dist/${output_name}"
+              (cd dist && sha256sum "${output_name}.tar.gz" > "${output_name}.tar.gz.sha256")
+            fi
+          done
+
+          # Create a combined checksums file
+          (cd dist && sha256sum * > checksums.txt)
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+            .helm-releases/*.tgz
+          body: |
+            ## Release ${{ steps.version.outputs.tag }}
+
+            ### Docker Images
+
+            **Multi-arch image (linux/amd64, linux/arm64):**
+            ```bash
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ```
+
+            **Image Digest:**
+            ```
+            ${{ steps.docker_build.outputs.digest }}
+            ```
+
+            **Full image reference:**
+            ```
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}@${{ steps.docker_build.outputs.digest }}
+            ```
+
+            ### Helm Chart
+
+            **Install via Helm:**
+            ```bash
+            helm install godns oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm/godns --version ${{ steps.version.outputs.version }}
+            ```
+
+            ### CLI Binaries
+
+            Download the appropriate binary for your platform:
+
+            - **Linux (amd64):** `godnscli-${{ steps.version.outputs.version }}-linux-amd64.tar.gz`
+            - **Linux (arm64):** `godnscli-${{ steps.version.outputs.version }}-linux-arm64.tar.gz`
+            - **macOS (Intel):** `godnscli-${{ steps.version.outputs.version }}-darwin-amd64.tar.gz`
+            - **macOS (Apple Silicon):** `godnscli-${{ steps.version.outputs.version }}-darwin-arm64.tar.gz`
+            - **Windows (amd64):** `godnscli-${{ steps.version.outputs.version }}-windows-amd64.exe`
+
+            **Verify checksums:**
+            ```bash
+            sha256sum -c godnscli-${{ steps.version.outputs.version }}-<platform>.tar.gz.sha256
+            ```
+
+            ### Installation
+
+            #### Using Docker:
+            ```bash
+            docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} --version
+            ```
+
+            #### Using Kubernetes/Helm:
+            ```bash
+            helm repo add godns oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
+            helm install my-godns godns/godns --version ${{ steps.version.outputs.version }}
+            ```
+
+            #### CLI Installation (Linux/macOS):
+            ```bash
+            # Download and extract
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/godnscli-${{ steps.version.outputs.version }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz
+            tar -xzf godnscli-${{ steps.version.outputs.version }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz
+            chmod +x godnscli-${{ steps.version.outputs.version }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)
+            sudo mv godnscli-${{ steps.version.outputs.version }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m) /usr/local/bin/godnscli
+            ```
+
+            ### What's Changed
+
+            See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
+
+            ---
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.release.target_commitish }}...${{ steps.version.outputs.tag }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: true
+          upload-release-assets: true
+
+      - name: Security scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          format: sarif
+          output: trivy-results.sarif
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Create release summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          # Release ${{ steps.version.outputs.tag }} Published! 🎉
+
+          ## Artifacts
+
+          - 🐳 **Docker Image**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}\`
+          - 📦 **Helm Chart**: \`oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm/godns:${{ steps.version.outputs.version }}\`
+          - 💻 **CLI Binaries**: Available for Linux, macOS, and Windows
+
+          ## Image Details
+
+          - **Digest**: \`${{ steps.docker_build.outputs.digest }}\`
+          - **Platforms**: linux/amd64, linux/arm64
+          - **Base Image**: Google Distroless (Static, Debian 12)
+          - **Security**: Signed with Cosign, SBOM included
+
+          ## Next Steps
+
+          1. Test the release in your environment
+          2. Update your deployment manifests
+          3. Monitor for any issues
+
+          EOF
