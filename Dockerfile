@@ -1,6 +1,6 @@
 # Multi-stage build for secure, minimal Go binary
 # Stage 1: Build the Go binary
-FROM golang:1.25.3-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25.3-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
@@ -24,13 +24,18 @@ COPY . .
 ARG VERSION=dev
 ARG BUILD_TIME
 ARG GIT_COMMIT
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+ARG TARGETOS
+ARG TARGETARCH
+ARG TARGETVARIANT
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
     -trimpath \
     -ldflags="-s -w -X main.version=${VERSION} -X main.buildTime=${BUILD_TIME} -X main.gitCommit=${GIT_COMMIT}" \
     -o godns \
     ./cmd/godns
 
 # Stage 2: Create minimal runtime image using Google Distroless
+# Use the base image without specific variant tag for better ARM compatibility
 FROM gcr.io/distroless/static-debian12:nonroot
 
 # Copy CA certificates from builder
