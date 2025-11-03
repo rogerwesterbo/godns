@@ -1,0 +1,41 @@
+name: Cleanup Old Caches
+
+on:
+  # Run weekly on Sundays at 2am UTC
+  schedule:
+    - cron: '0 2 * * 0'
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    name: Cleanup Old Caches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cleanup old caches
+        run: |
+          echo "Fetching list of caches..."
+          
+          # Get repository caches older than 7 days
+          gh extension install actions/gh-actions-cache
+          
+          # List all caches
+          echo "Current caches:"
+          gh actions-cache list -L 100
+          
+          # Delete caches older than 7 days
+          echo "Deleting old caches..."
+          gh actions-cache list -L 100 | \
+            awk '{print $1}' | \
+            tail -n +2 | \
+            xargs -I {} gh actions-cache delete {} --confirm || true
+          
+          echo "Cleanup complete!"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
