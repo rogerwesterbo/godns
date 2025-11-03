@@ -33,12 +33,26 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          # Remove 'v' prefix if present
-          VERSION=${GITHUB_REF#refs/tags/}
-          VERSION=${VERSION#v}
+          # Get the tag name from the release
+          if [ -n "${{ github.event.release.tag_name }}" ]; then
+            TAG_NAME="${{ github.event.release.tag_name }}"
+          else
+            # Fallback to GITHUB_REF if tag_name is not available
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+          fi
+
+          # Remove 'v' prefix if present for version
+          VERSION="${TAG_NAME#v}"
+
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          echo "Build version: $VERSION"
+          echo "Build version: $VERSION (tag: $TAG_NAME)"
+
+          # Validate that we have a version
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version from tag"
+            exit 1
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -59,11 +73,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.tag }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.tag }}
             type=raw,value=latest,enable=${{ github.event.release.prerelease == false }}
+            type=sha,prefix=,format=short
 
       - name: Build and push Docker image
         id: docker_build
