@@ -46,6 +46,18 @@ help: ## Display this help.
 build: ## Build the manager binary.
 	go build ./...
 
+.PHONY: build-dns
+build-dns: ## Build the godns DNS server binary
+	@echo "Building godns..."
+	@go build -o $(LOCALBIN)/godns ./cmd/godns
+	@echo "godns built at $(LOCALBIN)/godns"
+
+.PHONY: build-api
+build-api: ## Build the godnsapi HTTP API server binary
+	@echo "Building godnsapi..."
+	@go build -o $(LOCALBIN)/godnsapi ./cmd/godnsapi
+	@echo "godnsapi built at $(LOCALBIN)/godnsapi"
+
 .PHONY: build-cli
 build-cli: ## Build the godnscli tool
 	@echo "Building godnscli..."
@@ -53,33 +65,69 @@ build-cli: ## Build the godnscli tool
 	@echo "godnscli built at $(LOCALBIN)/godnscli"
 
 .PHONY: build-all
-build-all: build build-cli ## Build all binaries
+build-all: build-dns build-api build-cli ## Build all binaries
+
+.PHONY: swagger
+swagger: ## Generate Swagger documentation
+	@echo "$(CYAN)Generating Swagger documentation...$(RESET)"
+	@if command -v swag >/dev/null 2>&1; then \
+		swag init -g cmd/godnsapi/main.go -o docs --parseDependency --parseInternal; \
+		echo "$(GREEN)✓ Swagger docs generated in docs/$(RESET)"; \
+	else \
+		echo "$(YELLOW)swag not found. Installing...$(RESET)"; \
+		go install github.com/swaggo/swag/cmd/swag@latest; \
+		swag init -g cmd/godnsapi/main.go -o docs --parseDependency --parseInternal; \
+		echo "$(GREEN)✓ Swagger docs generated in docs/$(RESET)"; \
+	fi
+
+.PHONY: generate-swagger
+generate-swagger: ## Generate Swagger documentation (alias for swagger)
+	@$(MAKE) swagger
 
 ##@ Docker
 .PHONY: docker-build
-docker-build: ## Build docker image
+docker-build: swagger ## Build docker image (generates swagger docs first)
+	@echo "$(CYAN)Building Docker image...$(RESET)"
 	docker build -t ghcr.io/rogerwesterbo/godns:latest \
 		--build-arg VERSION=$(shell git describe --tags --always --dirty) \
 		--build-arg BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ") \
 		--build-arg GIT_COMMIT=$(shell git rev-parse HEAD) \
 		.
+	@echo "$(GREEN)✓ Docker image built successfully$(RESET)"
 
 .PHONY: docker-build-multiarch
-docker-build-multiarch: ## Build multi-arch docker image (requires buildx)
+docker-build-multiarch: swagger ## Build multi-arch docker image (requires buildx, generates swagger docs first)
+	@echo "$(CYAN)Building multi-arch Docker image...$(RESET)"
 	docker buildx build --platform linux/amd64,linux/arm64 \
 		-t ghcr.io/rogerwesterbo/godns:latest \
 		--build-arg VERSION=$(shell git describe --tags --always --dirty) \
 		--build-arg BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ") \
 		--build-arg GIT_COMMIT=$(shell git rev-parse HEAD) \
 		.
+	@echo "$(GREEN)✓ Multi-arch Docker image built successfully$(RESET)"
 
 .PHONY: docker-push
 docker-push: ## Push docker image to registry
+	@echo "$(CYAN)Pushing Docker image...$(RESET)"
 	docker push ghcr.io/rogerwesterbo/godns:latest
+	@echo "$(GREEN)✓ Docker image pushed successfully$(RESET)"
 
 .PHONY: docker-run
 docker-run: ## Run docker container locally
-	docker run --rm -p 53:53/tcp -p 53:53/udp -p 8080:8080 ghcr.io/rogerwesterbo/godns:latest
+	docker run --rm -p 53:53/tcp -p 53:53/udp -p 8080:8080 -p 8082:8082 ghcr.io/rogerwesterbo/godns:latest
+
+.PHONY: release
+release: swagger docker-build docker-push ## Build and push docker image (full release workflow)
+	@echo "$(GREEN)$(BOLD)✓ Release complete!$(RESET)"
+	@echo "$(CYAN)Image: ghcr.io/rogerwesterbo/godns:latest$(RESET)"
+	@echo "$(CYAN)Version: $(shell git describe --tags --always --dirty)$(RESET)"
+
+.PHONY: release-multiarch
+release-multiarch: swagger docker-build-multiarch docker-push ## Build and push multi-arch docker image
+	@echo "$(GREEN)$(BOLD)✓ Multi-arch release complete!$(RESET)"
+	@echo "$(CYAN)Image: ghcr.io/rogerwesterbo/godns:latest$(RESET)"
+	@echo "$(CYAN)Platforms: linux/amd64, linux/arm64$(RESET)"
+	@echo "$(CYAN)Version: $(shell git describe --tags --always --dirty)$(RESET)"
 
 ##@ Code sanity
 

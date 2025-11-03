@@ -2,8 +2,39 @@
 
 Complete guide for using the `godnscli` command-line tool to test and manage your GoDNS server.
 
+## Quick Reference Cheat Sheet
+
+### Most Common Commands
+
+```bash
+./bin/godnscli d                        # Discover server and network info
+./bin/godnscli t                        # Test everything
+./bin/godnscli q example.lan            # Query a domain
+./bin/godnscli h                        # Check health
+./bin/godnscli v                        # Show version
+```
+
+### Query Different Record Types
+
+```bash
+./bin/godnscli q example.lan            # A record (IPv4)
+./bin/godnscli q example.lan -t AAAA    # IPv6
+./bin/godnscli q example.lan -t MX      # Mail servers
+./bin/godnscli q example.lan -t NS      # Name servers
+./bin/godnscli q example.lan -t TXT     # Text records
+```
+
+### Query Different Servers
+
+```bash
+./bin/godnscli q example.lan -s localhost:53         # Local server
+./bin/godnscli q example.lan -s 192.168.1.100:53     # Custom server
+./bin/godnscli q google.com -s 8.8.8.8:53            # Google DNS
+```
+
 ## Table of Contents
 
+- [Quick Reference Cheat Sheet](#quick-reference-cheat-sheet)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Command Reference](#command-reference)

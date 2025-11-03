@@ -14,8 +14,14 @@ COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download && go mod verify
 
+# Install swag for generating API documentation
+RUN go install github.com/swaggo/swag/cmd/swag@v1.16.6
+
 # Copy source code
 COPY . .
+
+# Generate Swagger documentation
+RUN /go/bin/swag init -g cmd/godnsapi/swagger.go --output docs
 
 # Build the binary with security hardening flags
 # - CGO_ENABLED=0: Static binary, no C dependencies

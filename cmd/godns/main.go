@@ -8,10 +8,12 @@ import (
 	"github.com/rogerwesterbo/godns/internal/clients"
 	"github.com/rogerwesterbo/godns/internal/dnsserver"
 	"github.com/rogerwesterbo/godns/internal/dnsserver/handlers"
+	"github.com/rogerwesterbo/godns/internal/httpserver"
 	"github.com/rogerwesterbo/godns/internal/services/seeding"
 	"github.com/rogerwesterbo/godns/internal/services/v1allowedlans"
 	"github.com/rogerwesterbo/godns/internal/services/v1dnsservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1upstream"
+	"github.com/rogerwesterbo/godns/internal/services/v1zoneservice"
 	"github.com/rogerwesterbo/godns/internal/settings"
 	"github.com/rogerwesterbo/godns/pkg/consts"
 	"github.com/rogerwesterbo/godns/pkg/validation"
@@ -77,6 +79,16 @@ func main() {
 
 	// Create DNS handler with all services
 	dnsHandler := handlers.NewDNSHandler(dnsService, allowedLANsService, upstreamService)
+
+	// Initialize zone service for HTTP API
+	zoneService := v1zoneservice.NewV1ZoneService(clients.V1ValkeyClient)
+
+	// Create and start the HTTP API server
+	httpAPIAddress := viper.GetString(consts.HTTP_API_PORT)
+	httpServer := httpserver.New(httpAPIAddress, zoneService)
+	if err := httpServer.Start(); err != nil {
+		vlog.Fatalf("failed to start HTTP API server: %v", err)
+	}
 
 	// Create and start the DNS server
 	dnsAddress := viper.GetString(consts.DNS_SERVER_PORT)

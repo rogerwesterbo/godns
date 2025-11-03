@@ -1,6 +1,6 @@
 # GoDNS Documentation
 
-Complete documentation for GoDNS DNS server and CLI tool.
+Complete documentation for GoDNS DNS server, HTTP API, and CLI tool.
 
 ## 📚 Documentation Index
 
@@ -11,189 +11,209 @@ Complete documentation for GoDNS DNS server and CLI tool.
   - First-time user guide
   - Basic commands and verification
 
+### HTTP API Documentation
+
+- **[API Documentation](API_DOCUMENTATION.md)** - Complete API reference
+
+  - All REST endpoints (zones, records)
+  - Interactive Swagger UI guide
+  - Request/response examples
+  - Error handling
+  - Data models and schemas
+
+- **[API Release Workflow](API_RELEASE_WORKFLOW.md)** - Build and deployment
+  - Docker build process
+  - Swagger documentation generation
+  - Release procedures
+  - Multi-platform builds
+  - CI/CD integration
+
 ### CLI Tool Documentation
 
-- **[CLI Cheat Sheet](CLI_CHEAT_SHEET.md)** - One-page quick reference
+- **[CLI Guide](CLI_GUIDE.md)** - Complete CLI reference
 
-  - Most common commands
-  - Copy-paste examples
-  - Perfect for keeping handy
-
-- **[CLI Quick Reference](CLI_QUICK_REFERENCE.md)** - Fast command lookup
-
+  - Quick reference cheat sheet
   - All commands with examples
-  - All flags and options
-  - Common workflows
-  - Troubleshooting quick fixes
+  - Advanced usage patterns
+  - Troubleshooting guide
 
-- **[CLI Guide](CLI_GUIDE.md)** - Complete documentation
-
-  - Detailed command reference
-  - Advanced usage examples
-  - CI/CD integration
-  - Kubernetes health checks
-  - Monitoring and automation scripts
-
-- **[Finding Domains Guide](FINDING_DOMAINS.md)** - Domain discovery and management
+- **[Finding Domains Guide](FINDING_DOMAINS.md)** - Domain discovery
   - How to find what domains to query
   - Adding test zones
   - Listing and managing zones
   - Network discovery tips
 
-### Server Configuration
+### Configuration & Setup
 
-- **[Valkey Authentication](VALKEY_AUTH.md)** - Authentication setup
+- **[Valkey Authentication](VALKEY_AUTH.md)** - Database authentication
   - ACL configuration
   - Username/password setup
   - Docker Compose integration
   - Security best practices
 
-## 🚀 Which Document Should I Read?
+## 🚀 Quick Navigation
 
 ### I'm brand new to GoDNS
 
 👉 Start with the **[Quick Start Guide](QUICK_START.md)**
 
-### I need a quick command reference
+### I want to use the REST API
 
-👉 Use the **[CLI Cheat Sheet](CLI_CHEAT_SHEET.md)**
+👉 Read the **[API Documentation](API_DOCUMENTATION.md)** and use Swagger UI at `http://localhost:8082/swagger/index.html`
 
-### I want detailed CLI documentation
+### I want to use the CLI
 
-👉 Read the **[CLI Guide](CLI_GUIDE.md)**
+👉 Check the **[CLI Guide](CLI_GUIDE.md)** for the quick reference cheat sheet
+
+### I need to build/deploy the API
+
+👉 Follow the **[API Release Workflow](API_RELEASE_WORKFLOW.md)**
 
 ### I need to set up authentication
 
 👉 Follow the **[Valkey Authentication](VALKEY_AUTH.md)** guide
 
-### I need fast lookup while working
-
-👉 Keep the **[CLI Quick Reference](CLI_QUICK_REFERENCE.md)** open
-
 ### I don't know what domain to query
 
 👉 Read the **[Finding Domains Guide](FINDING_DOMAINS.md)**
 
-## 📖 Documentation by Size
+## 📖 Documentation by Component
 
-| Document                                      | Size        | Best For           |
-| --------------------------------------------- | ----------- | ------------------ |
-| [CLI Cheat Sheet](CLI_CHEAT_SHEET.md)         | 1 page      | Quick lookup       |
-| [CLI Quick Reference](CLI_QUICK_REFERENCE.md) | 5 min read  | Fast reference     |
-| [Quick Start Guide](QUICK_START.md)           | 5 min read  | First-time setup   |
-| [Valkey Authentication](VALKEY_AUTH.md)       | 10 min read | Auth configuration |
-| [CLI Guide](CLI_GUIDE.md)                     | 20 min read | Complete reference |
+### HTTP API Server
+
+| Document                                        | Description                 | Best For               |
+| ----------------------------------------------- | --------------------------- | ---------------------- |
+| [API Documentation](API_DOCUMENTATION.md)       | Complete REST API reference | API users, integration |
+| [API Release Workflow](API_RELEASE_WORKFLOW.md) | Build, release, deploy      | DevOps, deployment     |
+| [Quick Start](QUICK_START.md)                   | Getting started             | First-time users       |
+
+**Interactive:** Swagger UI at http://localhost:8082/swagger/index.html
+
+### CLI Tool
+
+| Document                              | Description            | Best For                 |
+| ------------------------------------- | ---------------------- | ------------------------ |
+| [CLI Guide](CLI_GUIDE.md)             | Complete CLI reference | All CLI users            |
+| [Finding Domains](FINDING_DOMAINS.md) | Domain discovery       | Testing, troubleshooting |
+| [Quick Start](QUICK_START.md)         | Getting started        | First-time users         |
+
+### Server Configuration
+
+| Document                                | Description         | Best For               |
+| --------------------------------------- | ------------------- | ---------------------- |
+| [Valkey Authentication](VALKEY_AUTH.md) | Database auth setup | Production deployments |
+| [Quick Start](QUICK_START.md)           | Basic configuration | Development            |
 
 ## 🎯 Documentation by Use Case
 
-### Testing DNS Server
+### Testing the DNS Server
 
 1. [Quick Start Guide](QUICK_START.md) - Initial setup
-2. [CLI Cheat Sheet](CLI_CHEAT_SHEET.md) - Common test commands
+2. [CLI Guide](CLI_GUIDE.md) - Test commands
 
-### Development
+### Using the HTTP API
 
-1. [CLI Guide](CLI_GUIDE.md) - Advanced usage
-2. [CLI Quick Reference](CLI_QUICK_REFERENCE.md) - Command reference
+1. [API Documentation](API_DOCUMENTATION.md) - API reference
+2. Swagger UI - Interactive testing at http://localhost:8082/swagger/index.html
+3. Test scripts in `hack/test-api.sh`
+
+### Building and Releasing
+
+1. [API Release Workflow](API_RELEASE_WORKFLOW.md) - Complete release process
+2. Makefile targets: `make swagger`, `make release`
 
 ### Production Deployment
 
 1. [Valkey Authentication](VALKEY_AUTH.md) - Secure setup
-2. [CLI Guide](CLI_GUIDE.md) - Health checks and monitoring
-
-### Troubleshooting
-
-1. [CLI Quick Reference](CLI_QUICK_REFERENCE.md) - Common errors
-2. [CLI Guide](CLI_GUIDE.md) - Detailed troubleshooting
+2. [API Release Workflow](API_RELEASE_WORKFLOW.md) - Deployment procedures
+3. [CLI Guide](CLI_GUIDE.md) - Health checks and monitoring
 
 ## 📝 Additional Resources
 
 ### In the Repository
 
 - [Main README](../README.md) - Project overview
-- [CLI Tool README](../cmd/godnscli/README.md) - Development info
+- [CLI Tool README](../cmd/godnscli/README.md) - CLI quick start
+- [API Server README](../cmd/godnsapi/README.md) - API quick start
 - [License](../LICENSE) - License information
 
 ### Quick Links
 
 ```bash
-# Build documentation is in Makefile
+# Build documentation
 make help
 
-# Environment variables in
+# Environment variables
 .env.example
 
-# Docker configuration in
+# Docker configuration
 docker-compose.yaml
 
-# Valkey ACL examples in
-hack/valkey/users.acl.example
+# Test scripts
+hack/test-api.sh        # API testing
+hack/test-swagger.sh    # Swagger UI testing
+hack/add-test-zone.sh   # Add test data
 ```
 
 ## 🔍 Finding What You Need
 
 ### Search by Topic
 
-- **Commands**: [CLI Quick Reference](CLI_QUICK_REFERENCE.md)
-- **Examples**: [CLI Guide](CLI_GUIDE.md)
+- **REST API**: [API Documentation](API_DOCUMENTATION.md)
+- **Swagger**: [API Documentation](API_DOCUMENTATION.md#swaggeropenapi-integration)
+- **CLI Commands**: [CLI Guide](CLI_GUIDE.md)
 - **Setup**: [Quick Start Guide](QUICK_START.md)
 - **Security**: [Valkey Authentication](VALKEY_AUTH.md)
-- **Troubleshooting**: [CLI Guide](CLI_GUIDE.md#troubleshooting)
+- **Deployment**: [API Release Workflow](API_RELEASE_WORKFLOW.md)
 
-### Search by Command
+### Search by Command/Operation
 
-| Command         | Documentation                             |
-| --------------- | ----------------------------------------- |
-| `query` / `q`   | [CLI Guide](CLI_GUIDE.md#query-alias-q)   |
-| `health` / `h`  | [CLI Guide](CLI_GUIDE.md#health-alias-h)  |
-| `test` / `t`    | [CLI Guide](CLI_GUIDE.md#test-alias-t)    |
-| `version` / `v` | [CLI Guide](CLI_GUIDE.md#version-alias-v) |
+| What                  | Where                                                         |
+| --------------------- | ------------------------------------------------------------- |
+| List zones (API)      | [API Documentation](API_DOCUMENTATION.md#list-all-zones)      |
+| Create zone (API)     | [API Documentation](API_DOCUMENTATION.md#create-zone)         |
+| Query DNS (CLI)       | [CLI Guide](CLI_GUIDE.md#quick-reference-cheat-sheet)         |
+| Health check (CLI)    | [CLI Guide](CLI_GUIDE.md#quick-reference-cheat-sheet)         |
+| Build Docker image    | [API Release Workflow](API_RELEASE_WORKFLOW.md#docker)        |
+| Generate Swagger docs | [API Release Workflow](API_RELEASE_WORKFLOW.md#documentation) |
 
 ## 💡 Tips
 
 ### For First-Time Users
 
 1. Read [Quick Start Guide](QUICK_START.md)
-2. Print [CLI Cheat Sheet](CLI_CHEAT_SHEET.md)
-3. Bookmark [CLI Quick Reference](CLI_QUICK_REFERENCE.md)
+2. Try Swagger UI for API at http://localhost:8082/swagger/index.html
+3. Bookmark [CLI Guide](CLI_GUIDE.md) for CLI reference
 
-### For Daily Use
+### For API Development
 
-1. Keep [CLI Cheat Sheet](CLI_CHEAT_SHEET.md) handy
-2. Refer to [CLI Quick Reference](CLI_QUICK_REFERENCE.md) when needed
-3. Deep dive into [CLI Guide](CLI_GUIDE.md) for complex tasks
+1. Use Swagger UI for interactive testing
+2. Refer to [API Documentation](API_DOCUMENTATION.md) for details
+3. Run `hack/test-api.sh` for automated testing
+4. Run `make swagger` after code changes
 
 ### For Production
 
 1. Configure with [Valkey Authentication](VALKEY_AUTH.md)
-2. Set up monitoring using [CLI Guide](CLI_GUIDE.md#advanced-usage)
-3. Create automation scripts from [CLI Guide](CLI_GUIDE.md#common-use-cases)
+2. Follow [API Release Workflow](API_RELEASE_WORKFLOW.md) for deployments
+3. Set up monitoring using [CLI Guide](CLI_GUIDE.md)
 
 ## 🆘 Getting Help
 
 1. Check the relevant documentation above
-2. Look at examples in [CLI Guide](CLI_GUIDE.md#common-use-cases)
-3. Review troubleshooting in [CLI Guide](CLI_GUIDE.md#troubleshooting)
-4. Check server logs: `docker-compose logs godns`
-
-## 📌 Quick Access
-
-Most frequently accessed documentation:
-
-```bash
-# In your browser, bookmark these:
-docs/CLI_CHEAT_SHEET.md         # Daily reference
-docs/CLI_QUICK_REFERENCE.md     # Detailed lookup
-docs/QUICK_START.md             # Setup guide
-
-# Print this for your desk:
-docs/CLI_CHEAT_SHEET.md
-```
+2. Look at Swagger UI for API: http://localhost:8082/swagger/index.html
+3. Review examples in [API Documentation](API_DOCUMENTATION.md) or [CLI Guide](CLI_GUIDE.md)
+4. Run test scripts: `hack/test-api.sh` or `hack/test-swagger.sh`
+5. Check server logs: `docker-compose logs godns`
 
 ## 🔄 Documentation Updates
 
-All documentation is maintained in the `docs/` directory. If you make changes to the CLI or server, please update the relevant documentation.
+All documentation is maintained in the `docs/` directory. If you make changes to the API or CLI, please:
+
+1. Update relevant documentation
+2. Regenerate Swagger docs: `make swagger`
+3. Update examples in test scripts
 
 ---
 
-**Need something specific?** Use the search above or browse the documents by use case.
+**Need something specific?** Browse by component, use case, or search above.
