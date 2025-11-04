@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/rogerwesterbo/godns/cmd/godnscli/settings"
 	"github.com/spf13/cobra"
 )
 
@@ -20,13 +21,25 @@ It provides commands to:
 }
 
 func Execute() {
+	// Initialize settings before executing commands
+	settings.Init()
+	
+	// Initialize all command flags
+	initRootFlags()
+	initQueryCommand()
+	initHealthCommand()
+	initDiscoverCommand()
+	initTestCommand()
+	initVersionCommand()
+	initExportCommand()
+	
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func init() {
+func initRootFlags() {
 	// Global flags can be added here
 	rootCmd.PersistentFlags().StringP("server", "s", "localhost:53", "DNS server address")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose output")

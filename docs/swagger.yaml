@@ -30,6 +30,46 @@ definitions:
           $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
         type: array
     type: object
+  github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse:
+    properties:
+      count:
+        description: Number of results found
+        example: 5
+        type: integer
+      query:
+        description: The search query
+        example: example
+        type: string
+      results:
+        description: List of search results
+        items:
+          $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult'
+        type: array
+    type: object
+  github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult:
+    properties:
+      record:
+        allOf:
+        - $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
+        description: Record details (if type is record)
+      type:
+        allOf:
+        - $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType'
+        description: Type of result (zone, record)
+        example: zone
+      zone:
+        description: Zone name
+        example: example.lan
+        type: string
+    type: object
+  github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType:
+    enum:
+    - zone
+    - record
+    type: string
+    x-enum-varnames:
+    - SearchResultTypeZone
+    - SearchResultTypeRecord
 info:
   contact: {}
 paths:
@@ -65,13 +105,13 @@ paths:
       summary: Export all zones
       tags:
       - Export
-  /api/v1/export/{domain}:
+  /api/v1/export/{zone}:
     get:
       description: Export a specific DNS zone in a specified format
       parameters:
-      - description: Domain name (e.g., example.lan)
+      - description: Zone name (e.g., example.lan)
         in: path
-        name: domain
+        name: zone
         required: true
         type: string
       - default: bind
@@ -107,6 +147,47 @@ paths:
       summary: Export a specific zone
       tags:
       - Export
+  /api/v1/search:
+    get:
+      description: Search across DNS zones and records with optional type filtering
+      parameters:
+      - description: Search query (case-insensitive)
+        in: query
+        name: q
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: Filter by result type (zone, record). Can specify multiple types.
+        in: query
+        items:
+          enum:
+          - zone
+          - record
+          type: string
+        name: type
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Search results
+          schema:
+            $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Search DNS zones and records
+      tags:
+      - Search
   /api/v1/zones:
     get:
       description: Get a list of all DNS zones
@@ -167,13 +248,13 @@ paths:
       summary: Create a new DNS zone
       tags:
       - Zones
-  /api/v1/zones/{domain}:
+  /api/v1/zones/{zone}:
     delete:
       description: Delete a DNS zone and all its records
       parameters:
-      - description: Domain name (e.g., example.lan)
+      - description: Zone name (e.g., example.lan)
         in: path
-        name: domain
+        name: zone
         required: true
         type: string
       responses:
@@ -195,11 +276,11 @@ paths:
       tags:
       - Zones
     get:
-      description: Get a specific DNS zone by domain
+      description: Get a specific DNS zone by name
       parameters:
-      - description: Domain name (e.g., example.lan)
+      - description: Zone name (e.g., example.lan)
         in: path
-        name: domain
+        name: zone
         required: true
         type: string
       produces:
@@ -229,9 +310,9 @@ paths:
       - application/json
       description: Update an existing DNS zone (replaces all records)
       parameters:
-      - description: Domain name (e.g., example.lan)
+      - description: Zone name (e.g., example.lan)
         in: path
-        name: domain
+        name: zone
         required: true
         type: string
       - description: Updated zone data
@@ -268,15 +349,15 @@ paths:
       summary: Update a DNS zone
       tags:
       - Zones
-  /api/v1/zones/{domain}/records:
+  /api/v1/zones/{zone}/records:
     post:
       consumes:
       - application/json
       description: Add a new DNS record to an existing zone
       parameters:
-      - description: Domain name (e.g., example.lan)
+      - description: Zone name (e.g., example.lan)
         in: path
-        name: domain
+        name: zone
         required: true
         type: string
       - description: Record to create
@@ -319,13 +400,13 @@ paths:
       summary: Create a DNS record
       tags:
       - Records
-  /api/v1/zones/{domain}/records/{name}/{type}:
+  /api/v1/zones/{zone}/records/{name}/{type}:
     delete:
       description: Delete a specific DNS record from a zone
       parameters:
-      - description: Domain name (e.g., example.lan)
+      - description: Zone name (e.g., example.lan)
         in: path
-        name: domain
+        name: zone
         required: true
         type: string
       - description: Record name (e.g., www.example.lan.)
@@ -359,9 +440,9 @@ paths:
     get:
       description: Get a specific DNS record by name and type
       parameters:
-      - description: Domain name (e.g., example.lan)
+      - description: Zone name (e.g., example.lan)
         in: path
-        name: domain
+        name: zone
         required: true
         type: string
       - description: Record name (e.g., www.example.lan.)
@@ -401,9 +482,9 @@ paths:
       - application/json
       description: Update an existing DNS record
       parameters:
-      - description: Domain name (e.g., example.lan)
+      - description: Zone name (e.g., example.lan)
         in: path
-        name: domain
+        name: zone
         required: true
         type: string
       - description: Record name (e.g., www.example.lan.)
@@ -450,34 +531,4 @@ paths:
       summary: Update a DNS record
       tags:
       - Records
-  /health:
-    get:
-      description: Check if the API server is healthy
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 'status: healthy'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Health check
-      tags:
-      - Health
-  /ready:
-    get:
-      description: Check if the API server is ready to accept requests
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 'status: ready'
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Readiness check
-      tags:
-      - Health
 swagger: "2.0"

@@ -22,7 +22,7 @@ var queryCmd = &cobra.Command{
 	RunE:    runQuery,
 }
 
-func init() {
+func initQueryCommand() {
 	rootCmd.AddCommand(queryCmd)
 
 	queryCmd.Flags().StringVarP(&queryType, "type", "t", "A", "Query type (A, AAAA, MX, NS, TXT, etc.)")

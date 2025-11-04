@@ -24,6 +24,6 @@ var versionCmd = &cobra.Command{
 	},
 }
 
-func init() {
+func initVersionCommand() {
 	rootCmd.AddCommand(versionCmd)
 }

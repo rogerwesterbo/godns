@@ -6,13 +6,49 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/rogerwesterbo/godns/pkg/consts"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-var exportCmd = &cobra.Command{
-	Use:   "export [domain]",
-	Short: "Export DNS zones to different formats",
-	Long: `Export DNS zones to different DNS provider formats.
+// getDefaultAPIURL returns the appropriate API URL based on environment
+func getDefaultAPIURL() string {
+	// Check if running in development mode
+	if viper.GetBool(consts.DEVELOPMENT) {
+		// Use the configured API port or default to 14000
+		port := viper.GetString(consts.HTTP_API_PORT)
+		if port == "" {
+			port = ":14000"
+		}
+		// Remove leading colon if present
+		if port[0] == ':' {
+			port = port[1:]
+		}
+		return fmt.Sprintf("http://localhost:%s", port)
+	}
+
+	// Production: expect HTTPS with proper hostname
+	// User should override with --api-url flag
+	return "https://dns-api-server"
+}
+
+// getExportLongDescription returns the help text based on environment
+func getExportLongDescription() string {
+	isDev := viper.GetBool(consts.DEVELOPMENT)
+
+	exampleURL := "https://dns-api.example.com"
+	if isDev {
+		port := viper.GetString(consts.HTTP_API_PORT)
+		if port == "" {
+			port = ":14000"
+		}
+		if port[0] == ':' {
+			port = port[1:]
+		}
+		exampleURL = fmt.Sprintf("http://localhost:%s", port)
+	}
+
+	return fmt.Sprintf(`Export DNS zones to different DNS provider formats.
 
 Supported formats:
   - bind      : Standard BIND zone file format (default)
@@ -22,18 +58,23 @@ Supported formats:
 
 Examples:
 	# Export all zones in BIND format
-	godnscli export --api-url http://localhost:14082
+	godnscli export --api-url %s
 
 	# Export all zones in CoreDNS format
-	godnscli export --format coredns --api-url http://localhost:14082
+	godnscli export --format coredns --api-url %s
 
 	# Export a specific zone in PowerDNS format
-	godnscli export example.lan --format powerdns --api-url http://localhost:14082
+	godnscli export example.lan --format powerdns --api-url %s
 
   # Export to file
-  godnscli export example.lan --format bind --output example.lan.zone`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: runExport,
+  godnscli export example.lan --format bind --output example.lan.zone`, exampleURL, exampleURL, exampleURL)
+}
+
+var exportCmd = &cobra.Command{
+	Use:   "export [domain]",
+	Short: "Export DNS zones to different formats",
+	Args:  cobra.MaximumNArgs(1),
+	RunE:  runExport,
 }
 
 var (
@@ -42,12 +83,19 @@ var (
 	apiURL       string
 )
 
-func init() {
+func initExportCommand() {
 	rootCmd.AddCommand(exportCmd)
+
+	// Set a custom help function that updates the Long description before displaying help
+	originalHelpFunc := exportCmd.HelpFunc()
+	exportCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		cmd.Long = getExportLongDescription()
+		originalHelpFunc(cmd, args)
+	})
 
 	exportCmd.Flags().StringVarP(&exportFormat, "format", "f", "bind", "Export format (bind, coredns, powerdns, zonefile)")
 	exportCmd.Flags().StringVarP(&exportOutput, "output", "o", "", "Output file (default: stdout)")
-	exportCmd.Flags().StringVar(&apiURL, "api-url", "http://localhost:14082", "GoDNS API URL")
+	exportCmd.Flags().StringVar(&apiURL, "api-url", getDefaultAPIURL(), "GoDNS API URL")
 }
 
 func runExport(cmd *cobra.Command, args []string) error {

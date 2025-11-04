@@ -15,7 +15,7 @@ var discoverCmd = &cobra.Command{
 	RunE:    runDiscover,
 }
 
-func init() {
+func initDiscoverCommand() {
 	rootCmd.AddCommand(discoverCmd)
 }
 

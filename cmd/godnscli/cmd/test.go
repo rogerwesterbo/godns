@@ -16,7 +16,7 @@ var testCmd = &cobra.Command{
 	RunE:    runTest,
 }
 
-func init() {
+func initTestCommand() {
 	rootCmd.AddCommand(testCmd)
 }
 

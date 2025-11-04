@@ -62,7 +62,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/export/{domain}": {
+        "/api/v1/export/{zone}": {
             "get": {
                 "description": "Export a specific DNS zone in a specified format",
                 "produces": [
@@ -75,8 +75,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Domain name (e.g., example.lan)",
-                        "name": "domain",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
                         "in": "path",
                         "required": true
                     },
@@ -106,6 +106,67 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Zone not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/search": {
+            "get": {
+                "description": "Search across DNS zones and records with optional type filtering",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search DNS zones and records",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query (case-insensitive)",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "zone",
+                                "record"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by result type (zone, record). Can specify multiple types.",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -216,9 +277,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/zones/{domain}": {
+        "/api/v1/zones/{zone}": {
             "get": {
-                "description": "Get a specific DNS zone by domain",
+                "description": "Get a specific DNS zone by name",
                 "produces": [
                     "application/json"
                 ],
@@ -229,8 +290,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Domain name (e.g., example.lan)",
-                        "name": "domain",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
                         "in": "path",
                         "required": true
                     }
@@ -277,8 +338,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Domain name (e.g., example.lan)",
-                        "name": "domain",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
                         "in": "path",
                         "required": true
                     },
@@ -337,8 +398,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Domain name (e.g., example.lan)",
-                        "name": "domain",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
                         "in": "path",
                         "required": true
                     }
@@ -368,7 +429,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/zones/{domain}/records": {
+        "/api/v1/zones/{zone}/records": {
             "post": {
                 "description": "Add a new DNS record to an existing zone",
                 "consumes": [
@@ -384,8 +445,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Domain name (e.g., example.lan)",
-                        "name": "domain",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
                         "in": "path",
                         "required": true
                     },
@@ -445,7 +506,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/zones/{domain}/records/{name}/{type}": {
+        "/api/v1/zones/{zone}/records/{name}/{type}": {
             "get": {
                 "description": "Get a specific DNS record by name and type",
                 "produces": [
@@ -458,8 +519,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Domain name (e.g., example.lan)",
-                        "name": "domain",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
                         "in": "path",
                         "required": true
                     },
@@ -520,8 +581,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Domain name (e.g., example.lan)",
-                        "name": "domain",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
                         "in": "path",
                         "required": true
                     },
@@ -594,8 +655,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Domain name (e.g., example.lan)",
-                        "name": "domain",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
                         "in": "path",
                         "required": true
                     },
@@ -629,52 +690,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/health": {
-            "get": {
-                "description": "Check if the API server is healthy",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Health"
-                ],
-                "summary": "Health check",
-                "responses": {
-                    "200": {
-                        "description": "status: healthy",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/ready": {
-            "get": {
-                "description": "Check if the API server is ready to accept requests",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Health"
-                ],
-                "summary": "Readiness check",
-                "responses": {
-                    "200": {
-                        "description": "status: ready",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -728,6 +743,66 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "description": "Number of results found",
+                    "type": "integer",
+                    "example": 5
+                },
+                "query": {
+                    "description": "The search query",
+                    "type": "string",
+                    "example": "example"
+                },
+                "results": {
+                    "description": "List of search results",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult"
+                    }
+                }
+            }
+        },
+        "github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult": {
+            "type": "object",
+            "properties": {
+                "record": {
+                    "description": "Record details (if type is record)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+                        }
+                    ]
+                },
+                "type": {
+                    "description": "Type of result (zone, record)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType"
+                        }
+                    ],
+                    "example": "zone"
+                },
+                "zone": {
+                    "description": "Zone name",
+                    "type": "string",
+                    "example": "example.lan"
+                }
+            }
+        },
+        "github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType": {
+            "type": "string",
+            "enum": [
+                "zone",
+                "record"
+            ],
+            "x-enum-varnames": [
+                "SearchResultTypeZone",
+                "SearchResultTypeRecord"
+            ]
         }
     }
 }`

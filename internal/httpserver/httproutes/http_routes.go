@@ -7,9 +7,11 @@ import (
 	_ "github.com/rogerwesterbo/godns/docs" // swagger docs
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1exporthandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1recordhandler"
+	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1searchhandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1zonehandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/middleware"
 	"github.com/rogerwesterbo/godns/internal/services/v1exportservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1searchservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1zoneservice"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -20,17 +22,20 @@ type Router struct {
 	zoneHandler   *v1zonehandler.ZoneHandler
 	recordHandler *v1recordhandler.RecordHandler
 	exportHandler *v1exporthandler.ExportHandler
+	searchHandler *v1searchhandler.SearchHandler
 }
 
 // NewRouter creates a new HTTP router with all routes configured
 func NewRouter(zoneService *v1zoneservice.V1ZoneService) *http.ServeMux {
 	exportService := v1exportservice.NewV1ExportService(zoneService)
+	searchService := v1searchservice.NewV1SearchService(zoneService)
 
 	r := &Router{
 		mux:           http.NewServeMux(),
 		zoneHandler:   v1zonehandler.NewZoneHandler(zoneService),
 		recordHandler: v1recordhandler.NewRecordHandler(zoneService),
 		exportHandler: v1exporthandler.NewExportHandler(exportService),
+		searchHandler: v1searchhandler.NewSearchHandler(searchService),
 	}
 
 	r.registerRoutes()
@@ -70,6 +75,8 @@ func (r *Router) handleAPIRoutes(w http.ResponseWriter, req *http.Request) {
 		r.handleZones(w, req)
 	case strings.HasPrefix(path, "/api/v1/zones/"):
 		r.handleZoneOperations(w, req)
+	case path == "/api/v1/search":
+		r.handleSearch(w, req)
 	case path == "/api/v1/export":
 		r.handleExport(w, req)
 	case strings.HasPrefix(path, "/api/v1/export/"):
@@ -77,6 +84,16 @@ func (r *Router) handleAPIRoutes(w http.ResponseWriter, req *http.Request) {
 	default:
 		http.NotFound(w, req)
 	}
+}
+
+// Handle search
+func (r *Router) handleSearch(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	r.searchHandler.Search(w, req)
 }
 
 // Handle export all zones

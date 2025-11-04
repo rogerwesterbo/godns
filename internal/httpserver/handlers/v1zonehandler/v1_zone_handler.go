@@ -74,14 +74,14 @@ func (h *ZoneHandler) CreateZone(w http.ResponseWriter, req *http.Request) {
 }
 
 // @Summary Get a DNS zone
-// @Description Get a specific DNS zone by domain
+// @Description Get a specific DNS zone by name
 // @Tags Zones
 // @Produce json
-// @Param domain path string true "Domain name (e.g., example.lan)"
+// @Param zone path string true "Zone name (e.g., example.lan)"
 // @Success 200 {object} models.DNSZone "Zone details"
 // @Failure 404 {object} map[string]string "Zone not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/zones/{domain} [get]
+// @Router /api/v1/zones/{zone} [get]
 func (h *ZoneHandler) GetZone(w http.ResponseWriter, req *http.Request, domain string) {
 	zone, err := h.zoneService.GetZone(req.Context(), domain)
 	if err != nil {
@@ -102,13 +102,13 @@ func (h *ZoneHandler) GetZone(w http.ResponseWriter, req *http.Request, domain s
 // @Tags Zones
 // @Accept json
 // @Produce json
-// @Param domain path string true "Domain name (e.g., example.lan)"
+// @Param zone path string true "Zone name (e.g., example.lan)"
 // @Param zone body models.DNSZone true "Updated zone data"
 // @Success 200 {object} models.DNSZone "Zone updated"
 // @Failure 400 {object} map[string]string "Invalid request body"
 // @Failure 404 {object} map[string]string "Zone not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/zones/{domain} [put]
+// @Router /api/v1/zones/{zone} [put]
 func (h *ZoneHandler) UpdateZone(w http.ResponseWriter, req *http.Request, domain string) {
 	var zone models.DNSZone
 	if err := helpers.DecodeJSON(req.Body, &zone); err != nil {
@@ -134,11 +134,11 @@ func (h *ZoneHandler) UpdateZone(w http.ResponseWriter, req *http.Request, domai
 // @Summary Delete a DNS zone
 // @Description Delete a DNS zone and all its records
 // @Tags Zones
-// @Param domain path string true "Domain name (e.g., example.lan)"
+// @Param zone path string true "Zone name (e.g., example.lan)"
 // @Success 204 "Zone deleted"
 // @Failure 404 {object} map[string]string "Zone not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/v1/zones/{domain} [delete]
+// @Router /api/v1/zones/{zone} [delete]
 func (h *ZoneHandler) DeleteZone(w http.ResponseWriter, req *http.Request, domain string) {
 	if err := h.zoneService.DeleteZone(req.Context(), domain); err != nil {
 		vlog.Errorf("Failed to delete zone %s: %v", domain, err)

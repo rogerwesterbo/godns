@@ -21,7 +21,7 @@ var healthCmd = &cobra.Command{
 	RunE:    runHealth,
 }
 
-func init() {
+func initHealthCommand() {
 	rootCmd.AddCommand(healthCmd)
 
 	healthCmd.Flags().StringVar(&livenessPort, "liveness-port", "14080", "Liveness probe port")
