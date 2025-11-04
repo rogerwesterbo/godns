@@ -107,7 +107,7 @@ Test Results:
 2. Edit `.env` with your settings:
 
    ```bash
-   VALKEY_ADDR=localhost:6379
+   VALKEY_ADDR=localhost:14379
    VALKEY_USERNAME=default
    VALKEY_PASSWORD=mysecretpassword
    DNS_PORT=53

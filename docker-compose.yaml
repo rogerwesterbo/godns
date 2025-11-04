@@ -1,9 +1,9 @@
 services:
   valkey:
-    image: valkey/valkey:latest
+    image: valkey/valkey:8-alpine
     container_name: valkey
     ports:
-      - '6379:6379'
+      - '${VALKEY_PORT:-14102}:6379'
     volumes:
       - ./hack/data/valkey:/data
       - ./hack/valkey/users.acl:/etc/valkey/users.acl:ro
@@ -15,6 +15,71 @@ services:
     environment:
       - VALKEY_USERNAME=${VALKEY_USERNAME:-default}
       - VALKEY_PASSWORD=${VALKEY_PASSWORD:-mysecretpassword}
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres
+    restart: unless-stopped
+    networks:
+      - godns-network
+    ports:
+      - '${POSTGRES_PORT:-14100}:5432'
+    volumes:
+      - ./hack/data/postgres/pgdata:/var/lib/postgresql/data/pgdata
+    environment:
+      POSTGRES_DB: ${KEYCLOAK_DB_NAME:-keycloak}
+      POSTGRES_USER: ${KEYCLOAK_DB_USER:-keycloak}
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_password}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${KEYCLOAK_DB_USER:-keycloak}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    restart: unless-stopped
+    networks:
+      - godns-network
+    ports:
+      - '${KEYCLOAK_PORT:-14101}:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB_NAME:-keycloak}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER:-keycloak}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak_password}
+
+      # Keycloak admin credentials
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+
+      # Hostname configuration
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
+      KC_HOSTNAME_STRICT: 'false'
+      KC_HOSTNAME_STRICT_HTTPS: 'false'
+
+      # HTTP configuration (for development)
+      KC_HTTP_ENABLED: 'true'
+      KC_HEALTH_ENABLED: 'true'
+      KC_METRICS_ENABLED: 'true'
+
+      # Proxy configuration (if behind reverse proxy)
+      KC_PROXY: ${KEYCLOAK_PROXY:-edge}
+    command:
+      - start-dev
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'curl -f http://localhost:8080/health/ready || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 networks:
   godns-network:

@@ -207,6 +207,26 @@ func (c *V1ValkeyClient) ListKeys(ctx context.Context) ([]string, error) {
 	return keys, err
 }
 
+// Ping checks if the Valkey server is reachable
+func (c *V1ValkeyClient) Ping(ctx context.Context) error {
+	// Create a timeout context if the parent context doesn't have a deadline
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.timeout)
+		defer cancel()
+	}
+
+	return c.retry(ctx, "Ping", func() error {
+		cmd := c.client.B().Ping().Build()
+		resp := c.client.Do(ctx, cmd)
+
+		if err := resp.Error(); err != nil {
+			return fmt.Errorf("failed to ping valkey: %w", err)
+		}
+		return nil
+	})
+}
+
 // Close closes the Valkey client connection
 func (c *V1ValkeyClient) Close() {
 	c.client.Close()

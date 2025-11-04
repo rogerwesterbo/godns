@@ -573,7 +573,7 @@ docker-compose logs godns
 
 ```bash
 # Check if health endpoints are running
-curl http://localhost:8080/livez
+curl http://localhost:14083/livez
 curl http://localhost:8081/readyz
 
 # Verify correct ports

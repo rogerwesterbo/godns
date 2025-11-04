@@ -25,7 +25,7 @@ GoDNS includes comprehensive Swagger/OpenAPI documentation with an interactive U
 
 ### Accessing Swagger UI
 
-**URL:** http://localhost:8082/swagger/index.html
+**URL:** http://localhost:14082/swagger/index.html
 
 **Features:**
 
@@ -51,7 +51,7 @@ GoDNS includes comprehensive Swagger/OpenAPI documentation with an interactive U
    ```
 
 2. **Open Swagger UI:**
-   Visit http://localhost:8082/swagger/index.html
+   Visit http://localhost:14082/swagger/index.html
 
 3. **Explore & Test:**
    - Browse endpoints organized by tags (Health, Zones, Records)
@@ -70,10 +70,10 @@ Swagger documentation generates these files in `docs/`:
 
 ## Base URL
 
-By default, the API server runs on port `8082`. You can configure this using the `HTTP_API_PORT` environment variable.
+By default, the API server runs on port `13082`. You can configure this using the `HTTP_API_PORT` environment variable.
 
 ```
-http://localhost:8082
+http://localhost:14082
 ```
 
 ## Health Endpoints
@@ -379,7 +379,7 @@ Delete a specific DNS record from a zone.
 #### Create a zone with records:
 
 ```bash
-curl -X POST http://localhost:8082/api/v1/zones \
+curl -X POST http://localhost:14082/api/v1/zones \
   -H "Content-Type: application/json" \
   -d '{
     "domain": "example.lan",
@@ -403,19 +403,19 @@ curl -X POST http://localhost:8082/api/v1/zones \
 #### List all zones:
 
 ```bash
-curl http://localhost:8082/api/v1/zones
+curl http://localhost:14082/api/v1/zones
 ```
 
 #### Get a specific zone:
 
 ```bash
-curl http://localhost:8082/api/v1/zones/example.lan
+curl http://localhost:14082/api/v1/zones/example.lan
 ```
 
 #### Add a record to a zone:
 
 ```bash
-curl -X POST http://localhost:8082/api/v1/zones/example.lan/records \
+curl -X POST http://localhost:14082/api/v1/zones/example.lan/records \
   -H "Content-Type: application/json" \
   -d '{
     "name": "api.example.lan.",
@@ -428,7 +428,7 @@ curl -X POST http://localhost:8082/api/v1/zones/example.lan/records \
 #### Update a record:
 
 ```bash
-curl -X PUT http://localhost:8082/api/v1/zones/example.lan/records/www.example.lan./A \
+curl -X PUT http://localhost:14082/api/v1/zones/example.lan/records/www.example.lan./A \
   -H "Content-Type: application/json" \
   -d '{
     "name": "www.example.lan.",
@@ -441,13 +441,13 @@ curl -X PUT http://localhost:8082/api/v1/zones/example.lan/records/www.example.l
 #### Delete a record:
 
 ```bash
-curl -X DELETE http://localhost:8082/api/v1/zones/example.lan/records/api.example.lan./A
+curl -X DELETE http://localhost:14082/api/v1/zones/example.lan/records/api.example.lan./A
 ```
 
 #### Delete a zone:
 
 ```bash
-curl -X DELETE http://localhost:8082/api/v1/zones/example.lan
+curl -X DELETE http://localhost:14082/api/v1/zones/example.lan
 ```
 
 ---
@@ -481,7 +481,7 @@ The HTTP API server can be configured using environment variables:
 
 | Variable        | Default | Description                              |
 | --------------- | ------- | ---------------------------------------- |
-| `HTTP_API_PORT` | `:8082` | Port for the HTTP API server             |
+| `HTTP_API_PORT` | `:13082` | Port for the HTTP API server             |
 | `LOG_LEVEL`     | `info`  | Logging level (debug, info, warn, error) |
 | `LOG_JSON`      | `true`  | Enable JSON structured logging           |
 
@@ -565,7 +565,7 @@ openapi-generator-cli generate \
 **Swagger UI not loading?**
 
 - Ensure API server is running
-- Check URL: http://localhost:8082/swagger/index.html
+- Check URL: http://localhost:14082/swagger/index.html
 - Verify `docs/docs.go` exists
 
 **Documentation not updating?**
@@ -618,7 +618,7 @@ openapi-generator-cli generate \
    ```
 
 4. **Verify in Swagger UI:**
-   Visit http://localhost:8082/swagger/index.html
+   Visit http://localhost:14082/swagger/index.html
 
 ### Testing Scripts
 

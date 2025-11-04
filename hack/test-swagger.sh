@@ -2,7 +2,7 @@
 
 # Test script for Swagger UI endpoint
 
-API_URL="http://localhost:8082"
+API_URL="http://localhost:14082"
 
 echo "======================================"
 echo "Swagger UI Test Script"

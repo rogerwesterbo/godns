@@ -4,6 +4,116 @@
         "contact": {}
     },
     "paths": {
+        "/api/v1/export": {
+            "get": {
+                "description": "Export all DNS zones in a specified format (coredns, powerdns, bind, zonefile)",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Export"
+                ],
+                "summary": "Export all zones",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "bind",
+                        "description": "Export format: coredns, powerdns, bind, or zonefile",
+                        "name": "format",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exported zone configuration",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/export/{domain}": {
+            "get": {
+                "description": "Export a specific DNS zone in a specified format",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Export"
+                ],
+                "summary": "Export a specific zone",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Domain name (e.g., example.lan)",
+                        "name": "domain",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "bind",
+                        "description": "Export format: coredns, powerdns, bind, or zonefile",
+                        "name": "format",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Exported zone configuration",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Zone not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/zones": {
             "get": {
                 "description": "Get a list of all DNS zones",

@@ -26,7 +26,7 @@ A high-performance DNS server written in Go with Valkey (Redis) backend for dyna
 
 ```bash
 docker pull ghcr.io/rogerwesterbo/godns:latest
-docker run -p 53:53/udp -p 53:53/tcp -p 8080:8080 ghcr.io/rogerwesterbo/godns:latest
+docker run -p 53:53/udp -p 53:53/tcp -p 14080:14080 ghcr.io/rogerwesterbo/godns:latest
 ```
 
 #### Using Helm (Kubernetes)

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rogerwesterbo/godns/internal/clients"
+	"github.com/rogerwesterbo/godns/internal/healthserver"
 	"github.com/rogerwesterbo/godns/internal/httpserver"
 	"github.com/rogerwesterbo/godns/internal/services/v1zoneservice"
 	"github.com/rogerwesterbo/godns/internal/settings"
@@ -40,6 +41,21 @@ func main() {
 	// Initialize zone service for HTTP API
 	zoneService := v1zoneservice.NewV1ZoneService(clients.V1ValkeyClient)
 
+	// Create and start health check servers
+	livenessProbePort := viper.GetString(consts.HTTP_API_LIVENESS_PROBE_PORT)
+	readinessProbePort := viper.GetString(consts.HTTP_API_READINESS_PROBE_PORT)
+	healthServer := healthserver.New(livenessProbePort, readinessProbePort)
+
+	// Register Valkey health check
+	healthServer.AddHealthCheck(clients.V1ValkeyClient.Ping)
+
+	if err := healthServer.Start(); err != nil {
+		vlog.Fatalf("failed to start health check servers: %v", err)
+	}
+
+	// Mark service as ready after initialization
+	healthServer.SetReady(true)
+
 	// Create and start the HTTP API server
 	httpAPIAddress := viper.GetString(consts.HTTP_API_PORT)
 	httpServer := httpserver.New(httpAPIAddress, zoneService)
@@ -59,8 +75,15 @@ func main() {
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
+	// Mark service as not ready during shutdown
+	healthServer.SetReady(false)
+
 	if err := httpServer.Stop(shutdownCtx); err != nil {
-		vlog.Errorf("Error during shutdown: %v", err)
+		vlog.Errorf("Error during HTTP server shutdown: %v", err)
+	}
+
+	if err := healthServer.Shutdown(); err != nil {
+		vlog.Errorf("Error during health server shutdown: %v", err)
 	}
 
 	vlog.Info("GoDNS API Server stopped.")

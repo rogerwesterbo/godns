@@ -33,6 +33,80 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/export:
+    get:
+      description: Export all DNS zones in a specified format (coredns, powerdns,
+        bind, zonefile)
+      parameters:
+      - default: bind
+        description: 'Export format: coredns, powerdns, bind, or zonefile'
+        in: query
+        name: format
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Exported zone configuration
+          schema:
+            type: string
+        "400":
+          description: Invalid format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Export all zones
+      tags:
+      - Export
+  /api/v1/export/{domain}:
+    get:
+      description: Export a specific DNS zone in a specified format
+      parameters:
+      - description: Domain name (e.g., example.lan)
+        in: path
+        name: domain
+        required: true
+        type: string
+      - default: bind
+        description: 'Export format: coredns, powerdns, bind, or zonefile'
+        in: query
+        name: format
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Exported zone configuration
+          schema:
+            type: string
+        "400":
+          description: Invalid format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Zone not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Export a specific zone
+      tags:
+      - Export
   /api/v1/zones:
     get:
       description: Get a list of all DNS zones

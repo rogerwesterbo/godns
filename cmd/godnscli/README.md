@@ -19,8 +19,36 @@ make build-cli
 ./bin/godnscli test         # Test DNS functionality
 ./bin/godnscli query example.lan  # Query a domain
 ./bin/godnscli health       # Check server health
+./bin/godnscli export       # Export DNS zones to different formats
 ./bin/godnscli version      # Show version
 ```
+
+## Export Command
+
+Export DNS zones to different DNS provider formats:
+
+```bash
+# Export all zones in BIND format
+./bin/godnscli export --api-url http://localhost:14082
+
+# Export all zones in CoreDNS format
+./bin/godnscli export --format coredns --api-url http://localhost:14082
+
+# Export specific zone in PowerDNS format
+./bin/godnscli export example.lan --format powerdns --api-url http://localhost:14082
+
+# Export to file
+./bin/godnscli export example.lan --format bind --output example.lan.zone
+```
+
+**Supported Formats:**
+
+- `bind` - Standard BIND zone file format (default)
+- `coredns` - CoreDNS configuration format
+- `powerdns` - PowerDNS JSON API format
+- `zonefile` - Generic zone file (same as bind)
+
+For more details, see [Export API Documentation](../../docs/EXPORT_API.md).
 
 ## Full Documentation
 

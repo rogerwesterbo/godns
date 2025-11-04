@@ -24,8 +24,8 @@ var healthCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(healthCmd)
 
-	healthCmd.Flags().StringVar(&livenessPort, "liveness-port", "8080", "Liveness probe port")
-	healthCmd.Flags().StringVar(&readinessPort, "readiness-port", "8081", "Readiness probe port")
+	healthCmd.Flags().StringVar(&livenessPort, "liveness-port", "14080", "Liveness probe port")
+	healthCmd.Flags().StringVar(&readinessPort, "readiness-port", "14081", "Readiness probe port")
 }
 
 func runHealth(cmd *cobra.Command, args []string) error {

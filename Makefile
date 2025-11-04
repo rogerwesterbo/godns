@@ -43,41 +43,51 @@ help: ## Display this help.
 
 ##@ Build
 .PHONY: build
-build: ## Build the manager binary.
+build: swagger ## Build the manager binary.
+	@printf "$(CYAN)Building all packages...$(RESET)\n"
 	go build ./...
+	@printf "$(GREEN)✓ Build complete$(RESET)\n"
 
 .PHONY: build-dns
 build-dns: ## Build the godns DNS server binary
-	@echo "Building godns..."
+	@printf "$(CYAN)Building godns...$(RESET)\n"
 	@go build -o $(LOCALBIN)/godns ./cmd/godns
-	@echo "godns built at $(LOCALBIN)/godns"
+	@printf "$(GREEN)✓ godns built at $(BOLD)$(LOCALBIN)/godns$(RESET)\n"
 
 .PHONY: build-api
 build-api: ## Build the godnsapi HTTP API server binary
-	@echo "Building godnsapi..."
+	@printf "$(CYAN)Building godnsapi...$(RESET)\n"
 	@go build -o $(LOCALBIN)/godnsapi ./cmd/godnsapi
-	@echo "godnsapi built at $(LOCALBIN)/godnsapi"
+	@printf "$(GREEN)✓ godnsapi built at $(BOLD)$(LOCALBIN)/godnsapi$(RESET)\n"
 
 .PHONY: build-cli
 build-cli: ## Build the godnscli tool
-	@echo "Building godnscli..."
+	@printf "$(CYAN)Building godnscli...$(RESET)\n"
 	@go build -o $(LOCALBIN)/godnscli ./cmd/godnscli
-	@echo "godnscli built at $(LOCALBIN)/godnscli"
+	@printf "$(GREEN)✓ godnscli built at $(BOLD)$(LOCALBIN)/godnscli$(RESET)\n"
 
 .PHONY: build-all
 build-all: build-dns build-api build-cli ## Build all binaries
+	@printf "$(GREEN)$(BOLD)✓ All binaries built successfully!$(RESET)\n"
+
+.PHONY: clean
+clean: ## Clean build artifacts and binaries
+	@printf "$(YELLOW)Cleaning build artifacts...$(RESET)\n"
+	@rm -rf $(LOCALBIN)/godns $(LOCALBIN)/godnsapi $(LOCALBIN)/godnscli
+	@rm -f coverage.out coverage.html bench.cpu bench.mem
+	@printf "$(GREEN)✓ Clean complete$(RESET)\n"
 
 .PHONY: swagger
 swagger: ## Generate Swagger documentation
-	@echo "$(CYAN)Generating Swagger documentation...$(RESET)"
+	@printf "$(CYAN)Generating Swagger documentation...$(RESET)\n"
 	@if command -v swag >/dev/null 2>&1; then \
 		swag init -g cmd/godnsapi/main.go -o docs --parseDependency --parseInternal; \
-		echo "$(GREEN)✓ Swagger docs generated in docs/$(RESET)"; \
+		printf "$(GREEN)✓ Swagger docs generated in docs/$(RESET)\n"; \
 	else \
-		echo "$(YELLOW)swag not found. Installing...$(RESET)"; \
+		printf "$(YELLOW)swag not found. Installing...$(RESET)\n"; \
 		go install github.com/swaggo/swag/cmd/swag@latest; \
 		swag init -g cmd/godnsapi/main.go -o docs --parseDependency --parseInternal; \
-		echo "$(GREEN)✓ Swagger docs generated in docs/$(RESET)"; \
+		printf "$(GREEN)✓ Swagger docs generated in docs/$(RESET)\n"; \
 	fi
 
 .PHONY: generate-swagger
@@ -87,120 +97,132 @@ generate-swagger: ## Generate Swagger documentation (alias for swagger)
 ##@ Docker
 .PHONY: docker-build
 docker-build: swagger ## Build docker image (generates swagger docs first)
-	@echo "$(CYAN)Building Docker image...$(RESET)"
+	@printf "$(CYAN)Building Docker image...$(RESET)\n"
 	docker build -t ghcr.io/rogerwesterbo/godns:latest \
 		--build-arg VERSION=$(shell git describe --tags --always --dirty) \
 		--build-arg BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ") \
 		--build-arg GIT_COMMIT=$(shell git rev-parse HEAD) \
 		.
-	@echo "$(GREEN)✓ Docker image built successfully$(RESET)"
+	@printf "$(GREEN)✓ Docker image built successfully$(RESET)\n"
 
 .PHONY: docker-build-multiarch
 docker-build-multiarch: swagger ## Build multi-arch docker image (requires buildx, generates swagger docs first)
-	@echo "$(CYAN)Building multi-arch Docker image...$(RESET)"
+	@printf "$(CYAN)Building multi-arch Docker image...$(RESET)\n"
 	docker buildx build --platform linux/amd64,linux/arm64 \
 		-t ghcr.io/rogerwesterbo/godns:latest \
 		--build-arg VERSION=$(shell git describe --tags --always --dirty) \
 		--build-arg BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ") \
 		--build-arg GIT_COMMIT=$(shell git rev-parse HEAD) \
 		.
-	@echo "$(GREEN)✓ Multi-arch Docker image built successfully$(RESET)"
+	@printf "$(GREEN)✓ Multi-arch Docker image built successfully$(RESET)\n"
 
 .PHONY: docker-push
 docker-push: ## Push docker image to registry
-	@echo "$(CYAN)Pushing Docker image...$(RESET)"
+	@printf "$(CYAN)Pushing Docker image...$(RESET)\n"
 	docker push ghcr.io/rogerwesterbo/godns:latest
-	@echo "$(GREEN)✓ Docker image pushed successfully$(RESET)"
+	@printf "$(GREEN)✓ Docker image pushed successfully$(RESET)\n"
 
 .PHONY: docker-run
 docker-run: ## Run docker container locally
-	docker run --rm -p 53:53/tcp -p 53:53/udp -p 8080:8080 -p 8082:8082 ghcr.io/rogerwesterbo/godns:latest
+	docker run --rm -p 53:53/tcp -p 53:53/udp -p 14080:14080 -p 14082:14082 ghcr.io/rogerwesterbo/godns:latest
 
 .PHONY: release
 release: swagger docker-build docker-push ## Build and push docker image (full release workflow)
-	@echo "$(GREEN)$(BOLD)✓ Release complete!$(RESET)"
-	@echo "$(CYAN)Image: ghcr.io/rogerwesterbo/godns:latest$(RESET)"
-	@echo "$(CYAN)Version: $(shell git describe --tags --always --dirty)$(RESET)"
+	@printf "$(GREEN)$(BOLD)✓ Release complete!$(RESET)\n"
+	@printf "$(CYAN)Image: ghcr.io/rogerwesterbo/godns:latest$(RESET)\n"
+	@printf "$(CYAN)Version: $(shell git describe --tags --always --dirty)$(RESET)\n"
 
 .PHONY: release-multiarch
 release-multiarch: swagger docker-build-multiarch docker-push ## Build and push multi-arch docker image
-	@echo "$(GREEN)$(BOLD)✓ Multi-arch release complete!$(RESET)"
-	@echo "$(CYAN)Image: ghcr.io/rogerwesterbo/godns:latest$(RESET)"
-	@echo "$(CYAN)Platforms: linux/amd64, linux/arm64$(RESET)"
-	@echo "$(CYAN)Version: $(shell git describe --tags --always --dirty)$(RESET)"
+	@printf "$(GREEN)$(BOLD)✓ Multi-arch release complete!$(RESET)\n"
+	@printf "$(CYAN)Image: ghcr.io/rogerwesterbo/godns:latest$(RESET)\n"
+	@printf "$(CYAN)Platforms: linux/amd64, linux/arm64$(RESET)\n"
+	@printf "$(CYAN)Version: $(shell git describe --tags --always --dirty)$(RESET)\n"
 
 ##@ Code sanity
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
-	go fmt ./...
+	@printf "$(CYAN)Running go fmt...$(RESET)\n"
+	@go fmt ./...
+	@printf "$(GREEN)✓ Code formatted$(RESET)\n"
 
 .PHONY: vet
 vet: ## Run go vet against code.
-	go vet ./...
+	@printf "$(CYAN)Running go vet...$(RESET)\n"
+	@go vet ./...
+	@printf "$(GREEN)✓ Vet complete$(RESET)\n"
 
 .PHONY: lint
 lint: golangci-lint ## Run go vet against code.
-	$(GOLANGCI_LINT) run --timeout 5m ./...
+	@printf "$(CYAN)Running golangci-lint...$(RESET)\n"
+	@$(GOLANGCI_LINT) run --timeout 5m ./...
+	@printf "$(GREEN)✓ Lint complete$(RESET)\n"
 
 ##@ Tests
 .PHONY: test
 test: ## Run unit tests.
-	go test -v ./... -coverprofile coverage.out
-	go tool cover -html=coverage.out -o coverage.html
+	@printf "$(CYAN)Running unit tests...$(RESET)\n"
+	@go test -v ./... -coverprofile coverage.out
+	@go tool cover -html=coverage.out -o coverage.html
+	@printf "$(GREEN)✓ Tests complete - coverage report: $(BOLD)coverage.html$(RESET)\n"
 
 .PHONY: bench
 bench: ## Run benchmarks (override with BENCH=<regex>, PKG=<package pattern>, COUNT=<n>)
 	@bench_regex=$${BENCH:-.}; \
 	pkg_pattern=$${PKG:-./...}; \
 	count=$${COUNT:-1}; \
-	echo "Running benchmarks: regex=$${bench_regex} packages=$${pkg_pattern} count=$${count}"; \
-	go test -run=^$$ -bench=$${bench_regex} -benchmem -count=$${count} $${pkg_pattern}
+	printf "$(CYAN)Running benchmarks: $(RESET)regex=$${bench_regex} packages=$${pkg_pattern} count=$${count}\n"; \
+	go test -run=^$$ -bench=$${bench_regex} -benchmem -count=$${count} $${pkg_pattern}; \
+	printf "$(GREEN)✓ Benchmarks complete$(RESET)\n"
 
 .PHONY: bench-profile
 bench-profile: ## Run benchmarks with CPU & memory profiles (outputs bench.cpu, bench.mem)
 	@bench_regex=$${BENCH:-.}; \
 	pkg_pattern=$${PKG:-./pkg/loggers/vlog}; \
-	echo "Profiling benchmarks: regex=$${bench_regex} packages=$${pkg_pattern}"; \
-	go test -run=^$$ -bench=$${bench_regex} -cpuprofile bench.cpu -memprofile bench.mem -benchmem $${pkg_pattern}
+	printf "$(CYAN)Profiling benchmarks: $(RESET)regex=$${bench_regex} packages=$${pkg_pattern}\n"; \
+	go test -run=^$$ -bench=$${bench_regex} -cpuprofile bench.cpu -memprofile bench.mem -benchmem $${pkg_pattern}; \
+	printf "$(GREEN)✓ Profiling complete: $(BOLD)bench.cpu, bench.mem$(RESET)\n"
 
 deps: ## Download and verify dependencies
-	@echo "Downloading dependencies..."
+	@printf "$(CYAN)Downloading dependencies...$(RESET)\n"
 	@go mod download
 	@go mod verify
 	@go mod tidy
-	@echo "Dependencies updated!"
+	@printf "$(GREEN)✓ Dependencies updated!$(RESET)\n"
 
 update-deps: ## Update dependencies
-	@echo "Updating dependencies..."
+	@printf "$(CYAN)Updating dependencies...$(RESET)\n"
 	@go get -u ./...
 	@go mod tidy
-	@echo "Dependencies updated!"
+	@printf "$(GREEN)✓ Dependencies updated!$(RESET)\n"
 
 ##@ Tools
 
 .PHONY: golangci-lint
 golangci-lint: $(LOCALBIN) ## Download golangci-lint locally if necessary.
-	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/v2/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
+	@$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/v2/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
 
 .PHONY: install-security-scanner
 install-security-scanner: $(GOSEC) ## Install gosec security scanner locally (static analysis for security issues)
 $(GOSEC): $(LOCALBIN)
-	@set -e; echo "Attempting to install gosec $(GOSEC_VERSION)"; \
+	@set -e; printf "$(CYAN)Installing gosec $(GOSEC_VERSION)...$(RESET)\n"; \
 	if ! GOBIN=$(LOCALBIN) go install github.com/securego/gosec/v2/cmd/gosec@$(GOSEC_VERSION) 2>/dev/null; then \
-		echo "Primary install failed, attempting install from @main (compatibility fallback)"; \
+		printf "$(YELLOW)Primary install failed, attempting fallback to @main...$(RESET)\n"; \
 		if ! GOBIN=$(LOCALBIN) go install github.com/securego/gosec/v2/cmd/gosec@main; then \
-			echo "gosec installation failed for versions $(GOSEC_VERSION) and @main"; \
+			printf "$(RED)✗ gosec installation failed$(RESET)\n"; \
 			exit 1; \
 		fi; \
 	fi; \
-	echo "gosec installed at $(GOSEC)"; \
+	printf "$(GREEN)✓ gosec installed at $(BOLD)$(GOSEC)$(RESET)\n"; \
 	chmod +x $(GOSEC)
 
 ##@ Security
 .PHONY: go-security-scan
 go-security-scan: install-security-scanner ## Run gosec security scan (fails on findings)
-	$(GOSEC) ./...
+	@printf "$(CYAN)Running gosec security scan...$(RESET)\n"
+	@$(GOSEC) ./...
+	@printf "$(GREEN)✓ Security scan complete$(RESET)\n"
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary
 # $2 - package url which can be installed
@@ -209,10 +231,11 @@ define go-install-tool
 @[ -f "$(1)-$(3)" ] || { \
 set -e; \
 package=$(2)@$(3) ;\
-echo "Downloading $${package}" ;\
+printf "$(CYAN)Downloading $${package}...$(RESET)\n" ;\
 rm -f $(1) || true ;\
 GOTOOLCHAIN=$(GO_TOOLCHAIN) GOBIN=$(LOCALBIN) go install $${package} ;\
 mv $(1) $(1)-$(3) ;\
+printf "$(GREEN)✓ Installed $(BOLD)$(1)-$(3)$(RESET)\n" ;\
 } ;\
 ln -sf $(1)-$(3) $(1)
 endef

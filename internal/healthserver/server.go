@@ -10,6 +10,9 @@ import (
 	"github.com/vitistack/common/pkg/loggers/vlog"
 )
 
+// HealthCheckFunc is a function type for performing health checks
+type HealthCheckFunc func(ctx context.Context) error
+
 // Server manages liveness and readiness probe HTTP servers
 type Server struct {
 	livenessAddr  string
@@ -17,6 +20,7 @@ type Server struct {
 	ready         atomic.Bool
 	livenessHTTP  *http.Server
 	readinessHTTP *http.Server
+	healthChecks  []HealthCheckFunc
 }
 
 // New creates a new health check server instance
@@ -76,6 +80,11 @@ func (hs *Server) Start() error {
 	}
 }
 
+// AddHealthCheck registers a health check function to be called during readiness probes
+func (hs *Server) AddHealthCheck(check HealthCheckFunc) {
+	hs.healthChecks = append(hs.healthChecks, check)
+}
+
 // SetReady marks the service as ready
 func (hs *Server) SetReady(ready bool) {
 	hs.ready.Store(ready)
@@ -102,11 +111,26 @@ func (hs *Server) handleLiveness(w http.ResponseWriter, r *http.Request) {
 
 // handleReadiness responds to readiness probe requests
 func (hs *Server) handleReadiness(w http.ResponseWriter, r *http.Request) {
-	if hs.ready.Load() {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("Ready"))
-	} else {
+	// First check if the service has been marked as ready
+	if !hs.ready.Load() {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		_, _ = w.Write([]byte("Not Ready"))
+		return
 	}
+
+	// Run all registered health checks
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	for _, check := range hs.healthChecks {
+		if err := check(ctx); err != nil {
+			vlog.Warnf("Health check failed: %v", err)
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = fmt.Fprintf(w, "Health check failed: %v", err)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("Ready"))
 }

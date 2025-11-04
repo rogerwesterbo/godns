@@ -54,8 +54,11 @@ func main() {
 	// Initialize upstream DNS service with Valkey backend
 	upstreamService := v1upstream.NewUpstreamService(clients.V1ValkeyClient, 3*time.Second)
 
+	// Initialize zone service for HTTP API and seeding
+	zoneService := v1zoneservice.NewV1ZoneService(clients.V1ValkeyClient)
+
 	// Initialize and run seeding service
-	seedingService := seeding.NewSeedingService(allowedLANsService, upstreamService)
+	seedingService := seeding.NewSeedingService(allowedLANsService, upstreamService, zoneService)
 
 	// Get default upstream server from config or use Cloudflare
 	defaultUpstream := viper.GetString(consts.DNS_UPSTREAM_SERVER)
@@ -80,14 +83,14 @@ func main() {
 	// Create DNS handler with all services
 	dnsHandler := handlers.NewDNSHandler(dnsService, allowedLANsService, upstreamService)
 
-	// Initialize zone service for HTTP API
-	zoneService := v1zoneservice.NewV1ZoneService(clients.V1ValkeyClient)
-
-	// Create and start the HTTP API server
-	httpAPIAddress := viper.GetString(consts.HTTP_API_PORT)
-	httpServer := httpserver.New(httpAPIAddress, zoneService)
-	if err := httpServer.Start(); err != nil {
-		vlog.Fatalf("failed to start HTTP API server: %v", err)
+	createHttpServer := viper.GetBool(consts.DNS_ENABLE_HTTP_API)
+	if createHttpServer {
+		// Create and start the HTTP API server
+		httpAPIAddress := viper.GetString(consts.HTTP_API_PORT)
+		httpServer := httpserver.New(httpAPIAddress, zoneService)
+		if err := httpServer.Start(); err != nil {
+			vlog.Fatalf("failed to start HTTP API server: %v", err)
+		}
 	}
 
 	// Create and start the DNS server

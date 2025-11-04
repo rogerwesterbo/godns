@@ -38,7 +38,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/valkey-io/valkey-go v1.0.67
-	github.com/vitistack/common v0.0.20
+	github.com/vitistack/common v0.0.21
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.46.0 // indirect

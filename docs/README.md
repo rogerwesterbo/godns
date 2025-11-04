@@ -59,7 +59,7 @@ Complete documentation for GoDNS DNS server, HTTP API, and CLI tool.
 
 ### I want to use the REST API
 
-👉 Read the **[API Documentation](API_DOCUMENTATION.md)** and use Swagger UI at `http://localhost:8082/swagger/index.html`
+👉 Read the **[API Documentation](API_DOCUMENTATION.md)** and use Swagger UI at `http://localhost:14082/swagger/index.html`
 
 ### I want to use the CLI
 
@@ -87,7 +87,7 @@ Complete documentation for GoDNS DNS server, HTTP API, and CLI tool.
 | [API Release Workflow](API_RELEASE_WORKFLOW.md) | Build, release, deploy      | DevOps, deployment     |
 | [Quick Start](QUICK_START.md)                   | Getting started             | First-time users       |
 
-**Interactive:** Swagger UI at http://localhost:8082/swagger/index.html
+**Interactive:** Swagger UI at http://localhost:14082/swagger/index.html
 
 ### CLI Tool
 
@@ -114,7 +114,7 @@ Complete documentation for GoDNS DNS server, HTTP API, and CLI tool.
 ### Using the HTTP API
 
 1. [API Documentation](API_DOCUMENTATION.md) - API reference
-2. Swagger UI - Interactive testing at http://localhost:8082/swagger/index.html
+2. Swagger UI - Interactive testing at http://localhost:14082/swagger/index.html
 3. Test scripts in `hack/test-api.sh`
 
 ### Building and Releasing
@@ -182,7 +182,7 @@ hack/add-test-zone.sh   # Add test data
 ### For First-Time Users
 
 1. Read [Quick Start Guide](QUICK_START.md)
-2. Try Swagger UI for API at http://localhost:8082/swagger/index.html
+2. Try Swagger UI for API at http://localhost:14082/swagger/index.html
 3. Bookmark [CLI Guide](CLI_GUIDE.md) for CLI reference
 
 ### For API Development
@@ -201,7 +201,7 @@ hack/add-test-zone.sh   # Add test data
 ## 🆘 Getting Help
 
 1. Check the relevant documentation above
-2. Look at Swagger UI for API: http://localhost:8082/swagger/index.html
+2. Look at Swagger UI for API: http://localhost:14082/swagger/index.html
 3. Review examples in [API Documentation](API_DOCUMENTATION.md) or [CLI Guide](CLI_GUIDE.md)
 4. Run test scripts: `hack/test-api.sh` or `hack/test-swagger.sh`
 5. Check server logs: `docker-compose logs godns`

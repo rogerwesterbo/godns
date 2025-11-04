@@ -31,11 +31,19 @@ go.work.sum
 # .idea/
 # .vscode/
 bin/
-.env
+.env*
 !.env.example
+
+__debug_bin*
 
 # Valkey data directory (but keep structure with .gitkeep)
 hack/data/*
 !hack/data/valkey/
+!hack/data/postgres/
+!hack/data/keycloak/
 hack/data/valkey/*
+hack/data/postgres/*
+hack/data/keycloak/*
 !hack/data/valkey/.gitkeep
+!hack/data/postgres/.gitkeep
+!hack/data/keycloak/.gitkeep

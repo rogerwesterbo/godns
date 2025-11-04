@@ -7,4 +7,5 @@ type ValkeyInterface interface {
 	SetData(ctx context.Context, key string, data string) error
 	DeleteData(ctx context.Context, key string) error
 	ListKeys(ctx context.Context) ([]string, error)
+	Ping(ctx context.Context) error
 }

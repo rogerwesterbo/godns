@@ -17,11 +17,11 @@
       }
     },
     {
-      "name": "Debug GoDNS CLI",
+      "name": "Debug GoDNS API",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/cmd/godnscli/main.go",
+      "program": "${workspaceFolder}/cmd/godnsapi/main.go",
       "cwd": "${workspaceFolder}",
       "debugAdapter": "dlv-dap",
       "env": {
@@ -29,11 +29,11 @@
       }
     },
     {
-      "name": "Debug GoDNS API",
+      "name": "Debug GoDNS CLI",
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/cmd/godnsapi/main.go",
+      "program": "${workspaceFolder}/cmd/godnscli/main.go",
       "cwd": "${workspaceFolder}",
       "debugAdapter": "dlv-dap",
       "env": {

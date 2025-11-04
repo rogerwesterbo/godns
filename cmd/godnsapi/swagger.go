@@ -19,7 +19,7 @@ package main
 // @license.name MIT
 // @license.url https://github.com/rogerwesterbo/godns/blob/main/LICENSE
 
-// @host localhost:8082
+// @host localhost:14082
 // @BasePath /
 
 // @schemes http https
