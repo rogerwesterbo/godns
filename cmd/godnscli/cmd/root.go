@@ -23,7 +23,7 @@ It provides commands to:
 func Execute() {
 	// Initialize settings before executing commands
 	settings.Init()
-	
+
 	// Initialize all command flags
 	initRootFlags()
 	initQueryCommand()
@@ -32,7 +32,7 @@ func Execute() {
 	initTestCommand()
 	initVersionCommand()
 	initExportCommand()
-	
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

@@ -42,7 +42,7 @@ func (h *SearchHandler) Search(w http.ResponseWriter, req *http.Request) {
 	// Get type filter (optional)
 	typeParams := req.URL.Query()["type"]
 	var types []v1searchservice.SearchResultType
-	
+
 	for _, t := range typeParams {
 		switch strings.ToLower(t) {
 		case "zone":
