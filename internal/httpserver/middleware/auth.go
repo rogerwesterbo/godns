@@ -12,6 +12,17 @@ import (
 	"github.com/vitistack/common/pkg/loggers/vlog"
 )
 
+// contextKey is a custom type for context keys to avoid collisions
+type contextKey string
+
+const (
+	// Context keys for user information
+	userEmailKey contextKey = "user_email"
+	userNameKey  contextKey = "user_name"
+	usernameKey  contextKey = "username"
+	userIDKey    contextKey = "user_id"
+)
+
 // AuthMiddleware validates JWT tokens from Keycloak
 type AuthMiddleware struct {
 	verifier *oidc.IDTokenVerifier
@@ -111,10 +122,10 @@ func (am *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 		}
 
 		// Add user information to request context
-		ctx := context.WithValue(r.Context(), "user_email", claims.Email)
-		ctx = context.WithValue(ctx, "user_name", claims.Name)
-		ctx = context.WithValue(ctx, "username", claims.PreferredUser)
-		ctx = context.WithValue(ctx, "user_id", token.Subject)
+		ctx := context.WithValue(r.Context(), userEmailKey, claims.Email)
+		ctx = context.WithValue(ctx, userNameKey, claims.Name)
+		ctx = context.WithValue(ctx, usernameKey, claims.PreferredUser)
+		ctx = context.WithValue(ctx, userIDKey, token.Subject)
 
 		// Log successful authentication
 		vlog.Debugf("Authenticated user: %s (%s)", claims.PreferredUser, claims.Email)
@@ -133,13 +144,13 @@ func (am *AuthMiddleware) AuthenticateFunc(next http.HandlerFunc) http.HandlerFu
 
 // GetUserFromContext extracts user information from the request context
 func GetUserFromContext(ctx context.Context) (userID, username, email string) {
-	if val := ctx.Value("user_id"); val != nil {
+	if val := ctx.Value(userIDKey); val != nil {
 		userID, _ = val.(string)
 	}
-	if val := ctx.Value("username"); val != nil {
+	if val := ctx.Value(usernameKey); val != nil {
 		username, _ = val.(string)
 	}
-	if val := ctx.Value("user_email"); val != nil {
+	if val := ctx.Value(userEmailKey); val != nil {
 		email, _ = val.(string)
 	}
 	return

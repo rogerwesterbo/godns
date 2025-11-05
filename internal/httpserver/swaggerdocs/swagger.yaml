@@ -28,7 +28,7 @@ definitions:
       records:
         description: DNS records in this zone
         items:
-          $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+          $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
         type: array
     type: object
   github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse:
@@ -44,18 +44,18 @@ definitions:
       results:
         description: List of search results
         items:
-          $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult"
+          $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult'
         type: array
     type: object
   github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult:
     properties:
       record:
         allOf:
-          - $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+        - $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
         description: Record details (if type is record)
       type:
         allOf:
-          - $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType"
+        - $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType'
         description: Type of result (zone, record)
         example: zone
       zone:
@@ -65,12 +65,12 @@ definitions:
     type: object
   github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType:
     enum:
-      - zone
-      - record
+    - zone
+    - record
     type: string
     x-enum-varnames:
-      - SearchResultTypeZone
-      - SearchResultTypeRecord
+    - SearchResultTypeZone
+    - SearchResultTypeRecord
 host: localhost:14000
 info:
   contact:
@@ -117,17 +117,16 @@ info:
 paths:
   /api/v1/export:
     get:
-      description:
-        Export all DNS zones in a specified format (coredns, powerdns,
+      description: Export all DNS zones in a specified format (coredns, powerdns,
         bind, zonefile)
       parameters:
-        - default: bind
-          description: "Export format: coredns, powerdns, bind, or zonefile"
-          in: query
-          name: format
-          type: string
+      - default: bind
+        description: 'Export format: coredns, powerdns, bind, or zonefile'
+        in: query
+        name: format
+        type: string
       produces:
-        - text/plain
+      - text/plain
       responses:
         "200":
           description: Exported zone configuration
@@ -146,27 +145,27 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Export all zones
       tags:
-        - Export
+      - Export
   /api/v1/export/{zone}:
     get:
       description: Export a specific DNS zone in a specified format
       parameters:
-        - description: Zone name (e.g., example.lan)
-          in: path
-          name: zone
-          required: true
-          type: string
-        - default: bind
-          description: "Export format: coredns, powerdns, bind, or zonefile"
-          in: query
-          name: format
-          type: string
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
+      - default: bind
+        description: 'Export format: coredns, powerdns, bind, or zonefile'
+        in: query
+        name: format
+        type: string
       produces:
-        - text/plain
+      - text/plain
       responses:
         "200":
           description: Exported zone configuration
@@ -191,37 +190,37 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Export a specific zone
       tags:
-        - Export
+      - Export
   /api/v1/search:
     get:
       description: Search across DNS zones and records with optional type filtering
       parameters:
-        - description: Search query (case-insensitive)
-          in: query
-          name: q
-          required: true
+      - description: Search query (case-insensitive)
+        in: query
+        name: q
+        required: true
+        type: string
+      - collectionFormat: csv
+        description: Filter by result type (zone, record). Can specify multiple types.
+        in: query
+        items:
+          enum:
+          - zone
+          - record
           type: string
-        - collectionFormat: csv
-          description: Filter by result type (zone, record). Can specify multiple types.
-          in: query
-          items:
-            enum:
-              - zone
-              - record
-            type: string
-          name: type
-          type: array
+        name: type
+        type: array
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Search results
           schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse"
+            $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse'
         "400":
           description: Invalid request parameters
           schema:
@@ -235,22 +234,22 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Search DNS zones and records
       tags:
-        - Search
+      - Search
   /api/v1/zones:
     get:
       description: Get a list of all DNS zones
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: List of zones
           schema:
             items:
-              $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+              $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone'
             type: array
         "500":
           description: Internal server error
@@ -259,29 +258,29 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: List all DNS zones
       tags:
-        - Zones
+      - Zones
     post:
       consumes:
-        - application/json
+      - application/json
       description: Create a new DNS zone with optional records
       parameters:
-        - description: Zone to create
-          in: body
-          name: zone
-          required: true
-          schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+      - description: Zone to create
+        in: body
+        name: zone
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone'
       produces:
-        - application/json
+      - application/json
       responses:
         "201":
           description: Zone created
           schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+            $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone'
         "400":
           description: Invalid request body
           schema:
@@ -301,20 +300,20 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Create a new DNS zone
       tags:
-        - Zones
+      - Zones
   /api/v1/zones/{zone}:
     delete:
       description: Delete a DNS zone and all its records
       parameters:
-        - description: Zone name (e.g., example.lan)
-          in: path
-          name: zone
-          required: true
-          type: string
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
       responses:
         "204":
           description: Zone deleted
@@ -331,26 +330,26 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Delete a DNS zone
       tags:
-        - Zones
+      - Zones
     get:
       description: Get a specific DNS zone by name
       parameters:
-        - description: Zone name (e.g., example.lan)
-          in: path
-          name: zone
-          required: true
-          type: string
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Zone details
           schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+            $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone'
         "404":
           description: Zone not found
           schema:
@@ -364,34 +363,34 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Get a DNS zone
       tags:
-        - Zones
+      - Zones
     put:
       consumes:
-        - application/json
+      - application/json
       description: Update an existing DNS zone (replaces all records)
       parameters:
-        - description: Zone name (e.g., example.lan)
-          in: path
-          name: zone
-          required: true
-          type: string
-        - description: Updated zone data
-          in: body
-          name: zone
-          required: true
-          schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
+      - description: Updated zone data
+        in: body
+        name: zone
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Zone updated
           schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+            $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone'
         "400":
           description: Invalid request body
           schema:
@@ -411,35 +410,35 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Update a DNS zone
       tags:
-        - Zones
+      - Zones
   /api/v1/zones/{zone}/records:
     post:
       consumes:
-        - application/json
+      - application/json
       description: Add a new DNS record to an existing zone
       parameters:
-        - description: Zone name (e.g., example.lan)
-          in: path
-          name: zone
-          required: true
-          type: string
-        - description: Record to create
-          in: body
-          name: record
-          required: true
-          schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
+      - description: Record to create
+        in: body
+        name: record
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
       produces:
-        - application/json
+      - application/json
       responses:
         "201":
           description: Record created
           schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+            $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
         "400":
           description: Invalid request body
           schema:
@@ -465,30 +464,30 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Create a DNS record
       tags:
-        - Records
+      - Records
   /api/v1/zones/{zone}/records/{name}/{type}:
     delete:
       description: Delete a specific DNS record from a zone
       parameters:
-        - description: Zone name (e.g., example.lan)
-          in: path
-          name: zone
-          required: true
-          type: string
-        - description: Record name (e.g., www.example.lan.)
-          in: path
-          name: name
-          required: true
-          type: string
-        - description: Record type (e.g., A, AAAA, CNAME)
-          in: path
-          name: type
-          required: true
-          type: string
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
+      - description: Record name (e.g., www.example.lan.)
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Record type (e.g., A, AAAA, CNAME)
+        in: path
+        name: type
+        required: true
+        type: string
       responses:
         "204":
           description: Record deleted
@@ -505,36 +504,36 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Delete a DNS record
       tags:
-        - Records
+      - Records
     get:
       description: Get a specific DNS record by name and type
       parameters:
-        - description: Zone name (e.g., example.lan)
-          in: path
-          name: zone
-          required: true
-          type: string
-        - description: Record name (e.g., www.example.lan.)
-          in: path
-          name: name
-          required: true
-          type: string
-        - description: Record type (e.g., A, AAAA, CNAME)
-          in: path
-          name: type
-          required: true
-          type: string
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
+      - description: Record name (e.g., www.example.lan.)
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Record type (e.g., A, AAAA, CNAME)
+        in: path
+        name: type
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Record details
           schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+            $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
         "404":
           description: Zone or record not found
           schema:
@@ -548,44 +547,44 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Get a DNS record
       tags:
-        - Records
+      - Records
     put:
       consumes:
-        - application/json
+      - application/json
       description: Update an existing DNS record
       parameters:
-        - description: Zone name (e.g., example.lan)
-          in: path
-          name: zone
-          required: true
-          type: string
-        - description: Record name (e.g., www.example.lan.)
-          in: path
-          name: name
-          required: true
-          type: string
-        - description: Record type (e.g., A, AAAA, CNAME)
-          in: path
-          name: type
-          required: true
-          type: string
-        - description: Updated record data
-          in: body
-          name: record
-          required: true
-          schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
+      - description: Record name (e.g., www.example.lan.)
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Record type (e.g., A, AAAA, CNAME)
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: Updated record data
+        in: body
+        name: record
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Record updated
           schema:
-            $ref: "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+            $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
         "400":
           description: Invalid request body
           schema:
@@ -605,16 +604,16 @@ paths:
               type: string
             type: object
       security:
-        - BearerAuth: []
-        - OAuth2Password: []
+      - BearerAuth: []
+      - OAuth2Password: []
       summary: Update a DNS record
       tags:
-        - Records
+      - Records
 produces:
-  - application/json
+- application/json
 schemes:
-  - http
-  - https
+- http
+- https
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token.
@@ -627,9 +626,9 @@ securityDefinitions:
     type: oauth2
 swagger: "2.0"
 tags:
-  - description: Health check and readiness endpoints
-    name: Health
-  - description: DNS zone management operations
-    name: Zones
-  - description: DNS record management operations
-    name: Records
+- description: Health check and readiness endpoints
+  name: Health
+- description: DNS zone management operations
+  name: Zones
+- description: DNS record management operations
+  name: Records

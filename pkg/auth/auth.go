@@ -65,7 +65,7 @@ func LoadTokenCache() (*TokenCache, error) {
 		return nil, err
 	}
 
-	data, err := os.ReadFile(cachePath)
+	data, err := os.ReadFile(cachePath) // #nosec G304 -- cachePath is constructed from user's home directory, not user input
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil // No cached token
@@ -166,11 +166,13 @@ func DeviceCodeLogin(ctx context.Context) error {
 	data := url.Values{}
 	data.Set("client_id", clientID)
 
-	resp, err := http.PostForm(deviceAuthURL, data)
+	resp, err := http.PostForm(deviceAuthURL, data) // #nosec G107 -- URL is constructed from trusted Keycloak configuration, not user input
 	if err != nil {
 		return fmt.Errorf("failed to request device code: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -246,11 +248,13 @@ func pollForToken(tokenURL, clientID, deviceCode string) (*TokenCache, error) {
 	data.Set("client_id", clientID)
 	data.Set("device_code", deviceCode)
 
-	resp, err := http.PostForm(tokenURL, data)
+	resp, err := http.PostForm(tokenURL, data) // #nosec G107 -- URL is constructed from trusted Keycloak configuration, not user input
 	if err != nil {
 		return nil, fmt.Errorf("failed to poll for token: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	var tokenResp TokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
@@ -288,11 +292,13 @@ func RefreshToken(ctx context.Context, refreshToken string) (string, error) {
 	data.Set("client_id", clientID)
 	data.Set("refresh_token", refreshToken)
 
-	resp, err := http.PostForm(tokenURL, data)
+	resp, err := http.PostForm(tokenURL, data) // #nosec G107 -- URL is constructed from trusted Keycloak configuration, not user input
 	if err != nil {
 		return "", fmt.Errorf("failed to refresh token: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
