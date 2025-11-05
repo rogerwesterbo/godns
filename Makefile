@@ -81,13 +81,13 @@ clean: ## Clean build artifacts and binaries
 swagger: ## Generate Swagger documentation
 	@printf "$(CYAN)Generating Swagger documentation...$(RESET)\n"
 	@if command -v swag >/dev/null 2>&1; then \
-		swag init -g cmd/godnsapi/main.go -o docs --parseDependency --parseInternal; \
-		printf "$(GREEN)✓ Swagger docs generated in docs/$(RESET)\n"; \
+		swag init -g internal/httpserver/swagger.go -o internal/httpserver/swaggerdocs --parseDependency --parseInternal; \
+		printf "$(GREEN)✓ Swagger docs generated in internal/httpserver/swaggerdocs/$(RESET)\n"; \
 	else \
 		printf "$(YELLOW)swag not found. Installing...$(RESET)\n"; \
 		go install github.com/swaggo/swag/cmd/swag@latest; \
-		swag init -g cmd/godnsapi/main.go -o docs --parseDependency --parseInternal; \
-		printf "$(GREEN)✓ Swagger docs generated in docs/$(RESET)\n"; \
+		swag init -g internal/httpserver/swagger.go -o internal/httpserver/swaggerdocs --parseDependency --parseInternal; \
+		printf "$(GREEN)✓ Swagger docs generated in internal/httpserver/swaggerdocs/$(RESET)\n"; \
 	fi
 
 .PHONY: generate-swagger
@@ -124,7 +124,7 @@ docker-push: ## Push docker image to registry
 
 .PHONY: docker-run
 docker-run: ## Run docker container locally
-	docker run --rm -p 53:53/tcp -p 53:53/udp -p 14080:14080 -p 14082:14082 ghcr.io/rogerwesterbo/godns:latest
+	docker run --rm -p 53:53/tcp -p 53:53/udp -p 14000:14000 -p 14001:14001 -p 14002:14002 ghcr.io/rogerwesterbo/godns:latest
 
 .PHONY: release
 release: swagger docker-build docker-push ## Build and push docker image (full release workflow)

@@ -54,10 +54,10 @@ INFO  configuration seeding completed successfully
 
 ```bash
 # List all zones
-curl http://localhost:14082/api/v1/zones | jq .
+curl http://localhost:14000/api/v1/zones | jq .
 
 # Get specific zone
-curl http://localhost:14082/api/v1/zones/home.lan | jq .
+curl http://localhost:14000/api/v1/zones/home.lan | jq .
 ```
 
 ### Check via DNS

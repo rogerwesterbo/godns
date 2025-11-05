@@ -6,7 +6,7 @@
 
 set -e
 
-API_URL="${GODNS_API_URL:-http://localhost:14082}"
+API_URL="${GODNS_API_URL:-http://localhost:14000}"
 OUTPUT_DIR="./exported-zones"
 
 # Colors for output

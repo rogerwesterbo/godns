@@ -58,7 +58,10 @@ func main() {
 
 	// Create and start the HTTP API server
 	httpAPIAddress := viper.GetString(consts.HTTP_API_PORT)
-	httpServer := httpserver.New(httpAPIAddress, zoneService)
+	httpServer, err := httpserver.New(httpAPIAddress, zoneService)
+	if err != nil {
+		vlog.Fatalf("failed to create HTTP API server: %v", err)
+	}
 	if err := httpServer.Start(); err != nil {
 		vlog.Fatalf("failed to start HTTP API server: %v", err)
 	}

@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	_ "github.com/rogerwesterbo/godns/docs" // swagger docs
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1exporthandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1recordhandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1searchhandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1zonehandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/middleware"
+	_ "github.com/rogerwesterbo/godns/internal/httpserver/swaggerdocs" // swagger docs
 	"github.com/rogerwesterbo/godns/internal/services/v1exportservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1searchservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1zoneservice"
@@ -18,24 +18,26 @@ import (
 
 // Router holds the handlers and provides HTTP routing
 type Router struct {
-	mux           *http.ServeMux
-	zoneHandler   *v1zonehandler.ZoneHandler
-	recordHandler *v1recordhandler.RecordHandler
-	exportHandler *v1exporthandler.ExportHandler
-	searchHandler *v1searchhandler.SearchHandler
+	mux            *http.ServeMux
+	zoneHandler    *v1zonehandler.ZoneHandler
+	recordHandler  *v1recordhandler.RecordHandler
+	exportHandler  *v1exporthandler.ExportHandler
+	searchHandler  *v1searchhandler.SearchHandler
+	authMiddleware *middleware.AuthMiddleware
 }
 
 // NewRouter creates a new HTTP router with all routes configured
-func NewRouter(zoneService *v1zoneservice.V1ZoneService) *http.ServeMux {
+func NewRouter(zoneService *v1zoneservice.V1ZoneService, authMiddleware *middleware.AuthMiddleware) *http.ServeMux {
 	exportService := v1exportservice.NewV1ExportService(zoneService)
 	searchService := v1searchservice.NewV1SearchService(zoneService)
 
 	r := &Router{
-		mux:           http.NewServeMux(),
-		zoneHandler:   v1zonehandler.NewZoneHandler(zoneService),
-		recordHandler: v1recordhandler.NewRecordHandler(zoneService),
-		exportHandler: v1exporthandler.NewExportHandler(exportService),
-		searchHandler: v1searchhandler.NewSearchHandler(searchService),
+		mux:            http.NewServeMux(),
+		zoneHandler:    v1zonehandler.NewZoneHandler(zoneService),
+		recordHandler:  v1recordhandler.NewRecordHandler(zoneService),
+		exportHandler:  v1exporthandler.NewExportHandler(exportService),
+		searchHandler:  v1searchhandler.NewSearchHandler(searchService),
+		authMiddleware: authMiddleware,
 	}
 
 	r.registerRoutes()
@@ -55,14 +57,19 @@ func (r *Router) registerRoutes() {
 func (r *Router) apiRouter(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
 
-	// Export endpoints use plain text middleware (exception to JSON default)
-	if strings.HasPrefix(path, "/api/v1/export") {
-		middleware.PlainTextContentType(r.handleAPIRoutes)(w, req)
-		return
-	}
+	// Wrap handler with authentication middleware
+	authenticatedHandler := r.authMiddleware.Authenticate(http.HandlerFunc(func(rw http.ResponseWriter, request *http.Request) {
+		// Export endpoints use plain text middleware (exception to JSON default)
+		if strings.HasPrefix(path, "/api/v1/export") {
+			middleware.PlainTextContentType(r.handleAPIRoutes)(rw, request)
+			return
+		}
 
-	// All other API routes use JSON middleware
-	middleware.JSONContentType(r.handleAPIRoutes)(w, req)
+		// All other API routes use JSON middleware
+		middleware.JSONContentType(r.handleAPIRoutes)(rw, request)
+	}))
+
+	authenticatedHandler.ServeHTTP(w, req)
 }
 
 // handleAPIRoutes handles the actual routing logic for API endpoints

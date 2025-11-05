@@ -11,8 +11,10 @@ A high-performance DNS server written in Go with Valkey (Redis) backend for dyna
 
 - 🚀 Fast DNS resolution with caching
 - 🔧 Dynamic configuration via Valkey
+- 🔐 OAuth2/OIDC authentication with Keycloak
+- 🌐 REST API with Swagger documentation
 - 🏥 Built-in health checks (liveness/readiness)
-- 🔒 ACL-based authentication
+- 🔒 ACL-based Valkey authentication
 - ☸️ Kubernetes-ready (multi-pod safe)
 - 🛠️ CLI tool for testing and management
 
@@ -26,7 +28,7 @@ A high-performance DNS server written in Go with Valkey (Redis) backend for dyna
 
 ```bash
 docker pull ghcr.io/rogerwesterbo/godns:latest
-docker run -p 53:53/udp -p 53:53/tcp -p 14080:14080 ghcr.io/rogerwesterbo/godns:latest
+docker run -p 53:53/udp -p 53:53/tcp ghcr.io/rogerwesterbo/godns:latest
 ```
 
 #### Using Helm (Kubernetes)
@@ -72,20 +74,60 @@ make build
 # Build the CLI tool
 make build-cli
 
+# Login to API
+./bin/godnscli login
+
+# Check authentication status
+./bin/godnscli status
+
+# Export zones
+./bin/godnscli export --format bind
+
+# Query DNS directly
+./bin/godnscli query example.lan
+
 # Run tests
 ./bin/godnscli test
-
-# Query a domain
-./bin/godnscli query example.lan
 ```
+
+## Authentication
+
+GoDNS uses **OAuth2/OIDC** authentication via Keycloak for API access:
+
+```bash
+# Start all services (includes Keycloak)
+docker-compose up -d
+
+# Login with CLI
+./bin/godnscli login
+
+# Or get token for direct API access
+TOKEN=$(curl -s -X POST "http://localhost:14101/realms/godns/protocol/openid-connect/token" \
+  -d "client_id=godns-cli" \
+  -d "username=testuser" \
+  -d "password=password" \
+  -d "grant_type=password" | jq -r '.access_token')
+
+# Use token with API
+curl -H "Authorization: Bearer $TOKEN" http://localhost:14000/api/v1/zones
+```
+
+**Default credentials:**
+- Keycloak Admin: `admin` / `admin` (http://localhost:14101)
+- Test User: `testuser` / `password`
+
+See [Authentication Guide](docs/AUTHENTICATION.md) for complete details.
 
 ## Documentation
 
 - **[Quick Start Guide](docs/QUICK_START.md)** - 5-minute setup walkthrough
+- **[Authentication Guide](docs/AUTHENTICATION.md)** - OAuth2/OIDC setup
+- **[Quick Auth Reference](docs/QUICK_AUTH_REFERENCE.md)** - Fast auth commands
+- **[API Documentation](docs/API_DOCUMENTATION.md)** - REST API reference
 - **[CLI Guide](docs/CLI_GUIDE.md)** - Complete guide for using godnscli
-- **[CLI Quick Reference](docs/CLI_QUICK_REFERENCE.md)** - Fast command lookup
-- **[CLI Cheat Sheet](docs/CLI_CHEAT_SHEET.md)** - One-page reference
-- **[Valkey Authentication](docs/VALKEY_AUTH.md)** - Authentication setup guide
+- **[CLI Config](docs/CLI_CONFIG.md)** - CLI configuration management
+- **[Port Configuration](docs/PORT_CONFIGURATION.md)** - Port mappings and setup
+- **[Valkey Authentication](docs/VALKEY_AUTH.md)** - Valkey auth setup guide
 
 ## Building
 
@@ -161,12 +203,33 @@ See the [CLI Guide](docs/CLI_GUIDE.md) for complete documentation.
 
 Configuration is managed via environment variables. See `.env.example` for available options.
 
-Key settings:
+### Key Settings
 
-- `VALKEY_ADDR` - Valkey server address
+**Valkey:**
+- `VALKEY_ADDR` - Valkey server address (default: `localhost:14103`)
 - `VALKEY_USERNAME` - Valkey username
 - `VALKEY_PASSWORD` - Valkey password
-- `DNS_PORT` - DNS server port (default: 53)
+
+**DNS Server:**
+- `DNS_SERVER_PORT` - DNS server port (default: `53`)
+
+**HTTP API:**
+- `HTTP_API_PORT` - API server port (default: `:14000`)
+- `HTTP_API_CORS_ALLOWED_ORIGINS` - CORS allowed origins
+
+**Authentication:**
+- `AUTH_ENABLED` - Enable/disable authentication (default: `true`)
+- `KEYCLOAK_URL` - Keycloak server URL (default: `http://localhost:14101`)
+- `KEYCLOAK_REALM` - OAuth2 realm (default: `godns`)
+
+**Ports:**
+- DNS: `53`
+- HTTP API: `14000`
+- Keycloak: `14101` (HTTP), `14102` (HTTPS)
+- Valkey: `14103`
+- PostgreSQL: `14100`
+
+See [Port Configuration](docs/PORT_CONFIGURATION.md) for details.
 
 ## Development
 

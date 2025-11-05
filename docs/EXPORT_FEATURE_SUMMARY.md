@@ -126,19 +126,19 @@ PowerDNS format correctly groups multiple records of the same name/type into a s
 ### Export All Zones in BIND Format
 
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export?format=bind" -o zones-backup.txt
+curl -X GET "http://localhost:14000/api/v1/export?format=bind" -o zones-backup.txt
 ```
 
 ### Export Single Zone in CoreDNS Format
 
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=coredns" -o coredns-config.txt
+curl -X GET "http://localhost:14000/api/v1/export/example.lan?format=coredns" -o coredns-config.txt
 ```
 
 ### Export for PowerDNS
 
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=powerdns" -o example.json
+curl -X GET "http://localhost:14000/api/v1/export/example.lan?format=powerdns" -o example.json
 ```
 
 ## Testing

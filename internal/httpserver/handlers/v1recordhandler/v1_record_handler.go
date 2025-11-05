@@ -34,6 +34,8 @@ func NewRecordHandler(zoneService *v1zoneservice.V1ZoneService) *RecordHandler {
 // @Failure 404 {object} map[string]string "Zone not found"
 // @Failure 409 {object} map[string]string "Record already exists"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/zones/{zone}/records [post]
 func (h *RecordHandler) CreateRecord(w http.ResponseWriter, req *http.Request, domain string) {
 	var record models.DNSRecord
@@ -69,6 +71,8 @@ func (h *RecordHandler) CreateRecord(w http.ResponseWriter, req *http.Request, d
 // @Success 200 {object} models.DNSRecord "Record details"
 // @Failure 404 {object} map[string]string "Zone or record not found"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/zones/{zone}/records/{name}/{type} [get]
 func (h *RecordHandler) GetRecord(w http.ResponseWriter, req *http.Request, domain, name, recordType string) {
 	record, err := h.zoneService.GetRecord(req.Context(), domain, name, recordType)
@@ -98,6 +102,8 @@ func (h *RecordHandler) GetRecord(w http.ResponseWriter, req *http.Request, doma
 // @Failure 400 {object} map[string]string "Invalid request body"
 // @Failure 404 {object} map[string]string "Zone or record not found"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/zones/{zone}/records/{name}/{type} [put]
 func (h *RecordHandler) UpdateRecord(w http.ResponseWriter, req *http.Request, domain, name, recordType string) {
 	var record models.DNSRecord
@@ -130,6 +136,8 @@ func (h *RecordHandler) UpdateRecord(w http.ResponseWriter, req *http.Request, d
 // @Success 204 "Record deleted"
 // @Failure 404 {object} map[string]string "Zone or record not found"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/zones/{zone}/records/{name}/{type} [delete]
 func (h *RecordHandler) DeleteRecord(w http.ResponseWriter, req *http.Request, domain, name, recordType string) {
 	if err := h.zoneService.DeleteRecord(req.Context(), domain, name, recordType); err != nil {

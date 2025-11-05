@@ -1,219 +1,176 @@
 # GoDNS Documentation
 
-Complete documentation for GoDNS DNS server, HTTP API, and CLI tool.
+Complete documentation for GoDNS DNS server and CLI tools.
 
-## 📚 Documentation Index
+## 📚 Table of Contents
 
 ### Getting Started
+- **[Quick Start Guide](QUICK_START.md)** - 5-minute setup walkthrough
+- **[Quick Auth Reference](QUICK_AUTH_REFERENCE.md)** - Fast authentication commands
+- **[Port Configuration](PORT_CONFIGURATION.md)** - Port mappings and configuration
 
-- **[Quick Start Guide](QUICK_START.md)** ⭐ START HERE
-  - 5-minute setup walkthrough
-  - First-time user guide
-  - Basic commands and verification
+### Authentication & Security
+- **[Authentication Guide](AUTHENTICATION.md)** - Complete OAuth2/OIDC guide
+- **[Authentication Implementation](AUTHENTICATION_IMPLEMENTATION.md)** - Technical details
+- **[Keycloak Setup](KEYCLOAK_SETUP.md)** - Keycloak configuration
+- **[Valkey Authentication](VALKEY_AUTH.md)** - Valkey ACL setup
 
-### HTTP API Documentation
+### API Documentation
+- **[API Documentation](API_DOCUMENTATION.md)** - REST API reference
+- **[Export API](EXPORT_API.md)** - Zone export endpoints
+- **[Export Feature Summary](EXPORT_FEATURE_SUMMARY.md)** - Export capabilities
+- **[API Release Workflow](API_RELEASE_WORKFLOW.md)** - API versioning and releases
 
-- **[API Documentation](API_DOCUMENTATION.md)** - Complete API reference
-
-  - All REST endpoints (zones, records)
-  - Interactive Swagger UI guide
-  - Request/response examples
-  - Error handling
-  - Data models and schemas
-
-- **[API Release Workflow](API_RELEASE_WORKFLOW.md)** - Build and deployment
-  - Docker build process
-  - Swagger documentation generation
-  - Release procedures
-  - Multi-platform builds
-  - CI/CD integration
-
-### CLI Tool Documentation
-
+### CLI Tools
 - **[CLI Guide](CLI_GUIDE.md)** - Complete CLI reference
+- **[CLI Configuration](CLI_CONFIG.md)** - CLI config management
 
-  - Quick reference cheat sheet
-  - All commands with examples
-  - Advanced usage patterns
-  - Troubleshooting guide
+### Development & Operations
+- **[Test Data Seeding](TEST_DATA_SEEDING.md)** - Test data setup
+- **[Finding Domains](FINDING_DOMAINS.md)** - Domain discovery utilities
 
-- **[Finding Domains Guide](FINDING_DOMAINS.md)** - Domain discovery
-  - How to find what domains to query
-  - Adding test zones
-  - Listing and managing zones
-  - Network discovery tips
+## 🚀 Quick Links
 
-### Configuration & Setup
+### Default Ports
 
-- **[Valkey Authentication](VALKEY_AUTH.md)** - Database authentication
-  - ACL configuration
-  - Username/password setup
-  - Docker Compose integration
-  - Security best practices
+| Service | Port | URL |
+|---------|------|-----|
+| DNS Server | 53 | - |
+| HTTP API | 14000 | http://localhost:14000 |
+| Swagger UI | 14000 | http://localhost:14000/swagger/index.html |
+| Keycloak | 14101 | http://localhost:14101 |
+| Valkey | 14103 | - |
+| PostgreSQL | 14100 | - |
 
-## 🚀 Quick Navigation
+### Default Credentials
 
-### I'm brand new to GoDNS
+| Service | Username | Password |
+|---------|----------|----------|
+| Keycloak Admin | admin | admin |
+| Test User | testuser | password |
 
-👉 Start with the **[Quick Start Guide](QUICK_START.md)**
+### Common Commands
 
-### I want to use the REST API
-
-👉 Read the **[API Documentation](API_DOCUMENTATION.md)** and use Swagger UI at `http://localhost:14082/swagger/index.html`
-
-### I want to use the CLI
-
-👉 Check the **[CLI Guide](CLI_GUIDE.md)** for the quick reference cheat sheet
-
-### I need to build/deploy the API
-
-👉 Follow the **[API Release Workflow](API_RELEASE_WORKFLOW.md)**
-
-### I need to set up authentication
-
-👉 Follow the **[Valkey Authentication](VALKEY_AUTH.md)** guide
-
-### I don't know what domain to query
-
-👉 Read the **[Finding Domains Guide](FINDING_DOMAINS.md)**
-
-## 📖 Documentation by Component
-
-### HTTP API Server
-
-| Document                                        | Description                 | Best For               |
-| ----------------------------------------------- | --------------------------- | ---------------------- |
-| [API Documentation](API_DOCUMENTATION.md)       | Complete REST API reference | API users, integration |
-| [API Release Workflow](API_RELEASE_WORKFLOW.md) | Build, release, deploy      | DevOps, deployment     |
-| [Quick Start](QUICK_START.md)                   | Getting started             | First-time users       |
-
-**Interactive:** Swagger UI at http://localhost:14082/swagger/index.html
-
-### CLI Tool
-
-| Document                              | Description            | Best For                 |
-| ------------------------------------- | ---------------------- | ------------------------ |
-| [CLI Guide](CLI_GUIDE.md)             | Complete CLI reference | All CLI users            |
-| [Finding Domains](FINDING_DOMAINS.md) | Domain discovery       | Testing, troubleshooting |
-| [Quick Start](QUICK_START.md)         | Getting started        | First-time users         |
-
-### Server Configuration
-
-| Document                                | Description         | Best For               |
-| --------------------------------------- | ------------------- | ---------------------- |
-| [Valkey Authentication](VALKEY_AUTH.md) | Database auth setup | Production deployments |
-| [Quick Start](QUICK_START.md)           | Basic configuration | Development            |
-
-## 🎯 Documentation by Use Case
-
-### Testing the DNS Server
-
-1. [Quick Start Guide](QUICK_START.md) - Initial setup
-2. [CLI Guide](CLI_GUIDE.md) - Test commands
-
-### Using the HTTP API
-
-1. [API Documentation](API_DOCUMENTATION.md) - API reference
-2. Swagger UI - Interactive testing at http://localhost:14082/swagger/index.html
-3. Test scripts in `hack/test-api.sh`
-
-### Building and Releasing
-
-1. [API Release Workflow](API_RELEASE_WORKFLOW.md) - Complete release process
-2. Makefile targets: `make swagger`, `make release`
-
-### Production Deployment
-
-1. [Valkey Authentication](VALKEY_AUTH.md) - Secure setup
-2. [API Release Workflow](API_RELEASE_WORKFLOW.md) - Deployment procedures
-3. [CLI Guide](CLI_GUIDE.md) - Health checks and monitoring
-
-## 📝 Additional Resources
-
-### In the Repository
-
-- [Main README](../README.md) - Project overview
-- [CLI Tool README](../cmd/godnscli/README.md) - CLI quick start
-- [API Server README](../cmd/godnsapi/README.md) - API quick start
-- [License](../LICENSE) - License information
-
-### Quick Links
-
+**Start the system:**
 ```bash
-# Build documentation
-make help
-
-# Environment variables
-.env.example
-
-# Docker configuration
-docker-compose.yaml
-
-# Test scripts
-hack/test-api.sh        # API testing
-hack/test-swagger.sh    # Swagger UI testing
-hack/add-test-zone.sh   # Add test data
+docker-compose up -d
 ```
 
-## 🔍 Finding What You Need
+**Login to CLI:**
+```bash
+godnscli login
+```
 
-### Search by Topic
+**Check auth status:**
+```bash
+godnscli status
+```
 
-- **REST API**: [API Documentation](API_DOCUMENTATION.md)
-- **Swagger**: [API Documentation](API_DOCUMENTATION.md#swaggeropenapi-integration)
-- **CLI Commands**: [CLI Guide](CLI_GUIDE.md)
-- **Setup**: [Quick Start Guide](QUICK_START.md)
-- **Security**: [Valkey Authentication](VALKEY_AUTH.md)
-- **Deployment**: [API Release Workflow](API_RELEASE_WORKFLOW.md)
+**Export zones:**
+```bash
+godnscli export --format bind
+```
 
-### Search by Command/Operation
+**View API documentation:**
+```bash
+open http://localhost:14000/swagger/index.html
+```
 
-| What                  | Where                                                         |
-| --------------------- | ------------------------------------------------------------- |
-| List zones (API)      | [API Documentation](API_DOCUMENTATION.md#list-all-zones)      |
-| Create zone (API)     | [API Documentation](API_DOCUMENTATION.md#create-zone)         |
-| Query DNS (CLI)       | [CLI Guide](CLI_GUIDE.md#quick-reference-cheat-sheet)         |
-| Health check (CLI)    | [CLI Guide](CLI_GUIDE.md#quick-reference-cheat-sheet)         |
-| Build Docker image    | [API Release Workflow](API_RELEASE_WORKFLOW.md#docker)        |
-| Generate Swagger docs | [API Release Workflow](API_RELEASE_WORKFLOW.md#documentation) |
+**Access Keycloak admin:**
+```bash
+open http://localhost:14101
+```
 
-## 💡 Tips
+## 📖 Documentation by Use Case
 
-### For First-Time Users
+### For Users
+If you're using GoDNS:
+1. [Quick Start Guide](QUICK_START.md) - Get started in 5 minutes
+2. [Quick Auth Reference](QUICK_AUTH_REFERENCE.md) - Authentication commands
+3. [CLI Guide](CLI_GUIDE.md) - Learn CLI commands
+4. [Export API](EXPORT_API.md) - Export zones to different formats
 
-1. Read [Quick Start Guide](QUICK_START.md)
-2. Try Swagger UI for API at http://localhost:14082/swagger/index.html
-3. Bookmark [CLI Guide](CLI_GUIDE.md) for CLI reference
+### For Developers
+If you're developing with/on GoDNS:
+1. [Authentication](AUTHENTICATION.md) - OAuth2/OIDC implementation
+2. [API Documentation](API_DOCUMENTATION.md) - REST API reference
+3. [Test Data Seeding](TEST_DATA_SEEDING.md) - Set up test data
+4. [Port Configuration](PORT_CONFIGURATION.md) - Configure ports
 
-### For API Development
+### For Operators
+If you're deploying GoDNS:
+1. [Port Configuration](PORT_CONFIGURATION.md) - Port mappings
+2. [Keycloak Setup](KEYCLOAK_SETUP.md) - Configure authentication
+3. [Valkey Authentication](VALKEY_AUTH.md) - Secure database access
+4. [Authentication Implementation](AUTHENTICATION_IMPLEMENTATION.md) - Technical details
 
-1. Use Swagger UI for interactive testing
-2. Refer to [API Documentation](API_DOCUMENTATION.md) for details
-3. Run `hack/test-api.sh` for automated testing
-4. Run `make swagger` after code changes
+## 🔍 Documentation by Feature
 
-### For Production
+### DNS Queries
+- [Quick Start](QUICK_START.md)
+- [CLI Guide](CLI_GUIDE.md)
 
-1. Configure with [Valkey Authentication](VALKEY_AUTH.md)
-2. Follow [API Release Workflow](API_RELEASE_WORKFLOW.md) for deployments
-3. Set up monitoring using [CLI Guide](CLI_GUIDE.md)
+### Zone Management
+- [API Documentation](API_DOCUMENTATION.md)
+- [Export API](EXPORT_API.md)
+- [Export Feature Summary](EXPORT_FEATURE_SUMMARY.md)
+
+### Authentication
+- [Authentication Guide](AUTHENTICATION.md)
+- [Quick Auth Reference](QUICK_AUTH_REFERENCE.md)
+- [Keycloak Setup](KEYCLOAK_SETUP.md)
+
+### CLI Tools
+- [CLI Guide](CLI_GUIDE.md)
+- [CLI Config](CLI_CONFIG.md)
+
+### Configuration
+- [Port Configuration](PORT_CONFIGURATION.md)
+- [Valkey Authentication](VALKEY_AUTH.md)
 
 ## 🆘 Getting Help
 
-1. Check the relevant documentation above
-2. Look at Swagger UI for API: http://localhost:14082/swagger/index.html
-3. Review examples in [API Documentation](API_DOCUMENTATION.md) or [CLI Guide](CLI_GUIDE.md)
-4. Run test scripts: `hack/test-api.sh` or `hack/test-swagger.sh`
-5. Check server logs: `docker-compose logs godns`
+### Troubleshooting
 
-## 🔄 Documentation Updates
+**Check service health:**
+```bash
+docker-compose ps
+```
 
-All documentation is maintained in the `docs/` directory. If you make changes to the API or CLI, please:
+**View logs:**
+```bash
+docker-compose logs -f
+```
 
-1. Update relevant documentation
-2. Regenerate Swagger docs: `make swagger`
-3. Update examples in test scripts
+**Check authentication:**
+```bash
+godnscli status
+```
 
----
+**Verify ports:**
+See [Port Configuration](PORT_CONFIGURATION.md)
 
-**Need something specific?** Browse by component, use case, or search above.
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Can't connect to API | Check if port 14000 is available |
+| Authentication fails | Run `godnscli login` again |
+| Port conflicts | See [Port Configuration](PORT_CONFIGURATION.md) |
+| Token expired | Use `godnscli status` to check (auto-refreshes) |
+
+### Additional Resources
+
+- Main README: `../README.md`
+- Security Policy: `../SECURITY.md`
+- Changelog: `../CHANGELOG.md`
+
+## 📝 Contributing to Documentation
+
+When adding documentation:
+
+1. Place all docs in the `docs/` folder
+2. Use descriptive filenames
+3. Update this README with a link
+4. Follow the existing structure and style
+5. Include examples and code snippets

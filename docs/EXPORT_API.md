@@ -23,7 +23,7 @@ GET /api/v1/export?format={format}
 
 **Example:**
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export?format=bind"
+curl -X GET "http://localhost:14000/api/v1/export?format=bind"
 ```
 
 ### Export Single Zone
@@ -42,7 +42,7 @@ GET /api/v1/export/{domain}?format={format}
 
 **Example:**
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=coredns"
+curl -X GET "http://localhost:14000/api/v1/export/example.lan?format=coredns"
 ```
 
 ## Export Format Examples
@@ -56,7 +56,7 @@ The BIND format is the most widely compatible format and can be used with:
 
 **Example BIND Export:**
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=bind" > example.lan.zone
+curl -X GET "http://localhost:14000/api/v1/export/example.lan?format=bind" > example.lan.zone
 ```
 
 **Output:**
@@ -88,7 +88,7 @@ The CoreDNS format provides both the Corefile configuration and the zone file co
 
 **Example CoreDNS Export:**
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export?format=coredns" > coredns-config.txt
+curl -X GET "http://localhost:14000/api/v1/export?format=coredns" > coredns-config.txt
 ```
 
 **Output:**
@@ -116,7 +116,7 @@ The PowerDNS format exports zones as JSON suitable for the PowerDNS HTTP API.
 
 **Example PowerDNS Export:**
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=powerdns" > example.lan.json
+curl -X GET "http://localhost:14000/api/v1/export/example.lan?format=powerdns" > example.lan.json
 ```
 
 **Output:**
@@ -160,7 +160,7 @@ curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=powerdns" >
 
 Export all zones to create a backup:
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export?format=bind" > dns-backup-$(date +%Y%m%d).zone
+curl -X GET "http://localhost:14000/api/v1/export?format=bind" > dns-backup-$(date +%Y%m%d).zone
 ```
 
 ### 2. Migrate to Another DNS Server
@@ -169,13 +169,13 @@ Export zones in the format compatible with your target DNS server:
 
 **To BIND:**
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export?format=bind" > /etc/bind/zones/imported-zones.conf
+curl -X GET "http://localhost:14000/api/v1/export?format=bind" > /etc/bind/zones/imported-zones.conf
 ```
 
 **To CoreDNS:**
 ```bash
 # Export all zones
-curl -X GET "http://localhost:14082/api/v1/export?format=coredns" > coredns-import.txt
+curl -X GET "http://localhost:14000/api/v1/export?format=coredns" > coredns-import.txt
 
 # Split into Corefile and zone files manually
 ```
@@ -183,7 +183,7 @@ curl -X GET "http://localhost:14082/api/v1/export?format=coredns" > coredns-impo
 **To PowerDNS:**
 ```bash
 # Export and import via API
-curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=powerdns" | \
+curl -X GET "http://localhost:14000/api/v1/export/example.lan?format=powerdns" | \
   curl -X POST -H "Content-Type: application/json" \
        -d @- "http://powerdns-server:8081/api/v1/servers/localhost/zones"
 ```
@@ -192,7 +192,7 @@ curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=powerdns" |
 
 Export a single zone for review:
 ```bash
-curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=bind"
+curl -X GET "http://localhost:14000/api/v1/export/example.lan?format=bind"
 ```
 
 ### 4. Documentation and Auditing
@@ -200,7 +200,7 @@ curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=bind"
 Generate documentation of your DNS infrastructure:
 ```bash
 # Export all zones in BIND format for documentation
-curl -X GET "http://localhost:14082/api/v1/export?format=bind" > docs/dns-zones.txt
+curl -X GET "http://localhost:14000/api/v1/export?format=bind" > docs/dns-zones.txt
 ```
 
 ## Response Format
@@ -242,13 +242,13 @@ HTTP Status: 500
 
 ```bash
 # Export all zones in BIND format
-curl -X GET "http://localhost:14082/api/v1/export?format=bind" -o zones.txt
+curl -X GET "http://localhost:14000/api/v1/export?format=bind" -o zones.txt
 
 # Export single zone in CoreDNS format
-curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=coredns" -o example-coredns.txt
+curl -X GET "http://localhost:14000/api/v1/export/example.lan?format=coredns" -o example-coredns.txt
 
 # Export in PowerDNS format
-curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=powerdns" -o example.json
+curl -X GET "http://localhost:14000/api/v1/export/example.lan?format=powerdns" -o example.json
 ```
 
 ### Using Python
@@ -257,14 +257,14 @@ curl -X GET "http://localhost:14082/api/v1/export/example.lan?format=powerdns" -
 import requests
 
 # Export all zones
-response = requests.get('http://localhost:14082/api/v1/export', 
+response = requests.get('http://localhost:14000/api/v1/export', 
                         params={'format': 'bind'})
 if response.status_code == 200:
     with open('zones-backup.txt', 'w') as f:
         f.write(response.text)
 
 # Export specific zone
-response = requests.get('http://localhost:14082/api/v1/export/example.lan',
+response = requests.get('http://localhost:14000/api/v1/export/example.lan',
                         params={'format': 'powerdns'})
 if response.status_code == 200:
     import json
@@ -280,7 +280,7 @@ const fs = require('fs');
 
 // Export all zones
 async function exportZones() {
-    const response = await fetch('http://localhost:14082/api/v1/export?format=bind');
+    const response = await fetch('http://localhost:14000/api/v1/export?format=bind');
     const zones = await response.text();
     fs.writeFileSync('zones-backup.txt', zones);
     console.log('Zones exported successfully');
@@ -289,7 +289,7 @@ async function exportZones() {
 // Export specific zone
 async function exportZone(domain, format = 'bind') {
     const response = await fetch(
-        `http://localhost:14082/api/v1/export/${domain}?format=${format}`
+        `http://localhost:14000/api/v1/export/${domain}?format=${format}`
     );
     
     if (response.ok) {
@@ -319,7 +319,7 @@ You can test the export functionality using the GoDNS CLI:
 
 ```bash
 # First, create a test zone
-curl -X POST http://localhost:14082/api/v1/zones \
+curl -X POST http://localhost:14000/api/v1/zones \
   -H "Content-Type: application/json" \
   -d '{
     "domain": "test.lan",
@@ -330,5 +330,5 @@ curl -X POST http://localhost:14082/api/v1/zones \
   }'
 
 # Export the zone
-curl -X GET "http://localhost:14082/api/v1/export/test.lan?format=bind"
+curl -X GET "http://localhost:14000/api/v1/export/test.lan?format=bind"
 ```

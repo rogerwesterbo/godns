@@ -32,6 +32,7 @@ func Execute() {
 	initTestCommand()
 	initVersionCommand()
 	initExportCommand()
+	// Config command initializes itself in init()
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

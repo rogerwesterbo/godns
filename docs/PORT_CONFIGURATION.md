@@ -6,15 +6,19 @@ This document describes all the ports used by GoDNS and its related services.
 
 All ports have been configured to use the **14000+ range** to avoid conflicts with commonly used ports (especially 80xx range).
 
-| Service                 | Port  | Environment Variable              | Description                       |
-| ----------------------- | ----- | --------------------------------- | --------------------------------- |
-| **DNS Server**          | 53    | `DNS_SERVER_PORT`                 | DNS query port (UDP/TCP)          |
-| **Valkey (Redis)**      | 14379 | `VALKEY_PORT`                     | Key-value store                   |
-| **DNS Liveness Probe**  | 14080 | `DNS_SERVER_LIVENESS_PROBE_PORT`  | Kubernetes liveness checks        |
-| **DNS Readiness Probe** | 14081 | `DNS_SERVER_READYNESS_PROBE_PORT` | Kubernetes readiness checks       |
-| **GoDNS HTTP API**      | 14082 | `HTTP_API_PORT`                   | REST API and Swagger UI           |
-| **Keycloak**            | 14083 | `KEYCLOAK_PORT`                   | Authentication server             |
-| **PostgreSQL**          | 5432  | -                                 | Keycloak database (internal only) |
+| Service                 | Port  | Environment Variable              | Description                   |
+| ----------------------- | ----- | --------------------------------- | ----------------------------- |
+| **DNS Server**          | 53    | `DNS_SERVER_PORT`                 | DNS query port (UDP/TCP)      |
+| **HTTP API**            | 14000 | `HTTP_API_PORT`                   | REST API and Swagger UI       |
+| **API Liveness Probe**  | 14001 | `HTTP_API_LIVENESS_PROBE_PORT`    | Kubernetes liveness checks    |
+| **API Readiness Probe** | 14002 | `HTTP_API_READINESS_PROBE_PORT`   | Kubernetes readiness checks   |
+| **DNS Liveness Probe**  | 14003 | `DNS_SERVER_LIVENESS_PROBE_PORT`  | DNS liveness checks           |
+| **DNS Readiness Probe** | 14004 | `DNS_SERVER_READYNESS_PROBE_PORT` | DNS readiness checks          |
+| **PostgreSQL**          | 14100 | `POSTGRES_PORT`                   | Keycloak database             |
+| **Keycloak HTTP**       | 14101 | `KEYCLOAK_PORT_HTTP`              | OAuth2/OIDC server (HTTP)     |
+| **Keycloak HTTPS**      | 14102 | `KEYCLOAK_PORT_HTTPS`             | OAuth2/OIDC server (HTTPS)    |
+| **Valkey (Redis)**      | 14103 | `VALKEY_PORT`                     | DNS records storage           |
+| **Frontend (Future)**   | 14200 | -                                 | Web UI (planned)              |
 
 ## Default Configuration
 
@@ -40,47 +44,78 @@ dig @localhost example.lan
 
 ```bash
 # Connect to Valkey
-redis-cli -h localhost -p 14379
+redis-cli -h localhost -p 14103
 ```
 
 ### DNS Health Probes
 
 ```bash
 # Liveness probe
-curl http://localhost:14080/healthz
+curl http://localhost:14003/healthz
 
 # Readiness probe
-curl http://localhost:14081/readyz
+curl http://localhost:14004/readyz
 ```
 
 ### GoDNS HTTP API
 
 ```bash
-# API endpoint
-curl http://localhost:14082/api/v1/zones
+# Get a token first
+TOKEN=$(curl -s -X POST "http://localhost:14101/realms/godns/protocol/openid-connect/token" \
+  -d "client_id=godns-cli" \
+  -d "username=testuser" \
+  -d "password=password" \
+  -d "grant_type=password" | jq -r '.access_token')
 
-# Swagger UI
-open http://localhost:14082/swagger/index.html
+# API endpoint (requires authentication)
+curl -H "Authorization: Bearer $TOKEN" http://localhost:14000/api/v1/zones
+
+# Swagger UI (includes OAuth2 login)
+open http://localhost:14000/swagger/index.html
 ```
+
+### CORS Configuration
+
+The HTTP API supports Cross-Origin Resource Sharing (CORS) for web applications. Configure allowed origins in `.env`:
+
+```bash
+# Allow multiple origins (comma-separated)
+HTTP_API_CORS_ALLOWED_ORIGINS=http://localhost:14000,http://localhost:14200
+
+# This allows:
+# - Swagger UI (http://localhost:14000)
+# - Frontend web app (http://localhost:14200)
+```
+
+The API will respond with appropriate CORS headers for allowed origins:
+
+- `Access-Control-Allow-Origin`
+- `Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS`
+- `Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With`
+- `Access-Control-Allow-Credentials: true`
 
 ### Keycloak Admin Console
 
 ```bash
-# Open admin console
-open http://localhost:14083
+# Open admin console (HTTP)
+open http://localhost:14101
+
+# Or HTTPS
+open https://localhost:14102
 
 # Login with default credentials:
 # Username: admin
 # Password: admin
 ```
 
-### PostgreSQL (Internal)
+### PostgreSQL
 
 ```bash
-# Access from host (only via Docker)
-docker exec -it postgres psql -U keycloak
+# Access from host
+psql -h localhost -p 14100 -U keycloak
 
-# Not exposed to host by default
+# Or via Docker
+docker exec -it postgres psql -U keycloak
 ```
 
 ## Customizing Ports
@@ -100,11 +135,11 @@ vim .env
 Change any port values:
 
 ```bash
-# Example: Change API port to 15000
-HTTP_API_PORT=:15000
+# Example: Change Keycloak HTTP port
+KEYCLOAK_PORT_HTTP=14201
 
-# Example: Change Keycloak port to 14090
-KEYCLOAK_PORT=14090
+# Example: Change Valkey port
+VALKEY_PORT=14203
 ```
 
 ### Using Command Line Flags
@@ -128,11 +163,11 @@ Edit `docker-compose.yaml` to change port mappings:
 services:
   valkey:
     ports:
-      - "15379:6379" # Map host:15379 to container:6379
+      - "14203:6379" # Map host:14203 to container:6379
 
   keycloak:
     ports:
-      - "15083:8080" # Map host:15083 to container:8080
+      - "14201:8080" # Map host:14201 to container:8080
 ```
 
 ## Port Conflicts
@@ -141,10 +176,10 @@ If you encounter port conflicts, check what's using the port:
 
 ```bash
 # macOS/Linux
-lsof -i :14082
+lsof -i :14000
 
 # Or using netstat
-netstat -an | grep 14082
+netstat -an | grep 14000
 ```
 
 ### Common Conflicts
@@ -152,8 +187,9 @@ netstat -an | grep 14082
 If you run into port conflicts, here are common culprits:
 
 - **Port 53**: May require sudo on Unix systems
-- **Port 14379**: Check for other Redis/Valkey instances
-- **Ports 14080-14083**: Check for other development services
+- **Port 14103**: Check for other Redis/Valkey instances  
+- **Ports 14000-14004**: Check for other development services
+- **Ports 14100-14103**: Check for other database/auth services
 
 ### Resolution
 
@@ -161,7 +197,7 @@ If you run into port conflicts, here are common culprits:
 
    ```bash
    # Find the process
-   lsof -i :14082
+   lsof -i :14000
 
    # Kill it (replace PID)
    kill <PID>
@@ -171,7 +207,7 @@ If you run into port conflicts, here are common culprits:
 
    ```bash
    # Update .env file
-   HTTP_API_PORT=:14092
+   HTTP_API_PORT=:14050
    ```
 
 3. **Use Docker network isolation**:
@@ -195,9 +231,10 @@ server {
     server_name api.example.com;
 
     location / {
-        proxy_pass http://localhost:14082;
+        proxy_pass http://localhost:14000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Authorization $http_authorization;
     }
 }
 
@@ -206,7 +243,7 @@ server {
     server_name auth.example.com;
 
     location / {
-        proxy_pass http://localhost:14083;
+        proxy_pass http://localhost:14101;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
@@ -228,7 +265,7 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: 14082 # Container port
+      targetPort: 14000 # Container port
 ```
 
 ### Security
@@ -244,23 +281,23 @@ spec:
 
 ```bash
 # Check if port is in use
-lsof -i :14082
+lsof -i :14000
 
 # Check Docker containers
 docker ps
 
 # Check Docker Compose logs
-docker-compose logs godns
+docker-compose logs godnsapi
 ```
 
 ### Cannot Connect to Service
 
 ```bash
 # Verify service is running
-curl http://localhost:14082/health
+curl http://localhost:14000/health
 
 # Check listening ports
-netstat -tuln | grep 14082
+netstat -tuln | grep 14000
 
 # Verify Docker port mapping
 docker port <container-name>
@@ -293,12 +330,13 @@ docker-compose ps
 # View logs
 docker-compose logs -f
 
-# Access services
-curl http://localhost:14082/api/v1/zones        # API
-open http://localhost:14082/swagger/index.html  # Swagger
-open http://localhost:14083                     # Keycloak
-redis-cli -p 14379                              # Valkey
-dig @localhost example.lan                       # DNS
+# Access services (with authentication)
+godnscli login                                  # Login first
+godnscli export --format bind                   # Use CLI (auto-auth)
+open http://localhost:14000/swagger/index.html  # Swagger (OAuth2)
+open http://localhost:14101                     # Keycloak admin
+redis-cli -p 14103                              # Valkey
+dig @localhost example.lan                      # DNS
 ```
 
 ## Summary

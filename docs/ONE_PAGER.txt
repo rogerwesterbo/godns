@@ -56,8 +56,8 @@
 
 ┌─ HEALTH FLAGS ────────────────────────────────────────────────────────────────┐
 │                                                                               │
-│  --liveness-port     Liveness probe port (default: 14080)                     │
-│  --readiness-port    Readiness probe port (default: 14081)                    │
+│  --liveness-port     Liveness probe port (default: 14003)                     │
+│  --readiness-port    Readiness probe port (default: 14004)                    │
 │                                                                               │
 └───────────────────────────────────────────────────────────────────────────────┘
 

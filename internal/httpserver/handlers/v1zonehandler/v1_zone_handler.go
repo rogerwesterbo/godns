@@ -28,6 +28,8 @@ func NewZoneHandler(zoneService *v1zoneservice.V1ZoneService) *ZoneHandler {
 // @Produce json
 // @Success 200 {array} models.DNSZone "List of zones"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/zones [get]
 func (h *ZoneHandler) ListZones(w http.ResponseWriter, req *http.Request) {
 	zones, err := h.zoneService.ListZones(req.Context())
@@ -50,6 +52,8 @@ func (h *ZoneHandler) ListZones(w http.ResponseWriter, req *http.Request) {
 // @Failure 400 {object} map[string]string "Invalid request body"
 // @Failure 409 {object} map[string]string "Zone already exists"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/zones [post]
 func (h *ZoneHandler) CreateZone(w http.ResponseWriter, req *http.Request) {
 	var zone models.DNSZone
@@ -81,6 +85,8 @@ func (h *ZoneHandler) CreateZone(w http.ResponseWriter, req *http.Request) {
 // @Success 200 {object} models.DNSZone "Zone details"
 // @Failure 404 {object} map[string]string "Zone not found"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/zones/{zone} [get]
 func (h *ZoneHandler) GetZone(w http.ResponseWriter, req *http.Request, domain string) {
 	zone, err := h.zoneService.GetZone(req.Context(), domain)
@@ -108,6 +114,8 @@ func (h *ZoneHandler) GetZone(w http.ResponseWriter, req *http.Request, domain s
 // @Failure 400 {object} map[string]string "Invalid request body"
 // @Failure 404 {object} map[string]string "Zone not found"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/zones/{zone} [put]
 func (h *ZoneHandler) UpdateZone(w http.ResponseWriter, req *http.Request, domain string) {
 	var zone models.DNSZone
@@ -138,6 +146,8 @@ func (h *ZoneHandler) UpdateZone(w http.ResponseWriter, req *http.Request, domai
 // @Success 204 "Zone deleted"
 // @Failure 404 {object} map[string]string "Zone not found"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/zones/{zone} [delete]
 func (h *ZoneHandler) DeleteZone(w http.ResponseWriter, req *http.Request, domain string) {
 	if err := h.zoneService.DeleteZone(req.Context(), domain); err != nil {

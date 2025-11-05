@@ -18,7 +18,7 @@ The GoDNS project now includes automated Swagger documentation generation integr
    make build-api
    ./bin/godnsapi
    ```
-4. **View Swagger UI** at http://localhost:14082/swagger/index.html
+4. **View Swagger UI** at http://localhost:14000/swagger/index.html
 
 ### Docker Build
 
@@ -140,8 +140,8 @@ All endpoints are documented in Swagger UI:
 
 ## Environment Variables
 
-- `HTTP_API_PORT` - API server port (default: `:13082`)
-- `VALKEY_ADDR` - Valkey server address (default: `localhost:14379`)
+- `HTTP_API_PORT` - API server port (default: `:14000`)
+- `VALKEY_ADDR` - Valkey server address (default: `localhost:14103`)
 - `VALKEY_PASSWORD` - Valkey password (optional)
 - `VALKEY_DB` - Valkey database number (default: `0`)
 
@@ -163,7 +163,7 @@ All endpoints are documented in Swagger UI:
 3. **Test Swagger UI** before committing:
 
    - Run `make build-api && ./bin/godnsapi`
-   - Visit http://localhost:14082/swagger/index.html
+   - Visit http://localhost:14000/swagger/index.html
    - Verify all endpoints are documented correctly
 
 4. **Use release targets** for production deployments:

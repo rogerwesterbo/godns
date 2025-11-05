@@ -20,13 +20,13 @@ make build-api
 ./bin/godnsapi
 ```
 
-The API server will start on `http://localhost:14082`
+The API server will start on `http://localhost:14000`
 
 ## Interactive Documentation
 
 Access the **Swagger UI** for interactive API documentation:
 
-**http://localhost:14082/swagger/index.html**
+**http://localhost:14000/swagger/index.html**
 
 Features:
 
@@ -39,18 +39,18 @@ Features:
 
 ```bash
 # List all zones
-curl http://localhost:14082/api/v1/zones
+curl http://localhost:14000/api/v1/zones
 
 # Create a zone
-curl -X POST http://localhost:14082/api/v1/zones \
+curl -X POST http://localhost:14000/api/v1/zones \
   -H "Content-Type: application/json" \
   -d '{"domain":"example.lan","records":[{"name":"www.example.lan.","type":"A","ttl":300,"value":"192.168.1.100"}]}'
 
 # Get a zone
-curl http://localhost:14082/api/v1/zones/example.lan
+curl http://localhost:14000/api/v1/zones/example.lan
 
 # Delete a zone
-curl -X DELETE http://localhost:14082/api/v1/zones/example.lan
+curl -X DELETE http://localhost:14000/api/v1/zones/example.lan
 ```
 
 ## Full Documentation
@@ -65,8 +65,8 @@ For complete documentation, see:
 
 Environment variables:
 
-- `HTTP_API_PORT` - Port to listen on (default: `:13082`)
-- `VALKEY_ADDR` - Valkey server address (default: `localhost:14379`)
+- `HTTP_API_PORT` - Port to listen on (default: `:14000`)
+- `VALKEY_ADDR` - Valkey server address (default: `localhost:14103`)
 - `VALKEY_PASSWORD` - Valkey password (optional)
 - `VALKEY_DB` - Valkey database number (default: `0`)
 
@@ -107,7 +107,7 @@ make build-dns
 ./bin/godns
 ```
 
-The API will be available at `http://localhost:14082` (configurable via `HTTP_API_PORT`).
+The API will be available at `http://localhost:14000` (configurable via `HTTP_API_PORT`).
 
 #### Option 2: Standalone API Server (Future/Recommended)
 
@@ -129,7 +129,7 @@ Configure the API server using environment variables:
 
 | Variable          | Default     | Description                              |
 | ----------------- | ----------- | ---------------------------------------- |
-| `HTTP_API_PORT`   | `:13082`     | Port for the HTTP API server             |
+| `HTTP_API_PORT`   | `:14000`     | Port for the HTTP API server             |
 | `VALKEY_HOST`     | `localhost` | Valkey server host                       |
 | `VALKEY_PORT`     | `6379`      | Valkey server port                       |
 | `VALKEY_USERNAME` | -           | Valkey username (if auth enabled)        |
@@ -142,7 +142,7 @@ Configure the API server using environment variables:
 ### Create a DNS Zone
 
 ```bash
-curl -X POST http://localhost:14082/api/v1/zones \
+curl -X POST http://localhost:14000/api/v1/zones \
   -H "Content-Type: application/json" \
   -d '{
     "domain": "example.lan",
@@ -160,19 +160,19 @@ curl -X POST http://localhost:14082/api/v1/zones \
 ### List All Zones
 
 ```bash
-curl http://localhost:14082/api/v1/zones
+curl http://localhost:14000/api/v1/zones
 ```
 
 ### Get a Specific Zone
 
 ```bash
-curl http://localhost:14082/api/v1/zones/example.lan
+curl http://localhost:14000/api/v1/zones/example.lan
 ```
 
 ### Add a Record
 
 ```bash
-curl -X POST http://localhost:14082/api/v1/zones/example.lan/records \
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
   -H "Content-Type: application/json" \
   -d '{
     "name": "api.example.lan.",
@@ -185,7 +185,7 @@ curl -X POST http://localhost:14082/api/v1/zones/example.lan/records \
 ### Update a Record
 
 ```bash
-curl -X PUT http://localhost:14082/api/v1/zones/example.lan/records/www.example.lan./A \
+curl -X PUT http://localhost:14000/api/v1/zones/example.lan/records/www.example.lan./A \
   -H "Content-Type: application/json" \
   -d '{
     "name": "www.example.lan.",
@@ -198,13 +198,13 @@ curl -X PUT http://localhost:14082/api/v1/zones/example.lan/records/www.example.
 ### Delete a Record
 
 ```bash
-curl -X DELETE http://localhost:14082/api/v1/zones/example.lan/records/api.example.lan./A
+curl -X DELETE http://localhost:14000/api/v1/zones/example.lan/records/api.example.lan./A
 ```
 
 ### Delete a Zone
 
 ```bash
-curl -X DELETE http://localhost:14082/api/v1/zones/example.lan
+curl -X DELETE http://localhost:14000/api/v1/zones/example.lan
 ```
 
 ## Testing
@@ -219,7 +219,7 @@ This script demonstrates all CRUD operations on zones and records.
 
 ## Documentation
 
-- [Interactive Swagger UI](http://localhost:14082/swagger/index.html) - Try the API in your browser
+- [Interactive Swagger UI](http://localhost:14000/swagger/index.html) - Try the API in your browser
 - [Full API Documentation](../docs/API_DOCUMENTATION.md) - Complete endpoint reference
 - [Swagger Guide](../docs/SWAGGER_GUIDE.md) - How to use and customize Swagger docs
 - [Implementation Details](../docs/HTTP_API_IMPLEMENTATION.md) - Architecture and design
@@ -279,7 +279,7 @@ Build and run as a Docker container:
 docker build -t godnsapi .
 
 # Run
-docker run -p 13082:13082 \
+docker run -p 14000:14000 \
   -e VALKEY_HOST=valkey \
   -e VALKEY_PORT=6379 \
   godnsapi
@@ -309,10 +309,10 @@ spec:
           image: ghcr.io/rogerwesterbo/godns:latest
           command: ["/godnsapi"] # Use standalone binary
           ports:
-            - containerPort: 13082
+            - containerPort: 14000
           env:
             - name: HTTP_API_PORT
-              value: ":13082"
+              value: ":14000"
             - name: VALKEY_HOST
               value: "valkey"
 ```

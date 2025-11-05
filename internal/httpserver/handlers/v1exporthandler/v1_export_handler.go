@@ -30,6 +30,8 @@ func NewExportHandler(exportService *v1exportservice.V1ExportService) *ExportHan
 // @Success 200 {string} string "Exported zone configuration"
 // @Failure 400 {object} map[string]string "Invalid format"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/export [get]
 func (h *ExportHandler) ExportAll(w http.ResponseWriter, req *http.Request) {
 	// Get format from query parameter
@@ -68,6 +70,8 @@ func (h *ExportHandler) ExportAll(w http.ResponseWriter, req *http.Request) {
 // @Failure 400 {object} map[string]string "Invalid format"
 // @Failure 404 {object} map[string]string "Zone not found"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/export/{zone} [get]
 func (h *ExportHandler) ExportZone(w http.ResponseWriter, req *http.Request, domain string) {
 	if domain == "" {

@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 
 	"github.com/rogerwesterbo/godns/pkg/consts"
+	"github.com/rogerwesterbo/godns/pkg/httpclient"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -134,9 +136,10 @@ func runExport(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "URL: %s\n", url)
 	}
 
-	// Make HTTP request
+	// Make HTTP request with authentication
+	client := httpclient.NewAuthenticatedClient()
 	// #nosec G107 - URL is constructed from user-provided flags (--api-url and domain argument)
-	resp, err := http.Get(url)
+	resp, err := client.Get(context.Background(), url)
 	if err != nil {
 		return fmt.Errorf("failed to connect to API: %w", err)
 	}

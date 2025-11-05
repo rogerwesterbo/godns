@@ -26,7 +26,7 @@ docker-compose logs -f keycloak
 Open your browser and navigate to:
 
 ```
-http://localhost:14083
+http://localhost:14101
 ```
 
 **Default Admin Credentials:**
@@ -62,14 +62,14 @@ KEYCLOAK_DB_PASSWORD=keycloak_password
 
 ### Port Configuration
 
-If port 14083 conflicts with other services, you can change Keycloak's port:
+If port 14101 conflicts with other services, you can change Keycloak's port:
 
 ```bash
 # .env file
-KEYCLOAK_PORT=14084
+KEYCLOAK_PORT_HTTP=14201
 ```
 
-Then access Keycloak at `http://localhost:14084`
+Then access Keycloak at `http://localhost:14201`
 
 ## Setting Up GoDNS Realm and Client
 
@@ -100,9 +100,9 @@ Then access Keycloak at `http://localhost:14084`
 
 4. **Login settings**:
 
-   - Valid redirect URIs: `http://localhost:14082/*`
-   - Valid post logout redirect URIs: `http://localhost:14082/*`
-   - Web origins: `http://localhost:14082`
+   - Valid redirect URIs: `http://localhost:14000/*`
+   - Valid post logout redirect URIs: `http://localhost:14000/*`
+   - Web origins: `http://localhost:14000`
    - Click **Save**
 
 5. Get the **Client Secret**:
@@ -151,7 +151,7 @@ Create roles for managing permissions:
 
 ```bash
 # Get access token
-curl -X POST "http://localhost:14083/realms/godns/protocol/openid-connect/token" \
+curl -X POST "http://localhost:14101/realms/godns/protocol/openid-connect/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "client_id=godns-api" \
   -d "client_secret=YOUR_CLIENT_SECRET" \
@@ -179,7 +179,7 @@ Response:
 TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCI..."
 
 # Use it to call GoDNS API
-curl -X GET "http://localhost:14082/api/v1/zones" \
+curl -X GET "http://localhost:14000/api/v1/zones" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -187,7 +187,7 @@ curl -X GET "http://localhost:14082/api/v1/zones" \
 
 To validate tokens in your GoDNS API, you'll need:
 
-1. **Keycloak URL**: `http://keycloak:14083` (internal Docker network) or `http://localhost:14083` (from host)
+1. **Keycloak URL**: `http://keycloak:14101` (internal Docker network) or `http://localhost:14101` (from host)
 2. **Realm**: `godns`
 3. **Client ID**: `godns-api`
 4. **Client Secret**: (from Keycloak admin console)
@@ -197,7 +197,7 @@ To validate tokens in your GoDNS API, you'll need:
 Get public keys for token verification:
 
 ```bash
-curl http://localhost:14083/realms/godns/protocol/openid-connect/certs
+curl http://localhost:14101/realms/godns/protocol/openid-connect/certs
 ```
 
 ## Production Considerations
@@ -309,7 +309,7 @@ docker-compose restart keycloak
 
 3. Ensure ports aren't in use:
    ```bash
-   lsof -i :14083
+   lsof -i :14101
    ```
 
 ### Can't Access Admin Console
@@ -323,7 +323,7 @@ docker-compose restart keycloak
 2. Check health endpoint:
 
    ```bash
-   curl http://localhost:14083/health
+   curl http://localhost:14101/health
    ```
 
 3. Verify port mapping:
@@ -402,13 +402,13 @@ Here's a complete example of authenticating and using the GoDNS API:
 #!/bin/bash
 
 # Configuration
-KEYCLOAK_URL="http://localhost:14083"
+KEYCLOAK_URL="http://localhost:14101"
 REALM="godns"
 CLIENT_ID="godns-api"
 CLIENT_SECRET="your-client-secret"
 USERNAME="testuser"
 PASSWORD="password"
-API_URL="http://localhost:14082"
+API_URL="http://localhost:14000"
 
 # Get access token
 TOKEN_RESPONSE=$(curl -s -X POST "${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token" \

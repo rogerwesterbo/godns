@@ -30,6 +30,8 @@ func NewSearchHandler(searchService *v1searchservice.V1SearchService) *SearchHan
 // @Success 200 {object} v1searchservice.SearchResponse "Search results"
 // @Failure 400 {object} map[string]string "Invalid request parameters"
 // @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
 // @Router /api/v1/search [get]
 func (h *SearchHandler) Search(w http.ResponseWriter, req *http.Request) {
 	// Get query parameter

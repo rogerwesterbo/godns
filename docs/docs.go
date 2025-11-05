@@ -804,7 +804,35 @@ const docTemplate = `{
                 "SearchResultTypeRecord"
             ]
         }
-    }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Type 'Bearer' followed by a space and JWT token. Example: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI..."
+        },
+        "OAuth2Password": {
+            "type": "oauth2",
+            "flow": "password",
+            "tokenUrl": "http://localhost:14101/realms/godns/protocol/openid-connect/token",
+            "scopes": {
+                "read": "Grants read access to DNS zones and records",
+                "write": "Grants write access to DNS zones and records"
+            }
+        }
+    },
+    "security": [
+        {
+            "BearerAuth": []
+        },
+        {
+            "OAuth2Password": [
+                "read",
+                "write"
+            ]
+        }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it

@@ -5,7 +5,7 @@
 
 set -e
 
-API_URL="${GODNS_API_URL:-http://localhost:14082}"
+API_URL="${GODNS_API_URL:-http://localhost:14000}"
 
 echo "======================================"
 echo "GoDNS Test Data Seeding Script"

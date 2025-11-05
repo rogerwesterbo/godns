@@ -29,13 +29,13 @@ Export DNS zones to different DNS provider formats:
 
 ```bash
 # Export all zones in BIND format
-./bin/godnscli export --api-url http://localhost:14082
+./bin/godnscli export --api-url http://localhost:14000
 
 # Export all zones in CoreDNS format
-./bin/godnscli export --format coredns --api-url http://localhost:14082
+./bin/godnscli export --format coredns --api-url http://localhost:14000
 
 # Export specific zone in PowerDNS format
-./bin/godnscli export example.lan --format powerdns --api-url http://localhost:14082
+./bin/godnscli export example.lan --format powerdns --api-url http://localhost:14000
 
 # Export to file
 ./bin/godnscli export example.lan --format bind --output example.lan.zone

@@ -5,7 +5,7 @@
 
 set -e
 
-API_URL="http://localhost:14082"
+API_URL="http://localhost:14000"
 ZONE="test.lan"
 
 echo "======================================"
