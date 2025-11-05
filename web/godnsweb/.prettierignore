@@ -1,0 +1,17 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+.vite
+
+# Config files
+*.config.js
+*.config.ts
+
+# Coverage
+coverage
+
+# Misc
+.DS_Store

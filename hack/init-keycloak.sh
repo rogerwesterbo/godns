@@ -14,6 +14,7 @@ ADMIN_PASSWORD="${KEYCLOAK_ADMIN_PASSWORD:-admin}"
 REALM_NAME="${KEYCLOAK_REALM:-godns}"
 API_CLIENT_ID="${KEYCLOAK_API_CLIENT_ID:-godns-api}"
 CLI_CLIENT_ID="${KEYCLOAK_CLI_CLIENT_ID:-godns-cli}"
+WEB_CLIENT_ID="${KEYCLOAK_WEB_CLIENT_ID:-godns-web}"
 
 echo "🔧 Initializing Keycloak for GoDNS..."
 echo "Keycloak URL: $KEYCLOAK_URL"
@@ -185,6 +186,84 @@ else
     echo "✅ CLI client updated"
 fi
 
+# Create or update Web client (public client with PKCE)
+echo "🔧 Configuring Web client '$WEB_CLIENT_ID'..."
+WEB_CLIENT_JSON=$(cat <<EOF
+{
+    "clientId": "$WEB_CLIENT_ID",
+    "name": "GoDNS Web",
+    "description": "GoDNS Web Application",
+    "enabled": true,
+    "protocol": "openid-connect",
+    "publicClient": true,
+    "bearerOnly": false,
+    "standardFlowEnabled": true,
+    "directAccessGrantsEnabled": false,
+    "implicitFlowEnabled": false,
+    "serviceAccountsEnabled": false,
+    "redirectUris": ["http://localhost:14200/callback", "http://localhost:14200/*"],
+    "webOrigins": ["http://localhost:14200"],
+    "rootUrl": "http://localhost:14200",
+    "baseUrl": "http://localhost:14200",
+    "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:14200",
+        "access.token.lifespan": "3600"
+    },
+    "protocolMappers": [
+        {
+            "name": "audience-mapper",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-audience-mapper",
+            "config": {
+                "included.client.audience": "$API_CLIENT_ID",
+                "id.token.claim": "false",
+                "access.token.claim": "true"
+            }
+        }
+    ]
+}
+EOF
+)
+
+WEB_CLIENT_ID_INTERNAL=$(curl -sf -X GET "$KEYCLOAK_URL/admin/realms/$REALM_NAME/clients?clientId=$WEB_CLIENT_ID" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id // empty')
+
+if [ -z "$WEB_CLIENT_ID_INTERNAL" ]; then
+    echo "📦 Creating Web client..."
+    curl -sf -X POST "$KEYCLOAK_URL/admin/realms/$REALM_NAME/clients" \
+        -H "Authorization: Bearer $ADMIN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "$WEB_CLIENT_JSON"
+    echo "✅ Web client created"
+    # Get the client ID after creation
+    WEB_CLIENT_ID_INTERNAL=$(curl -sf -X GET "$KEYCLOAK_URL/admin/realms/$REALM_NAME/clients?clientId=$WEB_CLIENT_ID" \
+        -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+else
+    echo "🔧 Updating Web client..."
+    curl -sf -X PUT "$KEYCLOAK_URL/admin/realms/$REALM_NAME/clients/$WEB_CLIENT_ID_INTERNAL" \
+        -H "Authorization: Bearer $ADMIN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "$WEB_CLIENT_JSON"
+    echo "✅ Web client updated"
+fi
+
+# Remove default 'account' client scope from Web client
+echo "🔧 Removing 'account' client scope from Web client..."
+if [ -n "$ACCOUNT_SCOPE_ID" ] && [ -n "$WEB_CLIENT_ID_INTERNAL" ]; then
+    DELETE_RESULT=$(curl -s -w "%{http_code}" -o /dev/null -X DELETE "$KEYCLOAK_URL/admin/realms/$REALM_NAME/clients/$WEB_CLIENT_ID_INTERNAL/default-client-scopes/$ACCOUNT_SCOPE_ID" \
+        -H "Authorization: Bearer $ADMIN_TOKEN")
+    if [ "$DELETE_RESULT" = "204" ] || [ "$DELETE_RESULT" = "404" ]; then
+        echo "✅ Removed 'account' from default scopes (or was not present)"
+    fi
+    
+    DELETE_RESULT=$(curl -s -w "%{http_code}" -o /dev/null -X DELETE "$KEYCLOAK_URL/admin/realms/$REALM_NAME/clients/$WEB_CLIENT_ID_INTERNAL/optional-client-scopes/$ACCOUNT_SCOPE_ID" \
+        -H "Authorization: Bearer $ADMIN_TOKEN")
+    if [ "$DELETE_RESULT" = "204" ] || [ "$DELETE_RESULT" = "404" ]; then
+        echo "✅ Removed 'account' from optional scopes (or was not present)"
+    fi
+fi
+
 # Remove default 'account' client scope from CLI client to prevent 'account' audience
 echo "🔧 Removing 'account' client scope from CLI client..."
 # Get account scope ID
@@ -302,8 +381,13 @@ echo "📋 Configuration Summary:"
 echo "  Realm: $REALM_NAME"
 echo "  API Client: $API_CLIENT_ID (bearer-only)"
 echo "  CLI Client: $CLI_CLIENT_ID (public, device flow enabled)"
+echo "  Web Client: $WEB_CLIENT_ID (public, PKCE with S256)"
 echo "  Test User: $TEST_USERNAME"
 echo "  Test Password: $TEST_PASSWORD"
+echo ""
+echo "🌐 Web Application:"
+echo "  URL: http://localhost:14200"
+echo "  Redirect URI: http://localhost:14200/callback"
 echo ""
 echo "🔐 Test authentication:"
 echo "  curl -X POST '$KEYCLOAK_URL/realms/$REALM_NAME/protocol/openid-connect/token' \\"

@@ -1,71 +1,158 @@
 name: CI
 
 on:
-    push:
-        branches:
-            - '**' # Run on all branches
-    pull_request:
-        branches:
-            - main
-            - develop
+  push:
+    branches:
+      - '**' # Run on all branches
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
-    build-and-test:
-        name: Build, Test, and Lint
-        runs-on: ubuntu-latest
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v5
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+              - 'Makefile'
+              - 'Dockerfile'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'web/godnsweb/**'
+              - '.github/workflows/ci.yml'
 
-            - name: Set up Go
-              uses: actions/setup-go@v6
-              with:
-                  go-version: '1.25'
-                  cache: true
-                  cache-dependency-path: go.sum
+  build-and-test:
+    name: Build, Test, and Lint (Go)
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
 
-            - name: Cache Go build cache
-              uses: actions/cache@v4
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/go/pkg/mod
-                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-                  restore-keys: |
-                      ${{ runner.os }}-go-
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-            - name: Cache tools
-              uses: actions/cache@v4
-              with:
-                  path: bin/
-                  key: ${{ runner.os }}-tools-${{ hashFiles('Makefile') }}
-                  restore-keys: |
-                      ${{ runner.os }}-tools-
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.23'
+          cache: true
+          cache-dependency-path: go.sum
 
-            - name: Install dependencies
-              run: go mod download
+      - name: Cache Go build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-            - name: Build
-              run: make build
+      - name: Cache tools
+        uses: actions/cache@v4
+        with:
+          path: bin/
+          key: ${{ runner.os }}-tools-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-tools-
 
-            - name: Run tests
-              run: make test
+      - name: Install dependencies
+        run: go mod download
 
-            - name: Run go vet
-              run: make vet
+      - name: Build
+        run: make build
 
-            - name: Check formatting
-              run: |
-                  make fmt
-                  if [ -n "$(git status --porcelain)" ]; then
-                    echo "Code is not formatted. Please run 'make fmt'"
-                    git diff
-                    exit 1
-                  fi
+      - name: Run tests
+        run: make test
 
-            - name: Run linter
-              run: make lint
+      - name: Run go vet
+        run: make vet
 
-            - name: Run security scan
-              run: make go-security-scan
+      - name: Check formatting
+        run: |
+          make fmt
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Code is not formatted. Please run 'make fmt'"
+            git diff
+            exit 1
+          fi
+
+      - name: Run linter
+        run: make lint
+
+      - name: Run security scan
+        run: make go-security-scan
+
+  build-and-test-web:
+    name: Build, Test, and Lint (Web UI)
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+
+    defaults:
+      run:
+        working-directory: web/godnsweb
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: web/godnsweb/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Build Docker image
+        run: docker build -f Dockerfile -t godnsweb:ci .
+
+      - name: Test Docker image
+        run: |
+          # Start container
+          docker run -d --name godnsweb-test -p 8080:8080 godnsweb:ci
+
+          # Wait for container to be ready
+          sleep 5
+
+          # Check health endpoint
+          curl -f http://localhost:8080/health || exit 1
+
+          # Check that index.html is served
+          curl -f http://localhost:8080/ | grep -q "<!DOCTYPE html>" || exit 1
+
+          # Cleanup
+          docker stop godnsweb-test
+          docker rm godnsweb-test

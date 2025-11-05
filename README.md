@@ -13,6 +13,7 @@ A high-performance DNS server written in Go with Valkey (Redis) backend for dyna
 - 🔧 Dynamic configuration via Valkey
 - 🔐 OAuth2/OIDC authentication with Keycloak
 - 🌐 REST API with Swagger documentation
+- 💻 **Web UI** - Modern React-based management interface
 - 🏥 Built-in health checks (liveness/readiness)
 - 🔒 ACL-based Valkey authentication
 - ☸️ Kubernetes-ready (multi-pod safe)
@@ -34,7 +35,13 @@ docker run -p 53:53/udp -p 53:53/tcp ghcr.io/rogerwesterbo/godns:latest
 #### Using Helm (Kubernetes)
 
 ```bash
+# Install DNS server
 helm install godns oci://ghcr.io/rogerwesterbo/helm/godns
+
+# Install Web UI
+helm install godnsweb oci://ghcr.io/rogerwesterbo/helm/godnsweb \
+  --set ingress.enabled=true \
+  --set ingress.hosts[0].host=godns.example.com
 ```
 
 #### Download CLI Binary
@@ -121,12 +128,25 @@ See [Authentication Guide](docs/AUTHENTICATION.md) for complete details.
 
 ## Documentation
 
+### Getting Started
+
 - **[Quick Start Guide](docs/QUICK_START.md)** - 5-minute setup walkthrough
 - **[Authentication Guide](docs/AUTHENTICATION.md)** - OAuth2/OIDC setup
 - **[Quick Auth Reference](docs/QUICK_AUTH_REFERENCE.md)** - Fast auth commands
+
+### API & CLI
+
 - **[API Documentation](docs/API_DOCUMENTATION.md)** - REST API reference
 - **[CLI Guide](docs/CLI_GUIDE.md)** - Complete guide for using godnscli
 - **[CLI Config](docs/CLI_CONFIG.md)** - CLI configuration management
+
+### Web UI
+
+- **[Web UI Documentation](web/godnsweb/README.md)** - React-based management interface
+- **[Web UI Deployment](web/godnsweb/docs/DOCKER.md)** - Docker and Kubernetes setup
+
+### Configuration
+
 - **[Port Configuration](docs/PORT_CONFIGURATION.md)** - Port mappings and setup
 - **[Valkey Authentication](docs/VALKEY_AUTH.md)** - Valkey auth setup guide
 
@@ -165,15 +185,30 @@ GoDNS uses **Google Distroless** base images for maximum security:
 
 ### Available Images
 
+**DNS Server:**
+
 ```bash
 # Latest release
 ghcr.io/rogerwesterbo/godns:latest
 
 # Specific version
 ghcr.io/rogerwesterbo/godns:1.0.0
+```
 
-# With digest for immutability
-ghcr.io/rogerwesterbo/godns:1.0.0@sha256:abc123...
+**Web UI:**
+
+```bash
+# Latest release
+ghcr.io/rogerwesterbo/godns-web:latest
+
+# Specific version
+ghcr.io/rogerwesterbo/godns-web:1.0.0
+
+# Run Web UI
+docker run -p 8080:8080 \
+  -e VITE_KEYCLOAK_URL=http://keycloak:8080 \
+  -e VITE_API_BASE_URL=http://godns-api:8080 \
+  ghcr.io/rogerwesterbo/godns-web:latest
 ```
 
 ### Security Scanning
@@ -250,14 +285,22 @@ See [Port Configuration](docs/PORT_CONFIGURATION.md) for details.
 ```
 godns/
 ├── cmd/
-│   ├── godns/          # Main server
+│   ├── godns/          # Main DNS server
+│   ├── godnsapi/       # HTTP API server
 │   └── godnscli/       # CLI tool
 ├── internal/           # Internal packages
-│   ├── handlers/       # DNS request handlers
+│   ├── dnsserver/      # DNS server logic
+│   ├── httpserver/     # HTTP API server
 │   └── services/       # Business logic
 ├── pkg/                # Public packages
+│   ├── auth/           # Authentication
 │   ├── clients/        # External clients (Valkey)
 │   └── options/        # Configuration options
+├── web/                # Web UI
+│   └── godnsweb/       # React application
+├── charts/             # Helm charts
+│   ├── godns/          # DNS server chart
+│   └── godnsweb/       # Web UI chart
 ├── docs/               # Documentation
 └── hack/               # Development utilities
 ```
@@ -274,24 +317,37 @@ Releases are automated via GitHub Actions. To create a new release:
    ```
 3. Create a [new release](https://github.com/rogerwesterbo/godns/releases/new) in GitHub
 4. GitHub Actions will automatically:
-   - Build multi-arch Docker images (linux/amd64, linux/arm64)
-   - Push images to `ghcr.io/rogerwesterbo/godns`
-   - Package Helm chart and push to `ghcr.io/rogerwesterbo/helm/godns`
-   - Build CLI binaries for:
-     - Linux (amd64, arm64)
-     - macOS (Intel, Apple Silicon)
-     - Windows (amd64)
-   - Run security scans (Trivy)
-   - Generate SBOM
+   - **Detect changes** - Build only what changed (DNS server, Web UI, or both)
+   - **Build DNS Server** (if backend changed):
+     - Multi-arch Docker images (linux/amd64, linux/arm64, linux/arm/v7)
+     - CLI binaries for Linux, macOS, Windows
+     - Helm chart package
+   - **Build Web UI** (if web files changed):
+     - Multi-arch Web UI Docker image
+     - Web UI Helm chart
+   - **Security & Quality**:
+     - Run security scans (Trivy)
+     - Generate SBOM
+     - Sign images with Cosign
    - Attach all artifacts to the release
 
 ### Release Artifacts
 
-Each release includes:
+Each release may include (depending on what changed):
 
-- 🐳 Multi-arch Docker images
-- 📦 Helm chart package
-- 💻 CLI binaries for all platforms
+**DNS Server:**
+
+- 🐳 Multi-arch Docker images (linux/amd64, linux/arm64, linux/arm/v7)
+- 📦 Helm chart package (godns)
+- 💻 CLI binaries (Linux, macOS, Windows)
+
+**Web UI:**
+
+- 🌐 Web UI Docker image (linux/amd64, linux/arm64)
+- 📦 Helm chart package (godnsweb)
+
+**Common:**
+
 - 🔒 SHA256 checksums
 - 📋 SBOM (SPDX format)
 - 🛡️ Security scan results

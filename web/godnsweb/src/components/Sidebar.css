@@ -1,0 +1,54 @@
+.sidebar {
+  width: 240px;
+  border-right: 1px solid var(--gray-a5);
+  background-color: var(--color-panel);
+  height: calc(100vh - 60px);
+  position: sticky;
+  top: 60px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--gray-12);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background-color: var(--gray-a3);
+}
+
+.nav-item.active {
+  background-color: var(--accent-a4);
+  color: var(--accent-12);
+}
+
+.nav-item.active .nav-icon {
+  color: var(--accent-11);
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-11);
+  transition: color 0.15s ease;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px;
+  }
+
+  .nav-item {
+    padding: 0.75rem;
+  }
+
+  .nav-item > div > :last-child {
+    display: none;
+  }
+}
