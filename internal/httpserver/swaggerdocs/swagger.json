@@ -1,940 +1,874 @@
 {
-    "produces": [
-        "application/json"
-    ],
-    "schemes": [
-        "http",
-        "https"
-    ],
-    "swagger": "2.0",
-    "info": {
-        "description": "RESTful API for managing DNS zones and records in GoDNS\n\nThis API provides CRUD operations for DNS zones and records, storing data in Valkey (Redis-compatible).\n\n## Features\n- Create, read, update, and delete DNS zones\n- Manage individual DNS records within zones\n- Support for various record types (A, AAAA, CNAME, MX, NS, TXT, PTR, SRV, SOA, CAA)\n- Health and readiness endpoints for Kubernetes deployments\n\n## Authentication\nThis API uses OAuth2/JWT authentication via Keycloak.\n\nTo authenticate:\n1. Click \"Authorize\" button\n2. For BearerAuth: Enter \"Bearer YOUR_JWT_TOKEN\"\n3. For OAuth2: Enter credentials (testuser/password for development)\n\nTo get a token manually:\n```\ncurl -X POST \"http://localhost:14101/realms/godns/protocol/openid-connect/token\" -H \"Content-Type: application/x-www-form-urlencoded\" -d \"client_id=godns-cli\" -d \"username=testuser\" -d \"password=password\" -d \"grant_type=password\"\n```\n\nExtract and use the access_token:\n```\nTOKEN=$(curl -s -X POST \"http://localhost:14101/realms/godns/protocol/openid-connect/token\" -H \"Content-Type: application/x-www-form-urlencoded\" -d \"client_id=godns-cli\" -d \"username=testuser\" -d \"password=password\" -d \"grant_type=password\" | jq -r '.access_token')\n\ncurl -H \"Authorization: Bearer $TOKEN\" http://localhost:14000/api/v1/zones\n```\n\nUse HTTPS (port 14102) for production.",
-        "title": "GoDNS API",
-        "contact": {
-            "name": "GoDNS Support",
-            "url": "https://github.com/rogerwesterbo/godns",
-            "email": "support@example.com"
-        },
-        "license": {
-            "name": "MIT",
-            "url": "https://github.com/rogerwesterbo/godns/blob/main/LICENSE"
-        },
-        "version": "1.0"
+  "produces": ["application/json"],
+  "schemes": ["http", "https"],
+  "swagger": "2.0",
+  "info": {
+    "description": "RESTful API for managing DNS zones and records in GoDNS\n\nThis API provides CRUD operations for DNS zones and records, storing data in Valkey (Redis-compatible).\n\n## Features\n- Create, read, update, and delete DNS zones\n- Manage individual DNS records within zones\n- Support for various record types (A, AAAA, CNAME, MX, NS, TXT, PTR, SRV, SOA, CAA)\n- Health and readiness endpoints for Kubernetes deployments\n\n## Authentication\nThis API uses OAuth2/JWT authentication via Keycloak.\n\nTo authenticate:\n1. Click \"Authorize\" button\n2. For BearerAuth: Enter \"Bearer YOUR_JWT_TOKEN\"\n3. For OAuth2: Enter credentials (testuser/password for development)\n\nTo get a token manually:\n```\ncurl -X POST \"http://localhost:14101/realms/godns/protocol/openid-connect/token\" -H \"Content-Type: application/x-www-form-urlencoded\" -d \"client_id=godns-cli\" -d \"username=testuser\" -d \"password=password\" -d \"grant_type=password\"\n```\n\nExtract and use the access_token:\n```\nTOKEN=$(curl -s -X POST \"http://localhost:14101/realms/godns/protocol/openid-connect/token\" -H \"Content-Type: application/x-www-form-urlencoded\" -d \"client_id=godns-cli\" -d \"username=testuser\" -d \"password=password\" -d \"grant_type=password\" | jq -r '.access_token')\n\ncurl -H \"Authorization: Bearer $TOKEN\" http://localhost:14000/api/v1/zones\n```\n\nUse HTTPS (port 14102) for production.",
+    "title": "GoDNS API",
+    "contact": {
+      "name": "GoDNS Support",
+      "url": "https://github.com/rogerwesterbo/godns",
+      "email": "support@example.com"
     },
-    "host": "localhost:14000",
-    "basePath": "/",
-    "paths": {
-        "/api/v1/export": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Export all DNS zones in a specified format (coredns, powerdns, bind, zonefile)",
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "Export"
-                ],
-                "summary": "Export all zones",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "bind",
-                        "description": "Export format: coredns, powerdns, bind, or zonefile",
-                        "name": "format",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Exported zone configuration",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid format",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/export/{zone}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Export a specific DNS zone in a specified format",
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "Export"
-                ],
-                "summary": "Export a specific zone",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Zone name (e.g., example.lan)",
-                        "name": "zone",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "bind",
-                        "description": "Export format: coredns, powerdns, bind, or zonefile",
-                        "name": "format",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Exported zone configuration",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid format",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Zone not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/search": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Search across DNS zones and records with optional type filtering",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Search"
-                ],
-                "summary": "Search DNS zones and records",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query (case-insensitive)",
-                        "name": "q",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "enum": [
-                                "zone",
-                                "record"
-                            ],
-                            "type": "string"
-                        },
-                        "collectionFormat": "csv",
-                        "description": "Filter by result type (zone, record). Can specify multiple types.",
-                        "name": "type",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Search results",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request parameters",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/zones": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Get a list of all DNS zones",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Zones"
-                ],
-                "summary": "List all DNS zones",
-                "responses": {
-                    "200": {
-                        "description": "List of zones",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Create a new DNS zone with optional records",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Zones"
-                ],
-                "summary": "Create a new DNS zone",
-                "parameters": [
-                    {
-                        "description": "Zone to create",
-                        "name": "zone",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Zone created",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "Zone already exists",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/zones/{zone}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Get a specific DNS zone by name",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Zones"
-                ],
-                "summary": "Get a DNS zone",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Zone name (e.g., example.lan)",
-                        "name": "zone",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Zone details",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
-                        }
-                    },
-                    "404": {
-                        "description": "Zone not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Update an existing DNS zone (replaces all records)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Zones"
-                ],
-                "summary": "Update a DNS zone",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Zone name (e.g., example.lan)",
-                        "name": "zone",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Updated zone data",
-                        "name": "zone",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Zone updated",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Zone not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Delete a DNS zone and all its records",
-                "tags": [
-                    "Zones"
-                ],
-                "summary": "Delete a DNS zone",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Zone name (e.g., example.lan)",
-                        "name": "zone",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "Zone deleted"
-                    },
-                    "404": {
-                        "description": "Zone not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/zones/{zone}/records": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Add a new DNS record to an existing zone",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Records"
-                ],
-                "summary": "Create a DNS record",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Zone name (e.g., example.lan)",
-                        "name": "zone",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Record to create",
-                        "name": "record",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Record created",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Zone not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "Record already exists",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/zones/{zone}/records/{name}/{type}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Get a specific DNS record by name and type",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Records"
-                ],
-                "summary": "Get a DNS record",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Zone name (e.g., example.lan)",
-                        "name": "zone",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Record name (e.g., www.example.lan.)",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Record type (e.g., A, AAAA, CNAME)",
-                        "name": "type",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Record details",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
-                        }
-                    },
-                    "404": {
-                        "description": "Zone or record not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Update an existing DNS record",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Records"
-                ],
-                "summary": "Update a DNS record",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Zone name (e.g., example.lan)",
-                        "name": "zone",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Record name (e.g., www.example.lan.)",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Record type (e.g., A, AAAA, CNAME)",
-                        "name": "type",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Updated record data",
-                        "name": "record",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Record updated",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Zone or record not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    },
-                    {
-                        "OAuth2Password": []
-                    }
-                ],
-                "description": "Delete a specific DNS record from a zone",
-                "tags": [
-                    "Records"
-                ],
-                "summary": "Delete a DNS record",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Zone name (e.g., example.lan)",
-                        "name": "zone",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Record name (e.g., www.example.lan.)",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Record type (e.g., A, AAAA, CNAME)",
-                        "name": "type",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "Record deleted"
-                    },
-                    "404": {
-                        "description": "Zone or record not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/rogerwesterbo/godns/blob/main/LICENSE"
     },
-    "definitions": {
-        "github_com_rogerwesterbo_godns_internal_models.DNSRecord": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "description": "Fully qualified domain name",
-                    "type": "string",
-                    "example": "www.example.lan."
-                },
-                "ttl": {
-                    "description": "Time to live in seconds",
-                    "type": "integer",
-                    "example": 300
-                },
-                "type": {
-                    "description": "A, AAAA, MX, NS, TXT, etc.",
-                    "type": "string",
-                    "example": "A"
-                },
-                "value": {
-                    "description": "The record value (IP, hostname, etc.)",
-                    "type": "string",
-                    "example": "192.168.1.100"
-                }
-            }
-        },
-        "github_com_rogerwesterbo_godns_internal_models.DNSZone": {
-            "type": "object",
-            "properties": {
-                "domain": {
-                    "description": "e.g., \"example.lan.\"",
-                    "type": "string",
-                    "example": "example.lan."
-                },
-                "records": {
-                    "description": "DNS records in this zone",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
-                    }
-                }
-            }
-        },
-        "github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "description": "Number of results found",
-                    "type": "integer",
-                    "example": 5
-                },
-                "query": {
-                    "description": "The search query",
-                    "type": "string",
-                    "example": "example"
-                },
-                "results": {
-                    "description": "List of search results",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult"
-                    }
-                }
-            }
-        },
-        "github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult": {
-            "type": "object",
-            "properties": {
-                "record": {
-                    "description": "Record details (if type is record)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
-                        }
-                    ]
-                },
-                "type": {
-                    "description": "Type of result (zone, record)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType"
-                        }
-                    ],
-                    "example": "zone"
-                },
-                "zone": {
-                    "description": "Zone name",
-                    "type": "string",
-                    "example": "example.lan"
-                }
-            }
-        },
-        "github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType": {
+    "version": "1.0"
+  },
+  "host": "localhost:14000",
+  "basePath": "/",
+  "paths": {
+    "/api/v1/export": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Export all DNS zones in a specified format (coredns, powerdns, bind, zonefile)",
+        "produces": ["text/plain"],
+        "tags": ["Export"],
+        "summary": "Export all zones",
+        "parameters": [
+          {
             "type": "string",
-            "enum": [
-                "zone",
-                "record"
-            ],
-            "x-enum-varnames": [
-                "SearchResultTypeZone",
-                "SearchResultTypeRecord"
-            ]
+            "default": "bind",
+            "description": "Export format: coredns, powerdns, bind, or zonefile",
+            "name": "format",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exported zone configuration",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Invalid format",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
         }
+      }
     },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "description": "Type \"Bearer\" followed by a space and JWT token.",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "OAuth2Password": {
-            "type": "oauth2",
-            "flow": "password",
-            "tokenUrl": "http://localhost:14101/realms/godns/protocol/openid-connect/token"
+    "/api/v1/export/{zone}": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Export a specific DNS zone in a specified format",
+        "produces": ["text/plain"],
+        "tags": ["Export"],
+        "summary": "Export a specific zone",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Zone name (e.g., example.lan)",
+            "name": "zone",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "bind",
+            "description": "Export format: coredns, powerdns, bind, or zonefile",
+            "name": "format",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exported zone configuration",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Invalid format",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "404": {
+            "description": "Zone not found",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
         }
+      }
     },
-    "tags": [
-        {
-            "description": "Health check and readiness endpoints",
-            "name": "Health"
-        },
-        {
-            "description": "DNS zone management operations",
-            "name": "Zones"
-        },
-        {
-            "description": "DNS record management operations",
-            "name": "Records"
+    "/api/v1/search": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Search across DNS zones and records with optional type filtering",
+        "produces": ["application/json"],
+        "tags": ["Search"],
+        "summary": "Search DNS zones and records",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Search query (case-insensitive)",
+            "name": "q",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "array",
+            "items": {
+              "enum": ["zone", "record"],
+              "type": "string"
+            },
+            "collectionFormat": "csv",
+            "description": "Filter by result type (zone, record). Can specify multiple types.",
+            "name": "type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
         }
-    ]
+      }
+    },
+    "/api/v1/zones": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Get a list of all DNS zones",
+        "produces": ["application/json"],
+        "tags": ["Zones"],
+        "summary": "List all DNS zones",
+        "responses": {
+          "200": {
+            "description": "List of zones",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Create a new DNS zone with optional records",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "tags": ["Zones"],
+        "summary": "Create a new DNS zone",
+        "parameters": [
+          {
+            "description": "Zone to create",
+            "name": "zone",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Zone created",
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "409": {
+            "description": "Zone already exists",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/zones/{zone}": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Get a specific DNS zone by name",
+        "produces": ["application/json"],
+        "tags": ["Zones"],
+        "summary": "Get a DNS zone",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Zone name (e.g., example.lan)",
+            "name": "zone",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Zone details",
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+            }
+          },
+          "404": {
+            "description": "Zone not found",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Update an existing DNS zone (replaces all records)",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "tags": ["Zones"],
+        "summary": "Update a DNS zone",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Zone name (e.g., example.lan)",
+            "name": "zone",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Updated zone data",
+            "name": "zone",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Zone updated",
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSZone"
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "404": {
+            "description": "Zone not found",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Delete a DNS zone and all its records",
+        "tags": ["Zones"],
+        "summary": "Delete a DNS zone",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Zone name (e.g., example.lan)",
+            "name": "zone",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Zone deleted"
+          },
+          "404": {
+            "description": "Zone not found",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/zones/{zone}/records": {
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Add a new DNS record to an existing zone",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "tags": ["Records"],
+        "summary": "Create a DNS record",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Zone name (e.g., example.lan)",
+            "name": "zone",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Record to create",
+            "name": "record",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Record created",
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "404": {
+            "description": "Zone not found",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "409": {
+            "description": "Record already exists",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/zones/{zone}/records/{name}/{type}": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Get a specific DNS record by name and type",
+        "produces": ["application/json"],
+        "tags": ["Records"],
+        "summary": "Get a DNS record",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Zone name (e.g., example.lan)",
+            "name": "zone",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Record name (e.g., www.example.lan.)",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Record type (e.g., A, AAAA, CNAME)",
+            "name": "type",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record details",
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+            }
+          },
+          "404": {
+            "description": "Zone or record not found",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Update an existing DNS record",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "tags": ["Records"],
+        "summary": "Update a DNS record",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Zone name (e.g., example.lan)",
+            "name": "zone",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Record name (e.g., www.example.lan.)",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Record type (e.g., A, AAAA, CNAME)",
+            "name": "type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Updated record data",
+            "name": "record",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record updated",
+            "schema": {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "404": {
+            "description": "Zone or record not found",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "OAuth2Password": []
+          }
+        ],
+        "description": "Delete a specific DNS record from a zone",
+        "tags": ["Records"],
+        "summary": "Delete a DNS record",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Zone name (e.g., example.lan)",
+            "name": "zone",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Record name (e.g., www.example.lan.)",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Record type (e.g., A, AAAA, CNAME)",
+            "name": "type",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Record deleted"
+          },
+          "404": {
+            "description": "Zone or record not found",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "github_com_rogerwesterbo_godns_internal_models.DNSRecord": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Fully qualified domain name",
+          "type": "string",
+          "example": "www.example.lan."
+        },
+        "ttl": {
+          "description": "Time to live in seconds",
+          "type": "integer",
+          "example": 300
+        },
+        "type": {
+          "description": "A, AAAA, MX, NS, TXT, etc.",
+          "type": "string",
+          "example": "A"
+        },
+        "value": {
+          "description": "The record value (IP, hostname, etc.)",
+          "type": "string",
+          "example": "192.168.1.100"
+        }
+      }
+    },
+    "github_com_rogerwesterbo_godns_internal_models.DNSZone": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "description": "e.g., \"example.lan.\"",
+          "type": "string",
+          "example": "example.lan."
+        },
+        "records": {
+          "description": "DNS records in this zone",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+          }
+        }
+      }
+    },
+    "github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "description": "Number of results found",
+          "type": "integer",
+          "example": 5
+        },
+        "query": {
+          "description": "The search query",
+          "type": "string",
+          "example": "example"
+        },
+        "results": {
+          "description": "List of search results",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult"
+          }
+        }
+      }
+    },
+    "github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResult": {
+      "type": "object",
+      "properties": {
+        "record": {
+          "description": "Record details (if type is record)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
+            }
+          ]
+        },
+        "type": {
+          "description": "Type of result (zone, record)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType"
+            }
+          ],
+          "example": "zone"
+        },
+        "zone": {
+          "description": "Zone name",
+          "type": "string",
+          "example": "example.lan"
+        }
+      }
+    },
+    "github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResultType": {
+      "type": "string",
+      "enum": ["zone", "record"],
+      "x-enum-varnames": ["SearchResultTypeZone", "SearchResultTypeRecord"]
+    }
+  },
+  "securityDefinitions": {
+    "BearerAuth": {
+      "description": "Type \"Bearer\" followed by a space and JWT token.",
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    },
+    "OAuth2Password": {
+      "type": "oauth2",
+      "flow": "password",
+      "tokenUrl": "http://localhost:14101/realms/godns/protocol/openid-connect/token"
+    }
+  },
+  "tags": [
+    {
+      "description": "Health check and readiness endpoints",
+      "name": "Health"
+    },
+    {
+      "description": "DNS zone management operations",
+      "name": "Zones"
+    },
+    {
+      "description": "DNS record management operations",
+      "name": "Records"
+    }
+  ]
 }

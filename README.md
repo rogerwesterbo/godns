@@ -113,6 +113,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:14000/api/v1/zones
 ```
 
 **Default credentials:**
+
 - Keycloak Admin: `admin` / `admin` (http://localhost:14101)
 - Test User: `testuser` / `password`
 
@@ -206,23 +207,28 @@ Configuration is managed via environment variables. See `.env.example` for avail
 ### Key Settings
 
 **Valkey:**
+
 - `VALKEY_ADDR` - Valkey server address (default: `localhost:14103`)
 - `VALKEY_USERNAME` - Valkey username
 - `VALKEY_PASSWORD` - Valkey password
 
 **DNS Server:**
+
 - `DNS_SERVER_PORT` - DNS server port (default: `53`)
 
 **HTTP API:**
+
 - `HTTP_API_PORT` - API server port (default: `:14000`)
 - `HTTP_API_CORS_ALLOWED_ORIGINS` - CORS allowed origins
 
 **Authentication:**
+
 - `AUTH_ENABLED` - Enable/disable authentication (default: `true`)
 - `KEYCLOAK_URL` - Keycloak server URL (default: `http://localhost:14101`)
 - `KEYCLOAK_REALM` - OAuth2 realm (default: `godns`)
 
 **Ports:**
+
 - DNS: `53`
 - HTTP API: `14000`
 - Keycloak: `14101` (HTTP), `14102` (HTTPS)

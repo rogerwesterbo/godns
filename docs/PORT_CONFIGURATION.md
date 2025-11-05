@@ -6,19 +6,19 @@ This document describes all the ports used by GoDNS and its related services.
 
 All ports have been configured to use the **14000+ range** to avoid conflicts with commonly used ports (especially 80xx range).
 
-| Service                 | Port  | Environment Variable              | Description                   |
-| ----------------------- | ----- | --------------------------------- | ----------------------------- |
-| **DNS Server**          | 53    | `DNS_SERVER_PORT`                 | DNS query port (UDP/TCP)      |
-| **HTTP API**            | 14000 | `HTTP_API_PORT`                   | REST API and Swagger UI       |
-| **API Liveness Probe**  | 14001 | `HTTP_API_LIVENESS_PROBE_PORT`    | Kubernetes liveness checks    |
-| **API Readiness Probe** | 14002 | `HTTP_API_READINESS_PROBE_PORT`   | Kubernetes readiness checks   |
-| **DNS Liveness Probe**  | 14003 | `DNS_SERVER_LIVENESS_PROBE_PORT`  | DNS liveness checks           |
-| **DNS Readiness Probe** | 14004 | `DNS_SERVER_READYNESS_PROBE_PORT` | DNS readiness checks          |
-| **PostgreSQL**          | 14100 | `POSTGRES_PORT`                   | Keycloak database             |
-| **Keycloak HTTP**       | 14101 | `KEYCLOAK_PORT_HTTP`              | OAuth2/OIDC server (HTTP)     |
-| **Keycloak HTTPS**      | 14102 | `KEYCLOAK_PORT_HTTPS`             | OAuth2/OIDC server (HTTPS)    |
-| **Valkey (Redis)**      | 14103 | `VALKEY_PORT`                     | DNS records storage           |
-| **Frontend (Future)**   | 14200 | -                                 | Web UI (planned)              |
+| Service                 | Port  | Environment Variable              | Description                 |
+| ----------------------- | ----- | --------------------------------- | --------------------------- |
+| **DNS Server**          | 53    | `DNS_SERVER_PORT`                 | DNS query port (UDP/TCP)    |
+| **HTTP API**            | 14000 | `HTTP_API_PORT`                   | REST API and Swagger UI     |
+| **API Liveness Probe**  | 14001 | `HTTP_API_LIVENESS_PROBE_PORT`    | Kubernetes liveness checks  |
+| **API Readiness Probe** | 14002 | `HTTP_API_READINESS_PROBE_PORT`   | Kubernetes readiness checks |
+| **DNS Liveness Probe**  | 14003 | `DNS_SERVER_LIVENESS_PROBE_PORT`  | DNS liveness checks         |
+| **DNS Readiness Probe** | 14004 | `DNS_SERVER_READYNESS_PROBE_PORT` | DNS readiness checks        |
+| **PostgreSQL**          | 14100 | `POSTGRES_PORT`                   | Keycloak database           |
+| **Keycloak HTTP**       | 14101 | `KEYCLOAK_PORT_HTTP`              | OAuth2/OIDC server (HTTP)   |
+| **Keycloak HTTPS**      | 14102 | `KEYCLOAK_PORT_HTTPS`             | OAuth2/OIDC server (HTTPS)  |
+| **Valkey (Redis)**      | 14103 | `VALKEY_PORT`                     | DNS records storage         |
+| **Frontend (Future)**   | 14200 | -                                 | Web UI (planned)            |
 
 ## Default Configuration
 
@@ -187,7 +187,7 @@ netstat -an | grep 14000
 If you run into port conflicts, here are common culprits:
 
 - **Port 53**: May require sudo on Unix systems
-- **Port 14103**: Check for other Redis/Valkey instances  
+- **Port 14103**: Check for other Redis/Valkey instances
 - **Ports 14000-14004**: Check for other development services
 - **Ports 14100-14103**: Check for other database/auth services
 

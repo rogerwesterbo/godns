@@ -129,7 +129,7 @@ Configure the API server using environment variables:
 
 | Variable          | Default     | Description                              |
 | ----------------- | ----------- | ---------------------------------------- |
-| `HTTP_API_PORT`   | `:14000`     | Port for the HTTP API server             |
+| `HTTP_API_PORT`   | `:14000`    | Port for the HTTP API server             |
 | `VALKEY_HOST`     | `localhost` | Valkey server host                       |
 | `VALKEY_PORT`     | `6379`      | Valkey server port                       |
 | `VALKEY_USERNAME` | -           | Valkey username (if auth enabled)        |
