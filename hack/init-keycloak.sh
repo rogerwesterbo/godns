@@ -144,7 +144,8 @@ CLI_CLIENT_JSON=$(cat <<EOF
     "webOrigins": ["+"],
     "attributes": {
         "oauth2.device.authorization.grant.enabled": "true",
-        "oidc.ciba.grant.enabled": "false"
+        "oidc.ciba.grant.enabled": "false",
+        "pkce.code.challenge.method": "S256"
     },
     "protocolMappers": [
         {

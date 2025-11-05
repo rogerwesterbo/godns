@@ -72,10 +72,11 @@ services:
       KC_HTTP_ENABLED: 'true'
       KC_HTTP_PORT: 8080
       KC_HEALTH_ENABLED: 'true'
-      KC_METRICS_ENABLED: 'true' # Hostname configuration
+      KC_METRICS_ENABLED: 'true'
+
+      # Hostname configuration
       KC_HOSTNAME: localhost
       KC_HOSTNAME_STRICT: 'false'
-      KC_HOSTNAME_STRICT_HTTPS: 'false'
     command:
       - start
     healthcheck:

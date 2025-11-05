@@ -113,6 +113,7 @@ Two clients are automatically configured:
 - Used by CLI for OAuth2 device flow
 - No client secret (public client)
 - Supports device authorization grant
+- **PKCE enabled** (S256 code challenge method) for enhanced security
 
 ## 🔑 User Management
 
@@ -184,6 +185,8 @@ godnscli login
 ```
 
 Open the URL in your browser, enter the code (or use the complete URL), and login.
+
+**Security Note**: The CLI uses **PKCE (Proof Key for Code Exchange)** with SHA256 code challenge to prevent authorization code interception attacks. This is automatically handled by the CLI - no configuration needed.
 
 ### Token Storage
 
@@ -381,6 +384,7 @@ curl http://localhost:14101/health/ready
 
 - [Keycloak Documentation](https://www.keycloak.org/documentation)
 - [OAuth 2.0 Device Flow](https://oauth.net/2/device-flow/)
+- [PKCE (RFC 7636)](https://datatracker.ietf.org/doc/html/rfc7636) - Proof Key for Code Exchange
 - [OpenID Connect Specification](https://openid.net/connect/)
 - [JWT.io](https://jwt.io/) - JWT decoder
 

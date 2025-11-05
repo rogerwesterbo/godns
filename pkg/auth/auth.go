@@ -2,6 +2,9 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -149,7 +152,24 @@ func GetValidToken(ctx context.Context) (string, error) {
 	return "", fmt.Errorf("no valid token found, please run 'godnscli login' first")
 }
 
-// DeviceCodeLogin performs OAuth2 device code flow authentication
+// generateCodeVerifier creates a random code verifier for PKCE (43-128 characters)
+func generateCodeVerifier() (string, error) {
+	// Generate 32 random bytes (will be 43 chars when base64url encoded)
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
+	}
+	// Base64url encode without padding
+	return base64.RawURLEncoding.EncodeToString(bytes), nil
+}
+
+// generateCodeChallenge creates a code challenge from the verifier using S256 method
+func generateCodeChallenge(verifier string) string {
+	hash := sha256.Sum256([]byte(verifier))
+	return base64.RawURLEncoding.EncodeToString(hash[:])
+}
+
+// DeviceCodeLogin performs OAuth2 device code flow authentication with PKCE
 func DeviceCodeLogin(ctx context.Context) error {
 	keycloakURL := viper.GetString(consts.KEYCLOAK_URL)
 	realm := viper.GetString(consts.KEYCLOAK_REALM)
@@ -162,9 +182,18 @@ func DeviceCodeLogin(ctx context.Context) error {
 	deviceAuthURL := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/auth/device", keycloakURL, realm)
 	tokenURL := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/token", keycloakURL, realm)
 
-	// Step 1: Request device code
+	// Generate PKCE code verifier and challenge
+	codeVerifier, err := generateCodeVerifier()
+	if err != nil {
+		return fmt.Errorf("failed to generate PKCE verifier: %w", err)
+	}
+	codeChallenge := generateCodeChallenge(codeVerifier)
+
+	// Step 1: Request device code with PKCE
 	data := url.Values{}
 	data.Set("client_id", clientID)
+	data.Set("code_challenge", codeChallenge)
+	data.Set("code_challenge_method", "S256")
 
 	resp, err := http.PostForm(deviceAuthURL, data) // #nosec G107 -- URL is constructed from trusted Keycloak configuration, not user input
 	if err != nil {
@@ -218,7 +247,7 @@ func DeviceCodeLogin(ctx context.Context) error {
 		case <-ctx.Done():
 			return fmt.Errorf("authentication timeout")
 		case <-ticker.C:
-			token, err := pollForToken(tokenURL, clientID, deviceResp.DeviceCode)
+			token, err := pollForToken(tokenURL, clientID, deviceResp.DeviceCode, codeVerifier)
 			if err != nil {
 				// authorization_pending is expected, continue polling
 				if strings.Contains(err.Error(), "authorization_pending") {
@@ -241,12 +270,13 @@ func DeviceCodeLogin(ctx context.Context) error {
 	}
 }
 
-// pollForToken attempts to exchange device code for access token
-func pollForToken(tokenURL, clientID, deviceCode string) (*TokenCache, error) {
+// pollForToken attempts to exchange device code for access token with PKCE
+func pollForToken(tokenURL, clientID, deviceCode, codeVerifier string) (*TokenCache, error) {
 	data := url.Values{}
 	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
 	data.Set("client_id", clientID)
 	data.Set("device_code", deviceCode)
+	data.Set("code_verifier", codeVerifier)
 
 	resp, err := http.PostForm(tokenURL, data) // #nosec G107 -- URL is constructed from trusted Keycloak configuration, not user input
 	if err != nil {
