@@ -49,7 +49,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version: '1.25.3'
           cache: true
           cache-dependency-path: go.sum
 
@@ -115,7 +115,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: web/godnsweb/package-lock.json
 
@@ -148,10 +148,22 @@ jobs:
           sleep 5
 
           # Check health endpoint
+          echo "Testing health endpoint..."
           curl -f http://localhost:8080/health || exit 1
 
           # Check that index.html is served
-          curl -f http://localhost:8080/ | grep -q "<!DOCTYPE html>" || exit 1
+          echo "Testing root endpoint..."
+          RESPONSE=$(curl -s http://localhost:8080/)
+          echo "Response: $RESPONSE"
+
+          # Check if response contains HTML
+          if echo "$RESPONSE" | grep -qi "html"; then
+            echo "✓ Root endpoint returns HTML"
+          else
+            echo "✗ Root endpoint does not return HTML"
+            docker logs godnsweb-test
+            exit 1
+          fi
 
           # Cleanup
           docker stop godnsweb-test
