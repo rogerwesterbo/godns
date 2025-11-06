@@ -2,20 +2,87 @@ basePath: /
 definitions:
   github_com_rogerwesterbo_godns_internal_models.DNSRecord:
     properties:
+      caa_flags:
+        description: CAA record specific fields
+        example: 0
+        type: integer
+      caa_tag:
+        description: Property tag (issue, issuewild, iodef)
+        example: issue
+        type: string
+      caa_value:
+        description: Property value
+        example: letsencrypt.org
+        type: string
+      disabled:
+        description: Whether the record is disabled (not served by DNS)
+        type: boolean
+      mx_host:
+        description: Mail server hostname
+        example: mail.example.com.
+        type: string
+      mx_priority:
+        description: MX record specific fields
+        example: 10
+        type: integer
       name:
-        description: Fully qualified domain name
+        description: Common fields for all record types
         example: www.example.lan.
         type: string
+      soa_expire:
+        description: Expire time (seconds)
+        example: 604800
+        type: integer
+      soa_minimum:
+        description: Minimum TTL (seconds)
+        example: 300
+        type: integer
+      soa_mname:
+        description: SOA record specific fields
+        example: ns1.example.com.
+        type: string
+      soa_refresh:
+        description: Refresh interval (seconds)
+        example: 3600
+        type: integer
+      soa_retry:
+        description: Retry interval (seconds)
+        example: 1800
+        type: integer
+      soa_rname:
+        description: Responsible person email
+        example: hostmaster.example.com.
+        type: string
+      soa_serial:
+        description: Serial number (YYYYMMDDnn)
+        example: 2024110601
+        type: integer
+      srv_port:
+        description: Port number (0-65535)
+        example: 443
+        type: integer
+      srv_priority:
+        description: SRV record specific fields
+        example: 10
+        type: integer
+      srv_target:
+        description: Target hostname
+        example: server.example.com.
+        type: string
+      srv_weight:
+        description: Weight for load balancing (0-65535)
+        example: 60
+        type: integer
       ttl:
         description: Time to live in seconds
         example: 300
         type: integer
       type:
-        description: A, AAAA, MX, NS, TXT, etc.
+        description: A, AAAA, MX, NS, TXT, SRV, SOA, CAA, CNAME, ALIAS, PTR
         example: A
         type: string
       value:
-        description: The record value (IP, hostname, etc.)
+        description: Simple value field (for A, AAAA, CNAME, ALIAS, NS, PTR, TXT)
         example: 192.168.1.100
         type: string
     type: object
@@ -25,6 +92,9 @@ definitions:
         description: e.g., "example.lan."
         example: example.lan.
         type: string
+      enabled:
+        description: Whether the zone is enabled/active
+        type: boolean
       records:
         description: DNS records in this zone
         items:
@@ -82,6 +152,23 @@ definitions:
       max_size:
         type: integer
       ttl_minutes:
+        type: integer
+    type: object
+  internal_httpserver_handlers_v1adminhandler.CacheStatsDetailed:
+    properties:
+      capacity:
+        type: integer
+      enabled:
+        type: boolean
+      evictions:
+        type: integer
+      hit_rate:
+        type: number
+      hits:
+        type: integer
+      misses:
+        type: integer
+      size:
         type: integer
     type: object
   internal_httpserver_handlers_v1adminhandler.HealthCheckResultInfo:
@@ -171,6 +258,8 @@ definitions:
         type: boolean
       qps:
         type: integer
+      total_blocked:
+        type: integer
     type: object
   internal_httpserver_handlers_v1adminhandler.SystemStats:
     properties:
@@ -256,7 +345,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.CacheStats'
+            $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.CacheStatsDetailed'
       security:
       - BearerAuth: []
       - OAuth2Password: []
@@ -840,6 +929,109 @@ paths:
       summary: Update a DNS record
       tags:
       - Records
+  /api/v1/zones/{zone}/records/{name}/{type}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Enable or disable a specific DNS record
+      parameters:
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
+      - description: Record name (e.g., www.example.lan.)
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Record type (e.g., A, AAAA, CNAME)
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: Record status
+        in: body
+        name: status
+        required: true
+        schema:
+          properties:
+            enabled:
+              type: boolean
+          type: object
+      responses:
+        "204":
+          description: Record status updated
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Zone or record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      - OAuth2Password: []
+      summary: Set DNS record status
+      tags:
+      - Records
+  /api/v1/zones/{zone}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Enable or disable a DNS zone
+      parameters:
+      - description: Zone name (e.g., example.lan)
+        in: path
+        name: zone
+        required: true
+        type: string
+      - description: Status object with 'enabled' field
+        in: body
+        name: status
+        required: true
+        schema:
+          additionalProperties:
+            type: boolean
+          type: object
+      responses:
+        "204":
+          description: Zone status updated
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Zone not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      - OAuth2Password: []
+      summary: Set zone status
+      tags:
+      - Zones
 produces:
 - application/json
 schemes:

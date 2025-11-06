@@ -77,7 +77,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_httpserver_handlers_v1adminhandler.CacheStats"
+                            "$ref": "#/definitions/internal_httpserver_handlers_v1adminhandler.CacheStatsDetailed"
                         }
                     }
                 }
@@ -1003,16 +1003,262 @@
                     }
                 }
             }
+        },
+        "/api/v1/zones/{zone}/records/{name}/{type}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "OAuth2Password": []
+                    }
+                ],
+                "description": "Enable or disable a specific DNS record",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Records"
+                ],
+                "summary": "Set DNS record status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Record name (e.g., www.example.lan.)",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Record type (e.g., A, AAAA, CNAME)",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Record status",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Record status updated"
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Zone or record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/zones/{zone}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "OAuth2Password": []
+                    }
+                ],
+                "description": "Enable or disable a DNS zone",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Zones"
+                ],
+                "summary": "Set zone status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Zone name (e.g., example.lan)",
+                        "name": "zone",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status object with 'enabled' field",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Zone status updated"
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Zone not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "github_com_rogerwesterbo_godns_internal_models.DNSRecord": {
             "type": "object",
             "properties": {
+                "caa_flags": {
+                    "description": "CAA record specific fields",
+                    "type": "integer",
+                    "example": 0
+                },
+                "caa_tag": {
+                    "description": "Property tag (issue, issuewild, iodef)",
+                    "type": "string",
+                    "example": "issue"
+                },
+                "caa_value": {
+                    "description": "Property value",
+                    "type": "string",
+                    "example": "letsencrypt.org"
+                },
+                "disabled": {
+                    "description": "Whether the record is disabled (not served by DNS)",
+                    "type": "boolean"
+                },
+                "mx_host": {
+                    "description": "Mail server hostname",
+                    "type": "string",
+                    "example": "mail.example.com."
+                },
+                "mx_priority": {
+                    "description": "MX record specific fields",
+                    "type": "integer",
+                    "example": 10
+                },
                 "name": {
-                    "description": "Fully qualified domain name",
+                    "description": "Common fields for all record types",
                     "type": "string",
                     "example": "www.example.lan."
+                },
+                "soa_expire": {
+                    "description": "Expire time (seconds)",
+                    "type": "integer",
+                    "example": 604800
+                },
+                "soa_minimum": {
+                    "description": "Minimum TTL (seconds)",
+                    "type": "integer",
+                    "example": 300
+                },
+                "soa_mname": {
+                    "description": "SOA record specific fields",
+                    "type": "string",
+                    "example": "ns1.example.com."
+                },
+                "soa_refresh": {
+                    "description": "Refresh interval (seconds)",
+                    "type": "integer",
+                    "example": 3600
+                },
+                "soa_retry": {
+                    "description": "Retry interval (seconds)",
+                    "type": "integer",
+                    "example": 1800
+                },
+                "soa_rname": {
+                    "description": "Responsible person email",
+                    "type": "string",
+                    "example": "hostmaster.example.com."
+                },
+                "soa_serial": {
+                    "description": "Serial number (YYYYMMDDnn)",
+                    "type": "integer",
+                    "example": 2024110601
+                },
+                "srv_port": {
+                    "description": "Port number (0-65535)",
+                    "type": "integer",
+                    "example": 443
+                },
+                "srv_priority": {
+                    "description": "SRV record specific fields",
+                    "type": "integer",
+                    "example": 10
+                },
+                "srv_target": {
+                    "description": "Target hostname",
+                    "type": "string",
+                    "example": "server.example.com."
+                },
+                "srv_weight": {
+                    "description": "Weight for load balancing (0-65535)",
+                    "type": "integer",
+                    "example": 60
                 },
                 "ttl": {
                     "description": "Time to live in seconds",
@@ -1020,12 +1266,12 @@
                     "example": 300
                 },
                 "type": {
-                    "description": "A, AAAA, MX, NS, TXT, etc.",
+                    "description": "A, AAAA, MX, NS, TXT, SRV, SOA, CAA, CNAME, ALIAS, PTR",
                     "type": "string",
                     "example": "A"
                 },
                 "value": {
-                    "description": "The record value (IP, hostname, etc.)",
+                    "description": "Simple value field (for A, AAAA, CNAME, ALIAS, NS, PTR, TXT)",
                     "type": "string",
                     "example": "192.168.1.100"
                 }
@@ -1038,6 +1284,10 @@
                     "description": "e.g., \"example.lan.\"",
                     "type": "string",
                     "example": "example.lan."
+                },
+                "enabled": {
+                    "description": "Whether the zone is enabled/active",
+                    "type": "boolean"
                 },
                 "records": {
                     "description": "DNS records in this zone",
@@ -1124,6 +1374,32 @@
                     "type": "integer"
                 },
                 "ttl_minutes": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_httpserver_handlers_v1adminhandler.CacheStatsDetailed": {
+            "type": "object",
+            "properties": {
+                "capacity": {
+                    "type": "integer"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "evictions": {
+                    "type": "integer"
+                },
+                "hit_rate": {
+                    "type": "number"
+                },
+                "hits": {
+                    "type": "integer"
+                },
+                "misses": {
+                    "type": "integer"
+                },
+                "size": {
                     "type": "integer"
                 }
             }
@@ -1259,6 +1535,9 @@
                     "type": "boolean"
                 },
                 "qps": {
+                    "type": "integer"
+                },
+                "total_blocked": {
                     "type": "integer"
                 }
             }
