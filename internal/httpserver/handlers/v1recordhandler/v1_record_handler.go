@@ -172,7 +172,7 @@ func (h *RecordHandler) SetRecordStatus(w http.ResponseWriter, req *http.Request
 	var statusReq struct {
 		Enabled bool `json:"enabled"`
 	}
-	
+
 	if err := helpers.DecodeJSON(req.Body, &statusReq); err != nil {
 		helpers.SendError(w, http.StatusBadRequest, "Invalid request body: "+err.Error())
 		return

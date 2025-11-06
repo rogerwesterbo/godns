@@ -20,7 +20,7 @@ export function useSortableData<T>(
 
   const sortedItems = useMemo(() => {
     const sortableItems = [...items];
-    
+
     if (sortConfig.key !== null && sortConfig.direction !== null) {
       sortableItems.sort((a, b) => {
         // Check if there's a custom comparator
@@ -37,7 +37,7 @@ export function useSortableData<T>(
         if (bValue === null || bValue === undefined) return -1;
 
         let comparison = 0;
-        
+
         // Handle different types
         if (typeof aValue === 'string' && typeof bValue === 'string') {
           comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
@@ -56,7 +56,7 @@ export function useSortableData<T>(
 
   const requestSort = (key: keyof T | string) => {
     let direction: SortDirection = 'asc';
-    
+
     if (sortConfig.key === key) {
       if (sortConfig.direction === 'asc') {
         direction = 'desc';

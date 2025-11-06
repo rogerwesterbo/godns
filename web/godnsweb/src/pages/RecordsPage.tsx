@@ -14,7 +14,13 @@ import {
   AlertDialog,
   IconButton,
 } from '@radix-ui/themes';
-import { PlusIcon, MagnifyingGlassIcon, Pencil1Icon, TrashIcon, ReloadIcon } from '@radix-ui/react-icons';
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  Pencil1Icon,
+  TrashIcon,
+  ReloadIcon,
+} from '@radix-ui/react-icons';
 import * as api from '../services/api';
 import { RecordDialog, SortableColumnHeader } from '../components';
 import { formatRecordValue } from '../utils/recordFormatting';
@@ -117,10 +123,11 @@ export default function RecordsPage() {
   });
 
   // Sortable data
-  const { items: sortedRecords, requestSort, sortConfig } = useSortableData<RecordWithZone>(
-    filteredRecords,
-    'name'
-  );
+  const {
+    items: sortedRecords,
+    requestSort,
+    sortConfig,
+  } = useSortableData<RecordWithZone>(filteredRecords, 'name');
 
   // Pagination
   const totalPages = Math.ceil(sortedRecords.length / itemsPerPage);
@@ -232,7 +239,7 @@ export default function RecordsPage() {
                       column="name"
                       currentSortKey={sortConfig.key as keyof RecordWithZone | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       Name
                     </SortableColumnHeader>
@@ -240,7 +247,7 @@ export default function RecordsPage() {
                       column="type"
                       currentSortKey={sortConfig.key as keyof RecordWithZone | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       Type
                     </SortableColumnHeader>
@@ -249,7 +256,7 @@ export default function RecordsPage() {
                       column="ttl"
                       currentSortKey={sortConfig.key as keyof RecordWithZone | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       TTL
                     </SortableColumnHeader>
@@ -257,7 +264,7 @@ export default function RecordsPage() {
                       column="zone"
                       currentSortKey={sortConfig.key as keyof RecordWithZone | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       Zone
                     </SortableColumnHeader>

@@ -159,7 +159,12 @@ export async function getRecord(domain: string, name: string, type: string): Pro
   );
 }
 
-export async function setRecordStatus(domain: string, name: string, type: string, enabled: boolean): Promise<void> {
+export async function setRecordStatus(
+  domain: string,
+  name: string,
+  type: string,
+  enabled: boolean
+): Promise<void> {
   return apiRequest<void>(
     `/api/v1/zones/${encodeURIComponent(domain)}/records/${encodeURIComponent(name)}/${encodeURIComponent(type)}/status`,
     {
@@ -210,7 +215,7 @@ export async function search(
 // Export endpoints
 export async function exportAllZones(format: string = 'bind'): Promise<string> {
   const token = await getValidAccessToken();
-  
+
   if (!token) {
     throw new ApiError(401, 'Not authenticated');
   }
@@ -230,7 +235,7 @@ export async function exportAllZones(format: string = 'bind'): Promise<string> {
 
 export async function exportZone(domain: string, format: string = 'bind'): Promise<string> {
   const token = await getValidAccessToken();
-  
+
   if (!token) {
     throw new ApiError(401, 'Not authenticated');
   }
@@ -251,4 +256,4 @@ export async function exportZone(domain: string, format: string = 'bind'): Promi
   return response.text();
 }
 
-export { ApiError};
+export { ApiError };

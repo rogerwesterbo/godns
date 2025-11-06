@@ -84,7 +84,7 @@ export default function ExportPage() {
 
   const handleCopy = async () => {
     if (!exportedData) return;
-    
+
     try {
       await navigator.clipboard.writeText(exportedData);
     } catch (err) {
@@ -110,8 +110,8 @@ export default function ExportPage() {
           <InfoCircledIcon />
         </Callout.Icon>
         <Callout.Text>
-          Export your DNS zones in various formats compatible with different DNS servers.
-          Only <strong>enabled zones</strong> can be exported. Disabled zones are automatically excluded.
+          Export your DNS zones in various formats compatible with different DNS servers. Only{' '}
+          <strong>enabled zones</strong> can be exported. Disabled zones are automatically excluded.
         </Callout.Text>
       </Callout.Root>
 

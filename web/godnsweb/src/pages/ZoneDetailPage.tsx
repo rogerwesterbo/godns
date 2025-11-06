@@ -78,10 +78,11 @@ export default function ZoneDetailPage() {
   }, [zone, filter, typeFilter]);
 
   // Sortable data
-  const { items: sortedRecords, requestSort, sortConfig } = useSortableData<api.DNSRecord>(
-    filteredRecords,
-    'name'
-  );
+  const {
+    items: sortedRecords,
+    requestSort,
+    sortConfig,
+  } = useSortableData<api.DNSRecord>(filteredRecords, 'name');
 
   // Pagination
   const totalPages = Math.ceil(sortedRecords.length / itemsPerPage);
@@ -122,7 +123,7 @@ export default function ZoneDetailPage() {
     try {
       await api.setZoneStatus(zone.domain, enabled);
       // Update local state
-      setZone(prevZone => prevZone ? { ...prevZone, enabled } : null);
+      setZone(prevZone => (prevZone ? { ...prevZone, enabled } : null));
     } catch (err) {
       console.error('Failed to update zone status:', err);
       setError(err instanceof Error ? err.message : 'Failed to update zone status');
@@ -240,8 +241,8 @@ export default function ZoneDetailPage() {
           <Box>
             <Flex align="center" gap="2">
               <Heading size="8">{zone.domain}</Heading>
-              <Badge color={zone.enabled ?? true ? 'green' : 'red'}>
-                {zone.enabled ?? true ? 'Active' : 'Disabled'}
+              <Badge color={(zone.enabled ?? true) ? 'green' : 'red'}>
+                {(zone.enabled ?? true) ? 'Active' : 'Disabled'}
               </Badge>
             </Flex>
             <Text size="2" color="gray">
@@ -258,32 +259,34 @@ export default function ZoneDetailPage() {
           </Button>
           <AlertDialog.Root>
             <AlertDialog.Trigger>
-              <Button 
-                size="3"
-                variant="soft" 
-                color={zone.enabled ?? true ? 'orange' : 'green'}
-              >
-                {zone.enabled ?? true ? <LockClosedIcon /> : <LockOpen1Icon />}
-                {zone.enabled ?? true ? 'Disable Zone' : 'Enable Zone'}
+              <Button size="3" variant="soft" color={(zone.enabled ?? true) ? 'orange' : 'green'}>
+                {(zone.enabled ?? true) ? <LockClosedIcon /> : <LockOpen1Icon />}
+                {(zone.enabled ?? true) ? 'Disable Zone' : 'Enable Zone'}
               </Button>
             </AlertDialog.Trigger>
             <AlertDialog.Content>
               <AlertDialog.Title>
-                {zone.enabled ?? true ? 'Disable' : 'Enable'} Zone
+                {(zone.enabled ?? true) ? 'Disable' : 'Enable'} Zone
               </AlertDialog.Title>
               <AlertDialog.Description>
-                {zone.enabled ?? true ? (
+                {(zone.enabled ?? true) ? (
                   <>
-                    Are you sure you want to <strong>disable</strong> the zone <strong>{zone.domain}</strong>?
-                    <br /><br />
-                    This will prevent the DNS server from responding to queries for this zone and all its {zone.records.length} record{zone.records.length !== 1 ? 's' : ''}. 
-                    The zone data will be preserved and can be re-enabled later.
+                    Are you sure you want to <strong>disable</strong> the zone{' '}
+                    <strong>{zone.domain}</strong>?
+                    <br />
+                    <br />
+                    This will prevent the DNS server from responding to queries for this zone and
+                    all its {zone.records.length} record{zone.records.length !== 1 ? 's' : ''}. The
+                    zone data will be preserved and can be re-enabled later.
                   </>
                 ) : (
                   <>
-                    Are you sure you want to <strong>enable</strong> the zone <strong>{zone.domain}</strong>?
-                    <br /><br />
-                    This will allow the DNS server to respond to queries for this zone and all its {zone.records.length} record{zone.records.length !== 1 ? 's' : ''}.
+                    Are you sure you want to <strong>enable</strong> the zone{' '}
+                    <strong>{zone.domain}</strong>?
+                    <br />
+                    <br />
+                    This will allow the DNS server to respond to queries for this zone and all its{' '}
+                    {zone.records.length} record{zone.records.length !== 1 ? 's' : ''}.
                   </>
                 )}
               </AlertDialog.Description>
@@ -294,11 +297,11 @@ export default function ZoneDetailPage() {
                   </Button>
                 </AlertDialog.Cancel>
                 <AlertDialog.Action>
-                  <Button 
-                    color={zone.enabled ?? true ? 'orange' : 'green'}
+                  <Button
+                    color={(zone.enabled ?? true) ? 'orange' : 'green'}
                     onClick={() => handleToggleZoneStatus(!(zone.enabled ?? true))}
                   >
-                    {zone.enabled ?? true ? 'Disable Zone' : 'Enable Zone'}
+                    {(zone.enabled ?? true) ? 'Disable Zone' : 'Enable Zone'}
                   </Button>
                 </AlertDialog.Action>
               </Flex>
@@ -391,7 +394,7 @@ export default function ZoneDetailPage() {
                       column="name"
                       currentSortKey={sortConfig.key as keyof api.DNSRecord | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       Name
                     </SortableColumnHeader>
@@ -399,7 +402,7 @@ export default function ZoneDetailPage() {
                       column="type"
                       currentSortKey={sortConfig.key as keyof api.DNSRecord | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       Type
                     </SortableColumnHeader>
@@ -408,7 +411,7 @@ export default function ZoneDetailPage() {
                       column="ttl"
                       currentSortKey={sortConfig.key as keyof api.DNSRecord | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       TTL
                     </SortableColumnHeader>
@@ -578,8 +581,8 @@ export default function ZoneDetailPage() {
                 {togglingRecord?.disabled ? 'Enable' : 'Disable'} Record
               </AlertDialog.Title>
               <AlertDialog.Description>
-                Are you sure you want to {togglingRecord?.disabled ? 'enable' : 'disable'} the record{' '}
-                <strong>{togglingRecord?.name}</strong> ({togglingRecord?.type})?
+                Are you sure you want to {togglingRecord?.disabled ? 'enable' : 'disable'} the
+                record <strong>{togglingRecord?.name}</strong> ({togglingRecord?.type})?
               </AlertDialog.Description>
               {!togglingRecord?.disabled && (
                 <Text as="p" mt="2" color="orange">

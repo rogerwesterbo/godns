@@ -153,7 +153,11 @@ export default function DashboardPage() {
                   <Heading size="4">Cache Hit Rate</Heading>
                 </Flex>
                 <Flex direction="column" gap="1">
-                  <Text size="7" weight="bold" color={systemStats?.query_log?.enabled ? 'green' : 'gray'}>
+                  <Text
+                    size="7"
+                    weight="bold"
+                    color={systemStats?.query_log?.enabled ? 'green' : 'gray'}
+                  >
                     {systemStats?.query_log?.enabled
                       ? `${(systemStats.query_log.cache_hit_rate * 100).toFixed(1)}%`
                       : 'Disabled'}

@@ -28,14 +28,13 @@ export default function ZonesPage() {
   const itemsPerPage = 10;
 
   // Sortable data hook with custom comparator for records count
-  const { items: sortedZones, requestSort, sortConfig } = useSortableData(
-    filteredZones,
-    'domain',
-    'asc',
-    {
-      recordCount: (a, b) => a.records.length - b.records.length,
-    }
-  );
+  const {
+    items: sortedZones,
+    requestSort,
+    sortConfig,
+  } = useSortableData(filteredZones, 'domain', 'asc', {
+    recordCount: (a, b) => a.records.length - b.records.length,
+  });
 
   useEffect(() => {
     loadZones();
@@ -149,7 +148,7 @@ export default function ZonesPage() {
                       column={'domain' as keyof api.DNSZone}
                       currentSortKey={sortConfig.key as keyof api.DNSZone | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       Zone Name
                     </SortableColumnHeader>
@@ -157,7 +156,7 @@ export default function ZonesPage() {
                       column={'recordCount' as keyof api.DNSZone}
                       currentSortKey={sortConfig.key as keyof api.DNSZone | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       Records
                     </SortableColumnHeader>
@@ -165,7 +164,7 @@ export default function ZonesPage() {
                       column={'enabled' as keyof api.DNSZone}
                       currentSortKey={sortConfig.key as keyof api.DNSZone | null}
                       currentSortDirection={sortConfig.direction}
-                      onSort={(col) => requestSort(col as string)}
+                      onSort={col => requestSort(col as string)}
                     >
                       Status
                     </SortableColumnHeader>
@@ -185,8 +184,8 @@ export default function ZonesPage() {
                       </Table.Cell>
                       <Table.Cell>{zone.records.length}</Table.Cell>
                       <Table.Cell>
-                        <Badge color={zone.enabled ?? true ? 'green' : 'red'}>
-                          {zone.enabled ?? true ? 'Active' : 'Disabled'}
+                        <Badge color={(zone.enabled ?? true) ? 'green' : 'red'}>
+                          {(zone.enabled ?? true) ? 'Active' : 'Disabled'}
                         </Badge>
                       </Table.Cell>
                     </Table.Row>

@@ -18,7 +18,7 @@ export function SortableColumnHeader<T>({
   children,
 }: SortableColumnHeaderProps<T>) {
   const isActive = currentSortKey === column;
-  
+
   return (
     <Table.ColumnHeaderCell
       style={{ cursor: 'pointer', userSelect: 'none' }}
