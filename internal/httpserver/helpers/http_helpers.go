@@ -23,6 +23,15 @@ func SendJSON(w http.ResponseWriter, status int, data interface{}) {
 	}
 }
 
+// RespondJSON encodes and sends a JSON response with status 200
+// If encoding fails, it returns an internal server error
+func RespondJSON(w http.ResponseWriter, data interface{}) {
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		vlog.Errorf("Failed to encode JSON response: %v", err)
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
 // SendError sends a JSON error response with the given status code and message
 func SendError(w http.ResponseWriter, status int, message string) {
 	w.WriteHeader(status)

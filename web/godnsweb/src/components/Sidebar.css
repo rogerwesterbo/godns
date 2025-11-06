@@ -31,6 +31,15 @@
   color: var(--accent-11);
 }
 
+.nav-item-child {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.nav-item-child:hover {
+  background-color: var(--gray-a2);
+}
+
 .nav-icon {
   display: flex;
   align-items: center;

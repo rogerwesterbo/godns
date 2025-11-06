@@ -28,6 +28,11 @@ func NewV1ZoneService(client valkeyinterface.ValkeyInterface) *V1ZoneService {
 	}
 }
 
+// GetClient returns the Valkey client (used for creating dependent services)
+func (s *V1ZoneService) GetClient() valkeyinterface.ValkeyInterface {
+	return s.client
+}
+
 // CreateZone creates a new DNS zone
 func (s *V1ZoneService) CreateZone(ctx context.Context, zone *models.DNSZone) error {
 	if zone.Domain == "" {
@@ -38,6 +43,9 @@ func (s *V1ZoneService) CreateZone(ctx context.Context, zone *models.DNSZone) er
 	if !strings.HasSuffix(zone.Domain, ".") {
 		zone.Domain += "."
 	}
+
+	// Set zone as enabled by default if not specified
+	zone.Enabled = true
 
 	// Check if zone already exists
 	zoneKey := zoneKeyPrefix + zone.Domain
@@ -115,6 +123,20 @@ func (s *V1ZoneService) GetZone(ctx context.Context, domain string) (*models.DNS
 		return nil, fmt.Errorf("failed to unmarshal zone: %w", err)
 	}
 
+	// For backward compatibility: if enabled field is not set in storage,
+	// check if it exists in the raw JSON. If not, default to true.
+	// This handles zones created before the enabled field was added.
+	if !zone.Enabled {
+		var rawZone map[string]interface{}
+		if err := json.Unmarshal([]byte(data), &rawZone); err == nil {
+			if _, exists := rawZone["enabled"]; !exists {
+				// Field doesn't exist in storage, default to enabled
+				zone.Enabled = true
+			}
+			// If field exists and is false, keep it false (user explicitly disabled it)
+		}
+	}
+
 	return &zone, nil
 }
 
@@ -189,6 +211,35 @@ func (s *V1ZoneService) UpdateZone(ctx context.Context, domain string, zone *mod
 	return nil
 }
 
+// SetZoneEnabled sets the enabled status of a zone
+func (s *V1ZoneService) SetZoneEnabled(ctx context.Context, domain string, enabled bool) error {
+	if !strings.HasSuffix(domain, ".") {
+		domain += "."
+	}
+
+	// Get the zone
+	zone, err := s.GetZone(ctx, domain)
+	if err != nil {
+		return fmt.Errorf("zone not found: %w", err)
+	}
+
+	// Update enabled status
+	zone.Enabled = enabled
+
+	// Save updated zone
+	zoneKey := zoneKeyPrefix + domain
+	zoneData, err := json.Marshal(zone)
+	if err != nil {
+		return fmt.Errorf("failed to marshal zone: %w", err)
+	}
+
+	if err := s.client.SetData(ctx, zoneKey, string(zoneData)); err != nil {
+		return fmt.Errorf("failed to update zone status: %w", err)
+	}
+
+	return nil
+}
+
 // DeleteZone deletes a DNS zone and all its records
 func (s *V1ZoneService) DeleteZone(ctx context.Context, domain string) error {
 	if !strings.HasSuffix(domain, ".") {
@@ -237,175 +288,6 @@ func (s *V1ZoneService) DeleteZone(ctx context.Context, domain string) error {
 	return nil
 }
 
-// CreateRecord adds a new record to a zone
-func (s *V1ZoneService) CreateRecord(ctx context.Context, domain string, record *models.DNSRecord) error {
-	if !strings.HasSuffix(domain, ".") {
-		domain += "."
-	}
-
-	// Check if zone exists
-	zone, err := s.GetZone(ctx, domain)
-	if err != nil {
-		return fmt.Errorf("zone not found: %w", err)
-	}
-
-	// Validate record
-	if err := s.validateRecord(record); err != nil {
-		return err
-	}
-
-	// Check if record already exists
-	for _, r := range zone.Records {
-		if r.Name == record.Name && r.Type == record.Type {
-			return fmt.Errorf("record %s of type %s already exists in zone", record.Name, record.Type)
-		}
-	}
-
-	// Add record to zone
-	zone.Records = append(zone.Records, *record)
-
-	// Update zone
-	zoneData, err := json.Marshal(zone)
-	if err != nil {
-		return fmt.Errorf("failed to marshal zone: %w", err)
-	}
-
-	zoneKey := zoneKeyPrefix + domain
-	if err := s.client.SetData(ctx, zoneKey, string(zoneData)); err != nil {
-		return fmt.Errorf("failed to update zone: %w", err)
-	}
-
-	// Save individual record
-	if err := s.saveRecord(ctx, domain, record); err != nil {
-		return fmt.Errorf("failed to save record: %w", err)
-	}
-
-	return nil
-}
-
-// GetRecord retrieves a specific record from a zone
-func (s *V1ZoneService) GetRecord(ctx context.Context, domain, name, recordType string) (*models.DNSRecord, error) {
-	if !strings.HasSuffix(domain, ".") {
-		domain += "."
-	}
-
-	zone, err := s.GetZone(ctx, domain)
-	if err != nil {
-		return nil, fmt.Errorf("zone not found: %w", err)
-	}
-
-	for _, record := range zone.Records {
-		if record.Name == name && record.Type == recordType {
-			return &record, nil
-		}
-	}
-
-	return nil, fmt.Errorf("record not found")
-}
-
-// UpdateRecord updates an existing record in a zone
-func (s *V1ZoneService) UpdateRecord(ctx context.Context, domain, name, recordType string, record *models.DNSRecord) error {
-	if !strings.HasSuffix(domain, ".") {
-		domain += "."
-	}
-
-	// Get zone
-	zone, err := s.GetZone(ctx, domain)
-	if err != nil {
-		return fmt.Errorf("zone not found: %w", err)
-	}
-
-	// Validate record
-	if err := s.validateRecord(record); err != nil {
-		return err
-	}
-
-	// Find and update the record
-	found := false
-	for i, r := range zone.Records {
-		if r.Name == name && r.Type == recordType {
-			zone.Records[i] = *record
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		return fmt.Errorf("record not found")
-	}
-
-	// Update zone
-	zoneData, err := json.Marshal(zone)
-	if err != nil {
-		return fmt.Errorf("failed to marshal zone: %w", err)
-	}
-
-	zoneKey := zoneKeyPrefix + domain
-	if err := s.client.SetData(ctx, zoneKey, string(zoneData)); err != nil {
-		return fmt.Errorf("failed to update zone: %w", err)
-	}
-
-	// Delete old record
-	oldRecordKey := recordKeyPrefix + domain + ":" + name + ":" + recordType
-	_ = s.client.DeleteData(ctx, oldRecordKey)
-
-	// Save updated record
-	if err := s.saveRecord(ctx, domain, record); err != nil {
-		return fmt.Errorf("failed to save record: %w", err)
-	}
-
-	return nil
-}
-
-// DeleteRecord deletes a record from a zone
-func (s *V1ZoneService) DeleteRecord(ctx context.Context, domain, name, recordType string) error {
-	if !strings.HasSuffix(domain, ".") {
-		domain += "."
-	}
-
-	// Get zone
-	zone, err := s.GetZone(ctx, domain)
-	if err != nil {
-		return fmt.Errorf("zone not found: %w", err)
-	}
-
-	// Find and remove the record
-	found := false
-	newRecords := make([]models.DNSRecord, 0, len(zone.Records))
-	for _, r := range zone.Records {
-		if r.Name == name && r.Type == recordType {
-			found = true
-			continue
-		}
-		newRecords = append(newRecords, r)
-	}
-
-	if !found {
-		return fmt.Errorf("record not found")
-	}
-
-	zone.Records = newRecords
-
-	// Update zone
-	zoneData, err := json.Marshal(zone)
-	if err != nil {
-		return fmt.Errorf("failed to marshal zone: %w", err)
-	}
-
-	zoneKey := zoneKeyPrefix + domain
-	if err := s.client.SetData(ctx, zoneKey, string(zoneData)); err != nil {
-		return fmt.Errorf("failed to update zone: %w", err)
-	}
-
-	// Delete individual record
-	recordKey := recordKeyPrefix + domain + ":" + name + ":" + recordType
-	if err := s.client.DeleteData(ctx, recordKey); err != nil {
-		return fmt.Errorf("failed to delete record: %w", err)
-	}
-
-	return nil
-}
-
 // Helper functions
 
 func (s *V1ZoneService) listZoneDomains(ctx context.Context) ([]string, error) {
@@ -447,32 +329,27 @@ func (s *V1ZoneService) deleteZoneRecords(ctx context.Context, domain string) er
 }
 
 func (s *V1ZoneService) validateRecord(record *models.DNSRecord) error {
-	if record.Name == "" {
-		return fmt.Errorf("record name cannot be empty")
-	}
-	if record.Type == "" {
-		return fmt.Errorf("record type cannot be empty")
-	}
-	if record.Value == "" {
-		return fmt.Errorf("record value cannot be empty")
-	}
-
-	// Validate record type
-	validTypes := map[string]bool{
-		"A": true, "AAAA": true, "CNAME": true, "MX": true,
-		"NS": true, "TXT": true, "PTR": true, "SRV": true,
-		"SOA": true, "CAA": true,
-	}
-	if !validTypes[strings.ToUpper(record.Type)] {
-		return fmt.Errorf("invalid record type: %s", record.Type)
-	}
-
 	// Normalize type to uppercase
 	record.Type = strings.ToUpper(record.Type)
 
 	// Set default TTL if not specified
 	if record.TTL == 0 {
 		record.TTL = 300 // 5 minutes default
+	}
+
+	// Validate record type
+	validTypes := map[string]bool{
+		"A": true, "AAAA": true, "CNAME": true, "ALIAS": true, "MX": true,
+		"NS": true, "TXT": true, "PTR": true, "SRV": true,
+		"SOA": true, "CAA": true,
+	}
+	if !validTypes[record.Type] {
+		return fmt.Errorf("invalid record type: %s", record.Type)
+	}
+
+	// Use the model's built-in validation for type-specific fields
+	if err := record.Validate(); err != nil {
+		return err
 	}
 
 	return nil

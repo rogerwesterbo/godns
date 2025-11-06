@@ -28,7 +28,7 @@ func FormatCoreDNSZone(zone *models.DNSZone) string {
 	// Add SOA record if exists, otherwise create a default one
 	hasSOA := false
 	for _, record := range zone.Records {
-		if record.Type == "SOA" {
+		if record.Type == "SOA" && !record.Disabled {
 			sb.WriteString(fmt.Sprintf("@\t%d\tIN\tSOA\t%s\n", record.TTL, record.Value))
 			hasSOA = true
 			break
@@ -41,10 +41,10 @@ func FormatCoreDNSZone(zone *models.DNSZone) string {
 	}
 	_, _ = sb.WriteString("\n")
 
-	// Add other records
+	// Add other records (skip disabled records)
 	for _, record := range zone.Records {
-		if record.Type == "SOA" {
-			continue // Already handled
+		if record.Type == "SOA" || record.Disabled {
+			continue // Skip SOA (already handled) and disabled records
 		}
 
 		name := record.Name

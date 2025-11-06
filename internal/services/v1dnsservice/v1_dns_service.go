@@ -13,9 +13,9 @@ import (
 
 const (
 	// Valkey key prefix for DNS zones
-	zoneKeyPrefix = "dns:zone:"
+	zoneKeyPrefix = "zone:"
 	// Valkey key prefix for DNS records
-	recordKeyPrefix = "dns:record:"
+	recordKeyPrefix = "record:"
 )
 
 // DNSService handles DNS record management and storage
@@ -118,13 +118,41 @@ func (s *DNSService) SetZone(ctx context.Context, zone *models.DNSZone) error {
 func (s *DNSService) LookupRecord(ctx context.Context, name string, qtype uint16) ([]dns.RR, error) {
 	recordType := dns.TypeToString[qtype]
 
-	record, err := s.GetRecord(ctx, name, recordType)
+	// First find which zone this record belongs to
+	zone, hasZone := s.HasZone(ctx, name)
+	if !hasZone {
+		return nil, fmt.Errorf("no zone found for %s", name)
+	}
+
+	// Check if the zone is enabled
+	zoneData, err := s.GetZone(ctx, zone)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get zone: %w", err)
+	}
+	if !zoneData.Enabled {
+		return nil, fmt.Errorf("zone %s is disabled", zone)
+	}
+
+	// Build the correct record key with zone
+	key := s.buildRecordKeyWithZone(zone, name, recordType)
+
+	data, err := s.valkeyClient.GetData(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get DNS record: %w", err)
+	}
+
+	var record models.DNSRecord
+	if err := json.Unmarshal([]byte(data), &record); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal DNS record: %w", err)
+	}
+
+	// Check if the record is disabled
+	if record.Disabled {
+		return nil, fmt.Errorf("record %s is disabled", name)
 	}
 
 	// Convert the record to DNS RR format
-	rr, err := s.convertToRR(record)
+	rr, err := s.convertToRR(&record)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert record to RR: %w", err)
 	}
@@ -151,15 +179,25 @@ func (s *DNSService) HasZone(ctx context.Context, name string) (string, bool) {
 	return "", false
 }
 
-// buildRecordKey creates a Valkey key for a DNS record
+// buildRecordKey creates a Valkey key for a DNS record (legacy, for compatibility)
 func (s *DNSService) buildRecordKey(name string, recordType string) string {
 	return fmt.Sprintf("%s%s:%s", recordKeyPrefix, name, recordType)
 }
 
+// buildRecordKeyWithZone creates a Valkey key for a DNS record with zone prefix
+// This matches the format used by v1zoneservice: record:domain:name:type
+func (s *DNSService) buildRecordKeyWithZone(domain, name, recordType string) string {
+	return fmt.Sprintf("%s%s:%s:%s", recordKeyPrefix, domain, name, recordType)
+}
+
 // convertToRR converts a DNSRecord model to a dns.RR
 func (s *DNSService) convertToRR(record *models.DNSRecord) (dns.RR, error) {
-	// Build the RR string format: "name TTL class type value"
-	rrString := fmt.Sprintf("%s %d IN %s %s", record.Name, record.TTL, record.Type, record.Value)
+	// Use GetRData() to get the appropriate string representation for the record type
+	// This handles type-specific fields (MX, SRV, SOA, CAA) correctly
+	rdata := record.GetRData()
+
+	// Build the RR string format: "name TTL class type rdata"
+	rrString := fmt.Sprintf("%s %d IN %s %s", record.Name, record.TTL, record.Type, rdata)
 
 	rr, err := dns.NewRR(rrString)
 	if err != nil {

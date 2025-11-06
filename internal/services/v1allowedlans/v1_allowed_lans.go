@@ -101,6 +101,12 @@ func (s *AllowedLANsService) IsAllowed(ip netip.Addr) bool {
 		return false
 	}
 
+	// Normalize IPv4-mapped IPv6 addresses (::ffff:192.0.2.1) to IPv4 (192.0.2.1)
+	// This ensures Docker containers using IPv6 stack can match IPv4 prefixes
+	if ip.Is4In6() {
+		ip = ip.Unmap()
+	}
+
 	for _, prefix := range s.prefixes {
 		if prefix.Contains(ip) {
 			return true

@@ -13,6 +13,7 @@ import {
 } from '@radix-ui/themes';
 import { MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import * as api from '../services/api';
+import { formatRecordValue } from '../utils/recordFormatting';
 
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -115,7 +116,7 @@ export function SearchPage() {
             Found {results.total} result{results.total !== 1 ? 's' : ''} for "{results.query}"
           </Text>
 
-          {results.results.length === 0 ? (
+          {!results.results || results.results.length === 0 ? (
             <Card>
               <Text color="gray">No results found. Try a different search query.</Text>
             </Card>
@@ -139,7 +140,7 @@ export function SearchPage() {
                         </Link>
                         <Text size="2" color="gray" mt="1">
                           {result.zone.records?.length || 0} record
-                          {result.zone.records?.length !== 1 ? 's' : ''}
+                          {(result.zone.records?.length || 0) !== 1 ? 's' : ''}
                         </Text>
                       </Box>
                     )}
@@ -162,7 +163,7 @@ export function SearchPage() {
                         </Text>
                         <Flex gap="4" mt="2">
                           <Text size="2">
-                            <Text color="gray">Value:</Text> {result.record.value}
+                            <Text color="gray">Value:</Text> {formatRecordValue(result.record)}
                           </Text>
                           <Text size="2">
                             <Text color="gray">TTL:</Text> {result.record.ttl}s

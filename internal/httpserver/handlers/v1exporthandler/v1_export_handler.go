@@ -97,6 +97,8 @@ func (h *ExportHandler) ExportZone(w http.ResponseWriter, req *http.Request, dom
 		vlog.Errorf("Failed to export zone %s: %v", domain, err)
 		if strings.Contains(err.Error(), "not found") {
 			helpers.SendError(w, http.StatusNotFound, "Zone not found")
+		} else if strings.Contains(err.Error(), "disabled") {
+			helpers.SendError(w, http.StatusBadRequest, "Zone is disabled and cannot be exported")
 		} else {
 			helpers.SendError(w, http.StatusInternalServerError, "Failed to export zone")
 		}

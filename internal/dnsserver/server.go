@@ -3,6 +3,7 @@ package dnsserver
 import (
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/miekg/dns"
 	"github.com/rogerwesterbo/godns/internal/dnsserver/handlers"
@@ -40,8 +41,23 @@ func (s *Server) Start() error {
 
 	// Start servers
 	errCh := make(chan error, 2)
-	go func() { errCh <- s.udpServer.ListenAndServe() }()
-	go func() { errCh <- s.tcpServer.ListenAndServe() }()
+	go func() {
+		vlog.Infof("Starting DNS server (UDP) on %s", s.udpServer.Addr)
+		if err := s.udpServer.ListenAndServe(); err != nil {
+			vlog.Errorf("UDP server error: %v", err)
+			errCh <- err
+		}
+	}()
+	go func() {
+		vlog.Infof("Starting DNS server (TCP) on %s", s.tcpServer.Addr)
+		if err := s.tcpServer.ListenAndServe(); err != nil {
+			vlog.Errorf("TCP server error: %v", err)
+			errCh <- err
+		}
+	}()
+
+	// Give servers a moment to start
+	time.Sleep(100 * time.Millisecond)
 	vlog.Infof("DNS server listening on %s (udp/tcp)", s.udpServer.Addr)
 
 	// Mark service as ready once DNS servers are started

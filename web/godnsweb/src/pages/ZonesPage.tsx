@@ -12,9 +12,10 @@ import {
   TextField,
   Box,
 } from '@radix-ui/themes';
-import { PlusIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
+import { PlusIcon, MagnifyingGlassIcon, ReloadIcon } from '@radix-ui/react-icons';
 import * as api from '../services/api';
-import { CreateZoneDialog } from '../components';
+import { CreateZoneDialog, SortableColumnHeader } from '../components';
+import { useSortableData } from '../hooks';
 
 export default function ZonesPage() {
   const [zones, setZones] = useState<api.DNSZone[]>([]);
@@ -25,6 +26,16 @@ export default function ZonesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const itemsPerPage = 10;
+
+  // Sortable data hook with custom comparator for records count
+  const { items: sortedZones, requestSort, sortConfig } = useSortableData(
+    filteredZones,
+    'domain',
+    'asc',
+    {
+      recordCount: (a, b) => a.records.length - b.records.length,
+    }
+  );
 
   useEffect(() => {
     loadZones();
@@ -58,18 +69,23 @@ export default function ZonesPage() {
   };
 
   // Pagination
-  const totalPages = Math.ceil(filteredZones.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedZones.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentZones = filteredZones.slice(startIndex, endIndex);
+  const currentZones = sortedZones.slice(startIndex, endIndex);
 
   return (
     <Flex direction="column" gap="6">
       <Flex justify="between" align="center">
         <Heading size="8">DNS Zones</Heading>
-        <Button size="3" onClick={() => setShowCreateDialog(true)}>
-          <PlusIcon /> Add Zone
-        </Button>
+        <Flex gap="2">
+          <Button size="3" variant="soft" onClick={loadZones}>
+            <ReloadIcon /> Refresh
+          </Button>
+          <Button size="3" onClick={() => setShowCreateDialog(true)}>
+            <PlusIcon /> Add Zone
+          </Button>
+        </Flex>
       </Flex>
 
       <CreateZoneDialog
@@ -121,23 +137,44 @@ export default function ZonesPage() {
           {!isLoading && !error && currentZones.length > 0 && (
             <>
               <Text size="2" color="gray">
-                Showing {startIndex + 1}-{Math.min(endIndex, filteredZones.length)} of{' '}
-                {filteredZones.length} zone{filteredZones.length !== 1 ? 's' : ''}
+                Showing {startIndex + 1}-{Math.min(endIndex, sortedZones.length)} of{' '}
+                {sortedZones.length} zone{sortedZones.length !== 1 ? 's' : ''}
                 {filter && ` matching "${filter}"`}
               </Text>
 
               <Table.Root variant="surface">
                 <Table.Header>
                   <Table.Row>
-                    <Table.ColumnHeaderCell>Zone Name</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Records</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
+                    <SortableColumnHeader
+                      column={'domain' as keyof api.DNSZone}
+                      currentSortKey={sortConfig.key as keyof api.DNSZone | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      Zone Name
+                    </SortableColumnHeader>
+                    <SortableColumnHeader
+                      column={'recordCount' as keyof api.DNSZone}
+                      currentSortKey={sortConfig.key as keyof api.DNSZone | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      Records
+                    </SortableColumnHeader>
+                    <SortableColumnHeader
+                      column={'enabled' as keyof api.DNSZone}
+                      currentSortKey={sortConfig.key as keyof api.DNSZone | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      Status
+                    </SortableColumnHeader>
                   </Table.Row>
                 </Table.Header>
 
                 <Table.Body>
                   {currentZones.map(zone => (
-                    <Table.Row key={zone.domain} style={{ cursor: 'pointer' }}>
+                    <Table.Row key={zone.domain}>
                       <Table.Cell>
                         <Link
                           to={`/zones/${encodeURIComponent(zone.domain)}`}
@@ -148,7 +185,9 @@ export default function ZonesPage() {
                       </Table.Cell>
                       <Table.Cell>{zone.records.length}</Table.Cell>
                       <Table.Cell>
-                        <Badge color="green">Active</Badge>
+                        <Badge color={zone.enabled ?? true ? 'green' : 'red'}>
+                          {zone.enabled ?? true ? 'Active' : 'Disabled'}
+                        </Badge>
                       </Table.Cell>
                     </Table.Row>
                   ))}

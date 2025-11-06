@@ -20,9 +20,14 @@ import {
   TrashIcon,
   Pencil1Icon,
   ArrowLeftIcon,
+  LockClosedIcon,
+  LockOpen1Icon,
+  ReloadIcon,
 } from '@radix-ui/react-icons';
 import * as api from '../services/api';
-import { RecordDialog } from '../components';
+import { RecordDialog, SortableColumnHeader } from '../components';
+import { formatRecordValue } from '../utils/recordFormatting';
+import { useSortableData } from '../hooks';
 
 export default function ZoneDetailPage() {
   const { domain } = useParams<{ domain: string }>();
@@ -38,6 +43,7 @@ export default function ZoneDetailPage() {
   const [editingRecord, setEditingRecord] = useState<api.DNSRecord | undefined>();
   const [recordDialogMode, setRecordDialogMode] = useState<'create' | 'edit'>('create');
   const [deletingRecord, setDeletingRecord] = useState<api.DNSRecord | null>(null);
+  const [togglingRecord, setTogglingRecord] = useState<api.DNSRecord | null>(null);
   const itemsPerPage = 15;
 
   useEffect(() => {
@@ -61,14 +67,27 @@ export default function ZoneDetailPage() {
       records = records.filter(
         r =>
           r.name.toLowerCase().includes(filter.toLowerCase()) ||
-          r.value.toLowerCase().includes(filter.toLowerCase()) ||
-          r.type.toLowerCase().includes(filter.toLowerCase())
+          (r.value && r.value.toLowerCase().includes(filter.toLowerCase())) ||
+          r.type.toLowerCase().includes(filter.toLowerCase()) ||
+          formatRecordValue(r).toLowerCase().includes(filter.toLowerCase())
       );
     }
 
     setFilteredRecords(records);
     setCurrentPage(1);
   }, [zone, filter, typeFilter]);
+
+  // Sortable data
+  const { items: sortedRecords, requestSort, sortConfig } = useSortableData<api.DNSRecord>(
+    filteredRecords,
+    'name'
+  );
+
+  // Pagination
+  const totalPages = Math.ceil(sortedRecords.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRecords = sortedRecords.slice(startIndex, endIndex);
 
   const loadZone = async (zoneDomain: string) => {
     try {
@@ -97,6 +116,23 @@ export default function ZoneDetailPage() {
     }
   };
 
+  const handleToggleZoneStatus = async (enabled: boolean) => {
+    if (!zone) return;
+
+    try {
+      await api.setZoneStatus(zone.domain, enabled);
+      // Update local state
+      setZone(prevZone => prevZone ? { ...prevZone, enabled } : null);
+    } catch (err) {
+      console.error('Failed to update zone status:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update zone status');
+      // Reload zone to get the correct state
+      if (domain) {
+        loadZone(domain);
+      }
+    }
+  };
+
   const handleCreateRecord = () => {
     setRecordDialogMode('create');
     setEditingRecord(undefined);
@@ -122,17 +158,29 @@ export default function ZoneDetailPage() {
     }
   };
 
+  const handleToggleRecord = async () => {
+    if (!zone || !togglingRecord) return;
+
+    try {
+      await api.setRecordStatus(
+        zone.domain,
+        togglingRecord.name,
+        togglingRecord.type,
+        !!togglingRecord.disabled
+      );
+      await loadZone(zone.domain);
+      setTogglingRecord(null);
+    } catch (err) {
+      console.error('Failed to toggle record:', err);
+      setError(err instanceof Error ? err.message : 'Failed to toggle record status');
+    }
+  };
+
   const handleRecordSuccess = async () => {
     if (zone) {
       await loadZone(zone.domain);
     }
   };
-
-  // Pagination
-  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentRecords = filteredRecords.slice(startIndex, endIndex);
 
   // Get unique record types from zone
   const recordTypes = zone
@@ -190,19 +238,75 @@ export default function ZoneDetailPage() {
             <ArrowLeftIcon />
           </IconButton>
           <Box>
-            <Heading size="8">{zone.domain}</Heading>
+            <Flex align="center" gap="2">
+              <Heading size="8">{zone.domain}</Heading>
+              <Badge color={zone.enabled ?? true ? 'green' : 'red'}>
+                {zone.enabled ?? true ? 'Active' : 'Disabled'}
+              </Badge>
+            </Flex>
             <Text size="2" color="gray">
               {zone.records.length} record{zone.records.length !== 1 ? 's' : ''}
             </Text>
           </Box>
         </Flex>
         <Flex gap="2">
-          <Button variant="soft" onClick={handleCreateRecord}>
+          <Button size="3" variant="soft" onClick={() => domain && loadZone(domain)}>
+            <ReloadIcon /> Refresh
+          </Button>
+          <Button size="3" variant="soft" onClick={handleCreateRecord}>
             <PlusIcon /> Add Record
           </Button>
           <AlertDialog.Root>
             <AlertDialog.Trigger>
-              <Button color="red" variant="soft">
+              <Button 
+                size="3"
+                variant="soft" 
+                color={zone.enabled ?? true ? 'orange' : 'green'}
+              >
+                {zone.enabled ?? true ? <LockClosedIcon /> : <LockOpen1Icon />}
+                {zone.enabled ?? true ? 'Disable Zone' : 'Enable Zone'}
+              </Button>
+            </AlertDialog.Trigger>
+            <AlertDialog.Content>
+              <AlertDialog.Title>
+                {zone.enabled ?? true ? 'Disable' : 'Enable'} Zone
+              </AlertDialog.Title>
+              <AlertDialog.Description>
+                {zone.enabled ?? true ? (
+                  <>
+                    Are you sure you want to <strong>disable</strong> the zone <strong>{zone.domain}</strong>?
+                    <br /><br />
+                    This will prevent the DNS server from responding to queries for this zone and all its {zone.records.length} record{zone.records.length !== 1 ? 's' : ''}. 
+                    The zone data will be preserved and can be re-enabled later.
+                  </>
+                ) : (
+                  <>
+                    Are you sure you want to <strong>enable</strong> the zone <strong>{zone.domain}</strong>?
+                    <br /><br />
+                    This will allow the DNS server to respond to queries for this zone and all its {zone.records.length} record{zone.records.length !== 1 ? 's' : ''}.
+                  </>
+                )}
+              </AlertDialog.Description>
+              <Flex gap="3" mt="4" justify="end">
+                <AlertDialog.Cancel>
+                  <Button variant="soft" color="gray">
+                    Cancel
+                  </Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action>
+                  <Button 
+                    color={zone.enabled ?? true ? 'orange' : 'green'}
+                    onClick={() => handleToggleZoneStatus(!(zone.enabled ?? true))}
+                  >
+                    {zone.enabled ?? true ? 'Disable Zone' : 'Enable Zone'}
+                  </Button>
+                </AlertDialog.Action>
+              </Flex>
+            </AlertDialog.Content>
+          </AlertDialog.Root>
+          <AlertDialog.Root>
+            <AlertDialog.Trigger>
+              <Button size="3" color="red" variant="soft">
                 <TrashIcon /> Delete Zone
               </Button>
             </AlertDialog.Trigger>
@@ -275,18 +379,40 @@ export default function ZoneDetailPage() {
           ) : (
             <>
               <Text size="2" color="gray">
-                Showing {startIndex + 1}-{Math.min(endIndex, filteredRecords.length)} of{' '}
-                {filteredRecords.length} record{filteredRecords.length !== 1 ? 's' : ''}
+                Showing {startIndex + 1}-{Math.min(endIndex, sortedRecords.length)} of{' '}
+                {sortedRecords.length} record{sortedRecords.length !== 1 ? 's' : ''}
                 {(filter || typeFilter !== 'All') && ' (filtered)'}
               </Text>
 
               <Table.Root variant="surface">
                 <Table.Header>
                   <Table.Row>
-                    <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Type</Table.ColumnHeaderCell>
+                    <SortableColumnHeader<api.DNSRecord>
+                      column="name"
+                      currentSortKey={sortConfig.key as keyof api.DNSRecord | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      Name
+                    </SortableColumnHeader>
+                    <SortableColumnHeader<api.DNSRecord>
+                      column="type"
+                      currentSortKey={sortConfig.key as keyof api.DNSRecord | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      Type
+                    </SortableColumnHeader>
                     <Table.ColumnHeaderCell>Value</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>TTL</Table.ColumnHeaderCell>
+                    <SortableColumnHeader<api.DNSRecord>
+                      column="ttl"
+                      currentSortKey={sortConfig.key as keyof api.DNSRecord | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      TTL
+                    </SortableColumnHeader>
+                    <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Actions</Table.ColumnHeaderCell>
                   </Table.Row>
                 </Table.Header>
@@ -311,7 +437,7 @@ export default function ZoneDetailPage() {
                             display: 'block',
                           }}
                         >
-                          {record.value}
+                          {formatRecordValue(record)}
                         </Text>
                       </Table.Cell>
                       <Table.Cell>
@@ -320,7 +446,21 @@ export default function ZoneDetailPage() {
                         </Text>
                       </Table.Cell>
                       <Table.Cell>
+                        <Badge color={record.disabled ? 'gray' : 'green'}>
+                          {record.disabled ? 'Disabled' : 'Active'}
+                        </Badge>
+                      </Table.Cell>
+                      <Table.Cell>
                         <Flex gap="2">
+                          <IconButton
+                            size="1"
+                            variant="ghost"
+                            color={record.disabled ? 'green' : 'orange'}
+                            onClick={() => setTogglingRecord(record)}
+                            title={record.disabled ? 'Enable record' : 'Disable record'}
+                          >
+                            {record.disabled ? <LockOpen1Icon /> : <LockClosedIcon />}
+                          </IconButton>
                           <IconButton
                             size="1"
                             variant="ghost"
@@ -422,6 +562,42 @@ export default function ZoneDetailPage() {
                 <AlertDialog.Action>
                   <Button color="red" onClick={handleDeleteRecord}>
                     Delete Record
+                  </Button>
+                </AlertDialog.Action>
+              </Flex>
+            </AlertDialog.Content>
+          </AlertDialog.Root>
+
+          {/* Toggle Record Status Dialog */}
+          <AlertDialog.Root
+            open={!!togglingRecord}
+            onOpenChange={open => !open && setTogglingRecord(null)}
+          >
+            <AlertDialog.Content>
+              <AlertDialog.Title>
+                {togglingRecord?.disabled ? 'Enable' : 'Disable'} Record
+              </AlertDialog.Title>
+              <AlertDialog.Description>
+                Are you sure you want to {togglingRecord?.disabled ? 'enable' : 'disable'} the record{' '}
+                <strong>{togglingRecord?.name}</strong> ({togglingRecord?.type})?
+              </AlertDialog.Description>
+              {!togglingRecord?.disabled && (
+                <Text as="p" mt="2" color="orange">
+                  Disabled records will not be served by the DNS server.
+                </Text>
+              )}
+              <Flex gap="3" mt="4" justify="end">
+                <AlertDialog.Cancel>
+                  <Button variant="soft" color="gray">
+                    Cancel
+                  </Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action>
+                  <Button
+                    color={togglingRecord?.disabled ? 'green' : 'orange'}
+                    onClick={handleToggleRecord}
+                  >
+                    {togglingRecord?.disabled ? 'Enable' : 'Disable'} Record
                   </Button>
                 </AlertDialog.Action>
               </Flex>

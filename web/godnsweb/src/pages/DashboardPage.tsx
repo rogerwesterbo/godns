@@ -1,27 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Flex, Card, Heading, Text, Grid, Box, Spinner, Badge } from '@radix-ui/themes';
-import { GlobeIcon, FileTextIcon, ReloadIcon } from '@radix-ui/react-icons';
+import { Flex, Card, Heading, Text, Grid, Box, Spinner, Badge, Button } from '@radix-ui/themes';
+import {
+  GlobeIcon,
+  FileTextIcon,
+  RocketIcon,
+  LightningBoltIcon,
+  ReloadIcon,
+} from '@radix-ui/react-icons';
 import * as api from '../services/api';
+import * as adminApi from '../services/admin-api';
 
 export default function DashboardPage() {
   const [zones, setZones] = useState<api.DNSZone[]>([]);
+  const [systemStats, setSystemStats] = useState<adminApi.SystemStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadZones();
+    loadData();
   }, []);
 
-  const loadZones = async () => {
+  const loadData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await api.listZones();
-      setZones(data);
+      const [zonesData, system] = await Promise.all([
+        api.listZones(),
+        adminApi.getSystemStats().catch(() => null),
+      ]);
+      console.log('DashboardPage - System stats:', system);
+      setZones(zonesData);
+      setSystemStats(system);
     } catch (err) {
-      console.error('Failed to load zones:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load zones');
+      console.error('Failed to load data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
     } finally {
       setIsLoading(false);
     }
@@ -53,14 +66,20 @@ export default function DashboardPage() {
     <Flex direction="column" gap="6">
       <Flex justify="between" align="center">
         <Heading size="8">Dashboard</Heading>
-        <Text size="2" color="gray">
-          {new Date().toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </Text>
+        <Flex gap="3" align="center">
+          <Text size="2" color="gray">
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </Text>
+          <Button size="3" variant="soft" onClick={loadData} disabled={isLoading}>
+            <ReloadIcon />
+            Refresh
+          </Button>
+        </Flex>
       </Flex>
 
       {isLoading ? (
@@ -75,7 +94,7 @@ export default function DashboardPage() {
         </Card>
       ) : (
         <>
-          <Grid columns={{ initial: '1', sm: '2', md: '3' }} gap="4">
+          <Grid columns={{ initial: '1', sm: '2', md: '4' }} gap="4">
             <Card>
               <Flex direction="column" gap="3">
                 <Flex align="center" gap="2">
@@ -113,15 +132,34 @@ export default function DashboardPage() {
             <Card>
               <Flex direction="column" gap="3">
                 <Flex align="center" gap="2">
-                  <ReloadIcon width="20" height="20" />
-                  <Heading size="4">Average</Heading>
+                  <RocketIcon width="20" height="20" />
+                  <Heading size="4">Queries</Heading>
                 </Flex>
                 <Flex direction="column" gap="1">
                   <Text size="7" weight="bold">
-                    {totalZones > 0 ? Math.round(totalRecords / totalZones) : 0}
+                    {systemStats?.query_log?.total_queries?.toLocaleString() || '0'}
                   </Text>
                   <Text size="2" color="gray">
-                    Records per zone
+                    Total queries
+                  </Text>
+                </Flex>
+              </Flex>
+            </Card>
+
+            <Card>
+              <Flex direction="column" gap="3">
+                <Flex align="center" gap="2">
+                  <LightningBoltIcon width="20" height="20" />
+                  <Heading size="4">Cache Hit Rate</Heading>
+                </Flex>
+                <Flex direction="column" gap="1">
+                  <Text size="7" weight="bold" color={systemStats?.query_log?.enabled ? 'green' : 'gray'}>
+                    {systemStats?.query_log?.enabled
+                      ? `${(systemStats.query_log.cache_hit_rate * 100).toFixed(1)}%`
+                      : 'Disabled'}
+                  </Text>
+                  <Text size="2" color="gray">
+                    {systemStats?.query_log?.enabled ? 'Cache efficiency' : 'Enable in settings'}
                   </Text>
                 </Flex>
               </Flex>

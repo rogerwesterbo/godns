@@ -4,13 +4,20 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1adminhandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1exporthandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1recordhandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1searchhandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/handlers/v1zonehandler"
 	"github.com/rogerwesterbo/godns/internal/httpserver/middleware"
 	_ "github.com/rogerwesterbo/godns/internal/httpserver/swaggerdocs" // swagger docs
+	"github.com/rogerwesterbo/godns/internal/services/v1cacheservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1exportservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1healthcheckservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1loadbalancerservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1querylogservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1ratelimitservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1recordservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1searchservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1zoneservice"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -23,20 +30,30 @@ type Router struct {
 	recordHandler  *v1recordhandler.RecordHandler
 	exportHandler  *v1exporthandler.ExportHandler
 	searchHandler  *v1searchhandler.SearchHandler
+	adminHandler   *v1adminhandler.AdminHandler
 	authMiddleware *middleware.AuthMiddleware
 }
 
 // NewRouter creates a new HTTP router with all routes configured
-func NewRouter(zoneService *v1zoneservice.V1ZoneService, authMiddleware *middleware.AuthMiddleware) *http.ServeMux {
+func NewRouter(
+	zoneService *v1zoneservice.V1ZoneService,
+	cacheService *v1cacheservice.DNSCache,
+	rateLimiter *v1ratelimitservice.RateLimiter,
+	loadBalancer *v1loadbalancerservice.LoadBalancer,
+	healthCheck *v1healthcheckservice.HealthCheckService,
+	queryLog *v1querylogservice.QueryLogService,
+	authMiddleware *middleware.AuthMiddleware,
+) *http.ServeMux {
 	exportService := v1exportservice.NewV1ExportService(zoneService)
 	searchService := v1searchservice.NewV1SearchService(zoneService)
 
 	r := &Router{
 		mux:            http.NewServeMux(),
 		zoneHandler:    v1zonehandler.NewZoneHandler(zoneService),
-		recordHandler:  v1recordhandler.NewRecordHandler(zoneService),
+		recordHandler:  v1recordhandler.NewRecordHandler(v1recordservice.NewV1RecordService(zoneService.GetClient())),
 		exportHandler:  v1exporthandler.NewExportHandler(exportService),
 		searchHandler:  v1searchhandler.NewSearchHandler(searchService),
+		adminHandler:   v1adminhandler.NewAdminHandler(cacheService, rateLimiter, loadBalancer, healthCheck, queryLog),
 		authMiddleware: authMiddleware,
 	}
 
@@ -88,6 +105,8 @@ func (r *Router) handleAPIRoutes(w http.ResponseWriter, req *http.Request) {
 		r.handleExport(w, req)
 	case strings.HasPrefix(path, "/api/v1/export/"):
 		r.handleExportZone(w, req)
+	case strings.HasPrefix(path, "/api/v1/admin/"):
+		r.handleAdmin(w, req)
 	default:
 		http.NotFound(w, req)
 	}
@@ -152,6 +171,16 @@ func (r *Router) handleZoneOperations(w http.ResponseWriter, req *http.Request) 
 
 	domain := parts[0]
 
+	// Check if this is a status operation
+	if len(parts) >= 2 && parts[1] == "status" {
+		if req.Method == http.MethodPatch {
+			r.zoneHandler.SetZoneStatus(w, req, domain)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+		return
+	}
+
 	// Check if this is a record operation
 	if len(parts) >= 2 && parts[1] == "records" {
 		r.handleRecordOperations(w, req, domain, parts[2:])
@@ -193,6 +222,16 @@ func (r *Router) handleRecordOperations(w http.ResponseWriter, req *http.Request
 	name := parts[0]
 	recordType := strings.ToUpper(parts[1])
 
+	// Check if this is a status operation
+	if len(parts) >= 3 && parts[2] == "status" {
+		if req.Method == http.MethodPatch {
+			r.recordHandler.SetRecordStatus(w, req, domain, name, recordType)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+		return
+	}
+
 	switch req.Method {
 	case http.MethodGet:
 		r.recordHandler.GetRecord(w, req, domain, name, recordType)
@@ -202,5 +241,64 @@ func (r *Router) handleRecordOperations(w http.ResponseWriter, req *http.Request
 		r.recordHandler.DeleteRecord(w, req, domain, name, recordType)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// Handle admin operations
+func (r *Router) handleAdmin(w http.ResponseWriter, req *http.Request) {
+	path := strings.TrimPrefix(req.URL.Path, "/api/v1/admin/")
+
+	switch path {
+	case "stats":
+		if req.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		r.adminHandler.GetSystemStats(w, req)
+
+	case "cache/stats":
+		if req.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		r.adminHandler.GetCacheStats(w, req)
+
+	case "cache/clear":
+		if req.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		r.adminHandler.ClearCache(w, req)
+
+	case "loadbalancer/stats":
+		if req.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		r.adminHandler.GetLoadBalancerStats(w, req)
+
+	case "healthcheck/stats":
+		if req.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		r.adminHandler.GetHealthCheckStats(w, req)
+
+	case "querylog/stats":
+		if req.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		r.adminHandler.GetQueryLogStats(w, req)
+
+	case "ratelimiter/stats":
+		if req.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		r.adminHandler.GetRateLimiterStats(w, req)
+
+	default:
+		http.NotFound(w, req)
 	}
 }

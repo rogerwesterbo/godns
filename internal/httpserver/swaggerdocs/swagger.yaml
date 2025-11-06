@@ -71,6 +71,120 @@ definitions:
     x-enum-varnames:
     - SearchResultTypeZone
     - SearchResultTypeRecord
+  internal_httpserver_handlers_v1adminhandler.CacheStats:
+    properties:
+      current_size:
+        type: integer
+      enabled:
+        type: boolean
+      hit_rate:
+        type: string
+      max_size:
+        type: integer
+      ttl_minutes:
+        type: integer
+    type: object
+  internal_httpserver_handlers_v1adminhandler.HealthCheckResultInfo:
+    properties:
+      error_message:
+        type: string
+      healthy:
+        type: boolean
+      last_check:
+        type: string
+      last_failure:
+        type: string
+      last_success:
+        type: string
+      target:
+        type: string
+    type: object
+  internal_httpserver_handlers_v1adminhandler.HealthCheckStats:
+    properties:
+      enabled:
+        type: boolean
+      interval_seconds:
+        type: integer
+      results:
+        items:
+          $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.HealthCheckResultInfo'
+        type: array
+      timeout_seconds:
+        type: integer
+      total_targets:
+        type: integer
+    type: object
+  internal_httpserver_handlers_v1adminhandler.LoadBalancerBackendInfo:
+    properties:
+      enabled:
+        type: boolean
+      healthy:
+        type: boolean
+      name:
+        type: string
+      type:
+        type: string
+      value:
+        type: string
+      weight:
+        type: integer
+    type: object
+  internal_httpserver_handlers_v1adminhandler.LoadBalancerStats:
+    properties:
+      backend_groups:
+        type: integer
+      backends:
+        items:
+          $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.LoadBalancerBackendInfo'
+        type: array
+      enabled:
+        type: boolean
+      healthy_backends:
+        type: integer
+      strategy:
+        type: string
+      total_backends:
+        type: integer
+    type: object
+  internal_httpserver_handlers_v1adminhandler.QueryLogStats:
+    properties:
+      blocked_queries:
+        type: integer
+      blocked_rate:
+        type: number
+      cache_hit_rate:
+        type: number
+      cached_queries:
+        type: integer
+      enabled:
+        type: boolean
+      total_queries:
+        type: integer
+    type: object
+  internal_httpserver_handlers_v1adminhandler.RateLimiterStats:
+    properties:
+      active_limiters:
+        type: integer
+      burst:
+        type: integer
+      enabled:
+        type: boolean
+      qps:
+        type: integer
+    type: object
+  internal_httpserver_handlers_v1adminhandler.SystemStats:
+    properties:
+      cache:
+        $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.CacheStats'
+      health_check:
+        $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.HealthCheckStats'
+      load_balancer:
+        $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.LoadBalancerStats'
+      query_log:
+        $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.QueryLogStats'
+      rate_limiter:
+        $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.RateLimiterStats'
+    type: object
 host: localhost:14000
 info:
   contact:
@@ -115,6 +229,123 @@ info:
   title: GoDNS API
   version: "1.0"
 paths:
+  /api/v1/admin/cache/clear:
+    post:
+      description: Clear all entries from the DNS response cache
+      responses:
+        "204":
+          description: Cache cleared successfully
+        "503":
+          description: Cache service not available
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      - OAuth2Password: []
+      summary: Clear DNS cache
+      tags:
+      - Admin
+  /api/v1/admin/cache/stats:
+    get:
+      description: Get detailed statistics about DNS response caching
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.CacheStats'
+      security:
+      - BearerAuth: []
+      - OAuth2Password: []
+      summary: Get cache statistics
+      tags:
+      - Admin
+  /api/v1/admin/healthcheck/stats:
+    get:
+      description: Get detailed health check results for all monitored backends
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.HealthCheckStats'
+      security:
+      - BearerAuth: []
+      - OAuth2Password: []
+      summary: Get health check statistics
+      tags:
+      - Admin
+  /api/v1/admin/loadbalancer/stats:
+    get:
+      description: Get detailed statistics about load balancing including backend
+        health status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.LoadBalancerStats'
+      security:
+      - BearerAuth: []
+      - OAuth2Password: []
+      summary: Get load balancer statistics
+      tags:
+      - Admin
+  /api/v1/admin/querylog/stats:
+    get:
+      description: Get statistics about DNS queries including cache hit rate and blocked
+        queries
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.QueryLogStats'
+      security:
+      - BearerAuth: []
+      - OAuth2Password: []
+      summary: Get query log statistics
+      tags:
+      - Admin
+  /api/v1/admin/ratelimiter/stats:
+    get:
+      description: Get statistics about rate limiting including active limiters
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.RateLimiterStats'
+      security:
+      - BearerAuth: []
+      - OAuth2Password: []
+      summary: Get rate limiter statistics
+      tags:
+      - Admin
+  /api/v1/admin/stats:
+    get:
+      description: Get comprehensive statistics about DNS caching, rate limiting,
+        load balancing, health checks, and query logging
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_httpserver_handlers_v1adminhandler.SystemStats'
+      security:
+      - BearerAuth: []
+      - OAuth2Password: []
+      summary: Get system statistics
+      tags:
+      - Admin
   /api/v1/export:
     get:
       description: Export all DNS zones in a specified format (coredns, powerdns,

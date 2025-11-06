@@ -37,10 +37,16 @@ func (s *V1ExportService) ExportZone(ctx context.Context, domain string, format 
 		return "", fmt.Errorf("failed to get zone: %w", err)
 	}
 
+	// Check if zone is enabled
+	if !zone.Enabled {
+		return "", fmt.Errorf("zone %s is disabled and cannot be exported", domain)
+	}
+
 	return s.formatZone(zone, format)
 }
 
 // ExportAllZones exports all zones in the specified format
+// Only exports zones that are enabled
 func (s *V1ExportService) ExportAllZones(ctx context.Context, format ExportFormat) (string, error) {
 	zones, err := s.zoneService.ListZones(ctx)
 	if err != nil {
@@ -48,16 +54,23 @@ func (s *V1ExportService) ExportAllZones(ctx context.Context, format ExportForma
 	}
 
 	result := ""
-	for i, zone := range zones {
+	exportedCount := 0
+	for _, zone := range zones {
+		// Skip disabled zones
+		if !zone.Enabled {
+			continue
+		}
+
 		formatted, err := s.formatZone(&zone, format)
 		if err != nil {
 			return "", fmt.Errorf("failed to format zone %s: %w", zone.Domain, err)
 		}
 
-		if i > 0 {
+		if exportedCount > 0 {
 			result += "\n\n"
 		}
 		result += formatted
+		exportedCount++
 	}
 
 	return result, nil

@@ -53,7 +53,7 @@ func FormatPowerDNSZone(zone *models.DNSZone) string {
 			// Add to existing RRset
 			rrset.Records = append(rrset.Records, PowerDNSRecord{
 				Content:  record.Value,
-				Disabled: false,
+				Disabled: record.Disabled,
 			})
 		} else {
 			// Create new RRset
@@ -64,7 +64,7 @@ func FormatPowerDNSZone(zone *models.DNSZone) string {
 				Records: []PowerDNSRecord{
 					{
 						Content:  record.Value,
-						Disabled: false,
+						Disabled: record.Disabled,
 					},
 				},
 			}

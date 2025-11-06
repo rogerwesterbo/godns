@@ -1,9 +1,13 @@
-import { Flex, Card, Heading, Text, Avatar, Box, Badge, Grid } from '@radix-ui/themes';
-import { PersonIcon, EnvelopeClosedIcon, CalendarIcon } from '@radix-ui/react-icons';
+import { Flex, Card, Heading, Text, Avatar, Box, Badge, Grid, Button } from '@radix-ui/themes';
+import { PersonIcon, EnvelopeClosedIcon, CalendarIcon, ReloadIcon } from '@radix-ui/react-icons';
 import { useAuth } from '../contexts/useAuth';
 
 export default function ProfilePage() {
   const { user } = useAuth();
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
   if (!user) {
     return null;
@@ -38,7 +42,12 @@ export default function ProfilePage() {
 
   return (
     <Flex direction="column" gap="6">
-      <Heading size="8">Profile</Heading>
+      <Flex justify="between" align="center">
+        <Heading size="8">Profile</Heading>
+        <Button size="3" variant="soft" onClick={handleRefresh}>
+          <ReloadIcon /> Refresh
+        </Button>
+      </Flex>
 
       <Card size="4">
         <Flex direction="column" gap="6">

@@ -8,13 +8,17 @@ services:
       - ./hack/data/valkey:/data
       - ./hack/valkey/users.acl:/etc/valkey/users.acl:ro
     # Use ACL file for username-based authentication
-    command: valkey-server --appendonly yes --aclfile /etc/valkey/users.acl
+    # --aclfile: Load ACL from file
+    # --appendonly yes: Enable data persistence
+    # --save "": Disable RDB snapshots (AOF is enough for DNS data)
+    # Note: ACL file is authoritative; changes via ACL SETUSER won't persist
+    command: valkey-server --appendonly yes --aclfile /etc/valkey/users.acl --save ""
     restart: unless-stopped
     networks:
       - godns-network
     environment:
       - VALKEY_USERNAME=${VALKEY_USERNAME:-default}
-      - VALKEY_PASSWORD=${VALKEY_PASSWORD:-mysecretpassword}
+      - VALKEY_TOKEN=${VALKEY_TOKEN:-mysecretpassword}
 
   postgres:
     image: postgres:17-alpine
@@ -75,8 +79,11 @@ services:
       KC_METRICS_ENABLED: 'true'
 
       # Hostname configuration
-      KC_HOSTNAME: localhost
+      # For development: Accept both 'localhost' (for VS Code debugging) and 'keycloak' (for Docker)
+      # In production, set KC_HOSTNAME to your actual domain
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
       KC_HOSTNAME_STRICT: 'false'
+      KC_HTTP_RELATIVE_PATH: /
     command:
       - start
     healthcheck:

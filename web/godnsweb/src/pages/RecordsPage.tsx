@@ -14,9 +14,13 @@ import {
   AlertDialog,
   IconButton,
 } from '@radix-ui/themes';
-import { PlusIcon, MagnifyingGlassIcon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
+import { PlusIcon, MagnifyingGlassIcon, Pencil1Icon, TrashIcon, ReloadIcon } from '@radix-ui/react-icons';
 import * as api from '../services/api';
-import { RecordDialog } from '../components';
+import { RecordDialog, SortableColumnHeader } from '../components';
+import { formatRecordValue } from '../utils/recordFormatting';
+import { useSortableData } from '../hooks';
+
+type RecordWithZone = api.DNSRecord & { zone: string };
 
 export default function RecordsPage() {
   const [zones, setZones] = useState<api.DNSZone[]>([]);
@@ -106,16 +110,23 @@ export default function RecordsPage() {
     const matchesFilter =
       !filter.trim() ||
       record.name.toLowerCase().includes(filter.toLowerCase()) ||
-      record.value.toLowerCase().includes(filter.toLowerCase()) ||
-      record.zone.toLowerCase().includes(filter.toLowerCase());
+      (record.value && record.value.toLowerCase().includes(filter.toLowerCase())) ||
+      record.zone.toLowerCase().includes(filter.toLowerCase()) ||
+      formatRecordValue(record).toLowerCase().includes(filter.toLowerCase());
     return matchesType && matchesFilter;
   });
 
+  // Sortable data
+  const { items: sortedRecords, requestSort, sortConfig } = useSortableData<RecordWithZone>(
+    filteredRecords,
+    'name'
+  );
+
   // Pagination
-  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedRecords.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentRecords = filteredRecords.slice(startIndex, endIndex);
+  const currentRecords = sortedRecords.slice(startIndex, endIndex);
 
   // Get unique record types
   const recordTypes = ['All', ...Array.from(new Set(allRecords.map(r => r.type))).sort()];
@@ -144,9 +155,14 @@ export default function RecordsPage() {
     <Flex direction="column" gap="6">
       <Flex justify="between" align="center">
         <Heading size="8">DNS Records</Heading>
-        <Button onClick={handleCreateRecord}>
-          <PlusIcon /> Add Record
-        </Button>
+        <Flex gap="2">
+          <Button size="3" variant="soft" onClick={loadZones}>
+            <ReloadIcon /> Refresh
+          </Button>
+          <Button size="3" onClick={handleCreateRecord}>
+            <PlusIcon /> Add Record
+          </Button>
+        </Flex>
       </Flex>
 
       <Card>
@@ -204,19 +220,48 @@ export default function RecordsPage() {
           {!isLoading && !error && currentRecords.length > 0 && (
             <>
               <Text size="2" color="gray">
-                Showing {startIndex + 1}-{Math.min(endIndex, filteredRecords.length)} of{' '}
-                {filteredRecords.length} record{filteredRecords.length !== 1 ? 's' : ''}
+                Showing {startIndex + 1}-{Math.min(endIndex, sortedRecords.length)} of{' '}
+                {sortedRecords.length} record{sortedRecords.length !== 1 ? 's' : ''}
                 {(filter || typeFilter !== 'All') && ' (filtered)'}
               </Text>
 
               <Table.Root variant="surface">
                 <Table.Header>
                   <Table.Row>
-                    <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Type</Table.ColumnHeaderCell>
+                    <SortableColumnHeader<RecordWithZone>
+                      column="name"
+                      currentSortKey={sortConfig.key as keyof RecordWithZone | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      Name
+                    </SortableColumnHeader>
+                    <SortableColumnHeader<RecordWithZone>
+                      column="type"
+                      currentSortKey={sortConfig.key as keyof RecordWithZone | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      Type
+                    </SortableColumnHeader>
                     <Table.ColumnHeaderCell>Value</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>TTL</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Zone</Table.ColumnHeaderCell>
+                    <SortableColumnHeader<RecordWithZone>
+                      column="ttl"
+                      currentSortKey={sortConfig.key as keyof RecordWithZone | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      TTL
+                    </SortableColumnHeader>
+                    <SortableColumnHeader<RecordWithZone>
+                      column="zone"
+                      currentSortKey={sortConfig.key as keyof RecordWithZone | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={(col) => requestSort(col as string)}
+                    >
+                      Zone
+                    </SortableColumnHeader>
+                    <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Actions</Table.ColumnHeaderCell>
                   </Table.Row>
                 </Table.Header>
@@ -241,7 +286,7 @@ export default function RecordsPage() {
                             display: 'block',
                           }}
                         >
-                          {record.value}
+                          {formatRecordValue(record)}
                         </Text>
                       </Table.Cell>
                       <Table.Cell>
@@ -253,6 +298,11 @@ export default function RecordsPage() {
                         <Text size="2" color="gray">
                           {record.zone}
                         </Text>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Badge color={record.disabled ? 'gray' : 'green'}>
+                          {record.disabled ? 'Disabled' : 'Active'}
+                        </Badge>
                       </Table.Cell>
                       <Table.Cell>
                         <Flex gap="2">

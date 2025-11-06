@@ -22,7 +22,7 @@ func FormatBINDZone(zone *models.DNSZone) string {
 	// Add SOA record if exists, otherwise create a default one
 	hasSOA := false
 	for _, record := range zone.Records {
-		if record.Type == "SOA" {
+		if record.Type == "SOA" && !record.Disabled {
 			sb.WriteString(formatBINDRecord(zone.Domain, &record))
 			hasSOA = true
 			break
@@ -43,8 +43,8 @@ func FormatBINDZone(zone *models.DNSZone) string {
 	// Group records by type for better readability
 	recordsByType := make(map[string][]models.DNSRecord)
 	for _, record := range zone.Records {
-		if record.Type == "SOA" {
-			continue // Already handled
+		if record.Type == "SOA" || record.Disabled {
+			continue // Skip SOA (already handled) and disabled records
 		}
 		recordsByType[record.Type] = append(recordsByType[record.Type], record)
 	}

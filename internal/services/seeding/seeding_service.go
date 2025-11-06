@@ -90,11 +90,24 @@ func (s *SeedingService) seedTestData(ctx context.Context) error {
 	if err := s.zoneService.CreateZone(ctx, &models.DNSZone{
 		Domain: "home.lan",
 		Records: []models.DNSRecord{
-			{Name: "router.home.lan.", Type: "A", TTL: 300, Value: "192.168.1.1"},
-			{Name: "nas.home.lan.", Type: "A", TTL: 300, Value: "192.168.1.10"},
-			{Name: "server.home.lan.", Type: "A", TTL: 300, Value: "192.168.1.100"},
-			{Name: "printer.home.lan.", Type: "A", TTL: 300, Value: "192.168.1.50"},
-			{Name: "pi.home.lan.", Type: "A", TTL: 300, Value: "192.168.1.200"},
+			// Zone authority
+			models.NewSOARecord("home.lan.", "ns1.home.lan.", "hostmaster.home.lan.", 2024110601, 3600, 1800, 604800, 300, 3600),
+			models.NewNSRecord("home.lan.", "ns1.home.lan.", 3600),
+			models.NewNSRecord("home.lan.", "ns2.home.lan.", 3600),
+			// Name servers
+			models.NewARecord("ns1.home.lan.", "192.168.1.1", 3600),
+			models.NewARecord("ns2.home.lan.", "192.168.1.2", 3600),
+			// Devices
+			models.NewARecord("router.home.lan.", "192.168.1.1", 300),
+			models.NewARecord("nas.home.lan.", "192.168.1.10", 300),
+			models.NewAAAARecord("nas.home.lan.", "fd00::10", 300),
+			models.NewARecord("server.home.lan.", "192.168.1.100", 300),
+			models.NewARecord("printer.home.lan.", "192.168.1.50", 300),
+			models.NewARecord("pi.home.lan.", "192.168.1.200", 300),
+			// Aliases
+			models.NewCNAMERecord("www.home.lan.", "server.home.lan.", 300),
+			// Metadata
+			models.NewTXTRecord("home.lan.", "v=spf1 ip4:192.168.1.0/24 -all", 300),
 		},
 	}); err != nil {
 		return fmt.Errorf("failed to create home.lan zone: %w", err)
@@ -104,11 +117,26 @@ func (s *SeedingService) seedTestData(ctx context.Context) error {
 	if err := s.zoneService.CreateZone(ctx, &models.DNSZone{
 		Domain: "dev.local",
 		Records: []models.DNSRecord{
-			{Name: "api.dev.local.", Type: "A", TTL: 300, Value: "127.0.0.1"},
-			{Name: "db.dev.local.", Type: "A", TTL: 300, Value: "127.0.0.1"},
-			{Name: "cache.dev.local.", Type: "A", TTL: 300, Value: "127.0.0.1"},
-			{Name: "web.dev.local.", Type: "A", TTL: 300, Value: "127.0.0.1"},
-			{Name: "mail.dev.local.", Type: "A", TTL: 300, Value: "127.0.0.1"},
+			// Zone authority
+			models.NewSOARecord("dev.local.", "ns.dev.local.", "hostmaster.dev.local.", 2024110601, 3600, 1800, 604800, 300, 3600),
+			models.NewNSRecord("dev.local.", "ns.dev.local.", 3600),
+			// Name server
+			models.NewARecord("ns.dev.local.", "127.0.0.1", 3600),
+			// Services
+			models.NewARecord("api.dev.local.", "127.0.0.1", 300),
+			models.NewARecord("db.dev.local.", "127.0.0.1", 300),
+			models.NewARecord("cache.dev.local.", "127.0.0.1", 300),
+			models.NewARecord("web.dev.local.", "127.0.0.1", 300),
+			models.NewARecord("mail.dev.local.", "127.0.0.1", 300),
+			// Mail configuration
+			models.NewMXRecord("dev.local.", 10, "mail.dev.local.", 300),
+			// Aliases
+			models.NewCNAMERecord("www.dev.local.", "web.dev.local.", 300),
+			models.NewCNAMERecord("admin.dev.local.", "web.dev.local.", 300),
+			// Service discovery
+			models.NewSRVRecord("_http._tcp.dev.local.", 10, 60, 80, "web.dev.local.", 300),
+			// SPF record
+			models.NewTXTRecord("dev.local.", "v=spf1 ip4:127.0.0.1 -all", 300),
 		},
 	}); err != nil {
 		return fmt.Errorf("failed to create dev.local zone: %w", err)
@@ -118,11 +146,27 @@ func (s *SeedingService) seedTestData(ctx context.Context) error {
 	if err := s.zoneService.CreateZone(ctx, &models.DNSZone{
 		Domain: "k8s.local",
 		Records: []models.DNSRecord{
-			{Name: "master.k8s.local.", Type: "A", TTL: 300, Value: "10.0.1.10"},
-			{Name: "worker1.k8s.local.", Type: "A", TTL: 300, Value: "10.0.1.20"},
-			{Name: "worker2.k8s.local.", Type: "A", TTL: 300, Value: "10.0.1.21"},
-			{Name: "worker3.k8s.local.", Type: "A", TTL: 300, Value: "10.0.1.22"},
-			{Name: "ingress.k8s.local.", Type: "A", TTL: 300, Value: "10.0.1.100"},
+			// Zone authority
+			models.NewSOARecord("k8s.local.", "ns.k8s.local.", "hostmaster.k8s.local.", 2024110601, 3600, 1800, 604800, 300, 3600),
+			models.NewNSRecord("k8s.local.", "ns.k8s.local.", 3600),
+			// Name server
+			models.NewARecord("ns.k8s.local.", "10.0.1.1", 3600),
+			// Cluster nodes
+			models.NewARecord("master.k8s.local.", "10.0.1.10", 300),
+			models.NewARecord("worker1.k8s.local.", "10.0.1.20", 300),
+			models.NewARecord("worker2.k8s.local.", "10.0.1.21", 300),
+			models.NewARecord("worker3.k8s.local.", "10.0.1.22", 300),
+			models.NewARecord("ingress.k8s.local.", "10.0.1.100", 300),
+			// IPv6 support
+			models.NewAAAARecord("master.k8s.local.", "fd00:10::10", 300),
+			// Wildcard for apps
+			models.NewARecord("*.apps.k8s.local.", "10.0.1.100", 300),
+			// Alias
+			models.NewCNAMERecord("api.k8s.local.", "master.k8s.local.", 300),
+			// Service discovery for etcd
+			models.NewSRVRecord("_etcd-server._tcp.k8s.local.", 10, 60, 2380, "master.k8s.local.", 300),
+			// Cluster info
+			models.NewTXTRecord("k8s.local.", "cluster=production version=1.28", 300),
 		},
 	}); err != nil {
 		return fmt.Errorf("failed to create k8s.local zone: %w", err)
@@ -132,11 +176,24 @@ func (s *SeedingService) seedTestData(ctx context.Context) error {
 	if err := s.zoneService.CreateZone(ctx, &models.DNSZone{
 		Domain: "docker.local",
 		Records: []models.DNSRecord{
-			{Name: "portainer.docker.local.", Type: "A", TTL: 300, Value: "172.17.0.10"},
-			{Name: "registry.docker.local.", Type: "A", TTL: 300, Value: "172.17.0.20"},
-			{Name: "traefik.docker.local.", Type: "A", TTL: 300, Value: "172.17.0.30"},
-			{Name: "grafana.docker.local.", Type: "A", TTL: 300, Value: "172.17.0.40"},
-			{Name: "prometheus.docker.local.", Type: "A", TTL: 300, Value: "172.17.0.41"},
+			// Zone authority
+			models.NewSOARecord("docker.local.", "ns.docker.local.", "hostmaster.docker.local.", 2024110601, 3600, 1800, 604800, 300, 3600),
+			models.NewNSRecord("docker.local.", "ns.docker.local.", 3600),
+			// Name server
+			models.NewARecord("ns.docker.local.", "172.17.0.1", 3600),
+			// Docker services
+			models.NewARecord("portainer.docker.local.", "172.17.0.10", 300),
+			models.NewARecord("registry.docker.local.", "172.17.0.20", 300),
+			models.NewARecord("traefik.docker.local.", "172.17.0.30", 300),
+			models.NewARecord("grafana.docker.local.", "172.17.0.40", 300),
+			models.NewARecord("prometheus.docker.local.", "172.17.0.41", 300),
+			// Aliases
+			models.NewCNAMERecord("monitor.docker.local.", "grafana.docker.local.", 300),
+			models.NewCNAMERecord("metrics.docker.local.", "prometheus.docker.local.", 300),
+			// Service discovery
+			models.NewSRVRecord("_metrics._tcp.docker.local.", 10, 100, 9090, "prometheus.docker.local.", 300),
+			// Info
+			models.NewTXTRecord("docker.local.", "network=bridge subnet=172.17.0.0/16", 300),
 		},
 	}); err != nil {
 		return fmt.Errorf("failed to create docker.local zone: %w", err)
@@ -146,17 +203,30 @@ func (s *SeedingService) seedTestData(ctx context.Context) error {
 	if err := s.zoneService.CreateZone(ctx, &models.DNSZone{
 		Domain: "example.lan",
 		Records: []models.DNSRecord{
-			{Name: "www.example.lan.", Type: "A", TTL: 300, Value: "192.168.100.10"},
-			{Name: "mail.example.lan.", Type: "A", TTL: 300, Value: "192.168.100.20"},
-			{Name: "ftp.example.lan.", Type: "A", TTL: 300, Value: "192.168.100.30"},
-			{Name: "db.example.lan.", Type: "A", TTL: 300, Value: "192.168.100.40"},
-			{Name: "ns1.example.lan.", Type: "A", TTL: 3600, Value: "192.168.100.1"},
-			{Name: "ns2.example.lan.", Type: "A", TTL: 3600, Value: "192.168.100.2"},
+			// Zone authority
+			models.NewSOARecord("example.lan.", "ns1.example.lan.", "hostmaster.example.lan.", 2024110601, 3600, 1800, 604800, 300, 3600),
+			models.NewNSRecord("example.lan.", "ns1.example.lan.", 3600),
+			models.NewNSRecord("example.lan.", "ns2.example.lan.", 3600),
+			// Name servers
+			models.NewARecord("ns1.example.lan.", "192.168.100.1", 3600),
+			models.NewARecord("ns2.example.lan.", "192.168.100.2", 3600),
+			// Web servers
+			models.NewARecord("www.example.lan.", "192.168.100.10", 300),
+			models.NewARecord("ftp.example.lan.", "192.168.100.30", 300),
+			models.NewARecord("db.example.lan.", "192.168.100.40", 300),
+			// Zone apex alias (ALIAS can be used at @ unlike CNAME)
+			models.NewALIASRecord("example.lan.", "www.example.lan.", 300),
+			// Mail servers
+			models.NewARecord("mail.example.lan.", "192.168.100.20", 300),
+			models.NewMXRecord("example.lan.", 10, "mail.example.lan.", 300),
+			// Email security
+			models.NewTXTRecord("example.lan.", "v=spf1 mx ip4:192.168.100.0/24 -all", 300),
+			models.NewTXTRecord("_dmarc.example.lan.", "v=DMARC1; p=quarantine; rua=mailto:dmarc@example.lan", 300),
 		},
 	}); err != nil {
 		return fmt.Errorf("failed to create example.lan zone: %w", err)
 	}
 
-	vlog.Info("successfully seeded 5 test zones with 26 DNS records")
+	vlog.Info("successfully seeded 5 test zones with realistic DNS records")
 	return nil
 }

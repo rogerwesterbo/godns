@@ -374,7 +374,7 @@ curl -v -H "Authorization: Bearer TOKEN" ...
 docker-compose logs keycloak-init
 
 # Manually run init script
-./hack/init-keycloak.sh
+./scripts/init-keycloak.sh
 
 # Verify Keycloak is ready
 curl http://localhost:14101/health/ready

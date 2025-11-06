@@ -6,12 +6,40 @@ export interface DNSRecord {
   name: string;
   type: string;
   ttl: number;
-  value: string;
+  value?: string;
+
+  // MX record fields
+  mx_priority?: number;
+  mx_host?: string;
+
+  // SRV record fields
+  srv_priority?: number;
+  srv_weight?: number;
+  srv_port?: number;
+  srv_target?: string;
+
+  // SOA record fields
+  soa_mname?: string;
+  soa_rname?: string;
+  soa_serial?: number;
+  soa_refresh?: number;
+  soa_retry?: number;
+  soa_expire?: number;
+  soa_minimum?: number;
+
+  // CAA record fields
+  caa_flags?: number;
+  caa_tag?: string;
+  caa_value?: string;
+
+  // Status field
+  disabled?: boolean;
 }
 
 export interface DNSZone {
   domain: string;
   records: DNSRecord[];
+  enabled: boolean;
 }
 
 export interface SearchResult {
@@ -22,7 +50,7 @@ export interface SearchResult {
 }
 
 export interface SearchResponse {
-  results: SearchResult[];
+  results: SearchResult[] | null;
   total: number;
   query: string;
 }
@@ -110,6 +138,13 @@ export async function deleteZone(domain: string): Promise<void> {
   });
 }
 
+export async function setZoneStatus(domain: string, enabled: boolean): Promise<void> {
+  return apiRequest<void>(`/api/v1/zones/${encodeURIComponent(domain)}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
+  });
+}
+
 // Record endpoints
 export async function createRecord(domain: string, record: DNSRecord): Promise<DNSRecord> {
   return apiRequest<DNSRecord>(`/api/v1/zones/${encodeURIComponent(domain)}/records`, {
@@ -121,6 +156,16 @@ export async function createRecord(domain: string, record: DNSRecord): Promise<D
 export async function getRecord(domain: string, name: string, type: string): Promise<DNSRecord> {
   return apiRequest<DNSRecord>(
     `/api/v1/zones/${encodeURIComponent(domain)}/records/${encodeURIComponent(name)}/${encodeURIComponent(type)}`
+  );
+}
+
+export async function setRecordStatus(domain: string, name: string, type: string, enabled: boolean): Promise<void> {
+  return apiRequest<void>(
+    `/api/v1/zones/${encodeURIComponent(domain)}/records/${encodeURIComponent(name)}/${encodeURIComponent(type)}/status`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ enabled }),
+    }
   );
 }
 
@@ -162,4 +207,48 @@ export async function search(
   return apiRequest<SearchResponse>(`/api/v1/search?${params.toString()}`);
 }
 
-export { ApiError };
+// Export endpoints
+export async function exportAllZones(format: string = 'bind'): Promise<string> {
+  const token = await getValidAccessToken();
+  
+  if (!token) {
+    throw new ApiError(401, 'Not authenticated');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/export?format=${format}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Failed to export zones`);
+  }
+
+  return response.text();
+}
+
+export async function exportZone(domain: string, format: string = 'bind'): Promise<string> {
+  const token = await getValidAccessToken();
+  
+  if (!token) {
+    throw new ApiError(401, 'Not authenticated');
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/export/${encodeURIComponent(domain)}?format=${format}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Failed to export zone ${domain}`);
+  }
+
+  return response.text();
+}
+
+export { ApiError};

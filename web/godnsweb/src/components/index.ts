@@ -6,3 +6,4 @@ export { default as ProtectedRoute } from './ProtectedRoute';
 export { default as ScrollToTop } from './ScrollToTop';
 export { CreateZoneDialog } from './CreateZoneDialog';
 export { RecordDialog } from './RecordDialog';
+export { SortableColumnHeader } from './SortableColumnHeader';

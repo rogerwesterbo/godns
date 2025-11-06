@@ -52,8 +52,20 @@ func NewAuthMiddleware() (*AuthMiddleware, error) {
 
 	vlog.Infof("Initializing OIDC authentication middleware with issuer: %s", issuerURL)
 
+	// In development mode, skip issuer verification to support both Docker and local debugging
+	isDevelopment := viper.GetBool(consts.DEVELOPMENT)
+	ctx := context.Background()
+
+	if isDevelopment {
+		vlog.Warn("DEVELOPMENT MODE: Skipping OIDC issuer verification")
+		vlog.Warn("This allows Keycloak to use 'localhost' while GoDNS expects 'keycloak'")
+		vlog.Warn("DO NOT USE IN PRODUCTION!")
+		// Use insecure context to skip issuer verification
+		ctx = oidc.InsecureIssuerURLContext(ctx, issuerURL)
+	}
+
 	// Create OIDC provider
-	provider, err := oidc.NewProvider(context.Background(), issuerURL)
+	provider, err := oidc.NewProvider(ctx, issuerURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create OIDC provider: %w", err)
 	}

@@ -1,38 +1,83 @@
-# GoDNS
+# GoDNS 🚀
 
 [![CI](https://github.com/rogerwesterbo/godns/actions/workflows/ci.yml/badge.svg)](https://github.com/rogerwesterbo/godns/actions/workflows/ci.yml)
 [![Release](https://github.com/rogerwesterbo/godns/actions/workflows/release.yml/badge.svg)](https://github.com/rogerwesterbo/godns/actions/workflows/release.yml)
 [![Security](https://img.shields.io/badge/security-distroless-blue)](https://github.com/GoogleContainerTools/distroless)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/rogerwesterbo/godns)](https://go.dev/)
 
-A high-performance DNS server written in Go with Valkey (Redis) backend for dynamic configuration.
+**A modern, high-performance DNS server with dynamic configuration, built-in web UI, and enterprise features.**
 
-## Features
+## ✨ Key Features
 
-- 🚀 Fast DNS resolution with caching
-- 🔧 Dynamic configuration via Valkey
-- 🔐 OAuth2/OIDC authentication with Keycloak
-- 🌐 REST API with Swagger documentation
-- 💻 **Web UI** - Modern React-based management interface
-- 🏥 Built-in health checks (liveness/readiness)
-- 🔒 ACL-based Valkey authentication
-- ☸️ Kubernetes-ready (multi-pod safe)
-- 🛠️ CLI tool for testing and management
+### 🎯 Core DNS
 
-## Quick Start
+- **High-Performance Resolution** - Fast DNS query processing with intelligent caching
+- **Dynamic Configuration** - Live updates via Valkey (Redis) backend - no restarts needed
+- **Load Balancing** - Round-robin, weighted, least-connections, and random strategies
+- **Health Checks** - Automatic backend monitoring with TCP/HTTP/HTTPS probes
+- **Query Logging** - Detailed query analytics with persistent statistics
 
-**New to GoDNS?** See the [Quick Start Guide](docs/QUICK_START.md) for a 5-minute setup walkthrough.
+### 🔐 Security & Authentication
 
-### Installation
+- **OAuth2/OIDC** - Enterprise authentication via Keycloak integration
+- **Rate Limiting** - Per-IP query rate limiting with configurable thresholds
+- **ACL Support** - Valkey ACL-based access control
+- **Distroless Images** - Minimal attack surface with Google Distroless base images
+- **LAN Restrictions** - Configurable allowed networks for DNS queries
 
-#### Using Docker
+### 🌐 Management & APIs
+
+- **Modern Web UI** - React-based dashboard with real-time stats
+- **REST API** - Full-featured HTTP API with Swagger/OpenAPI documentation
+- **CLI Tool** - Powerful command-line interface for testing and management
+- **Admin Endpoints** - System stats, cache management, health monitoring
+- **Export/Import** - BIND zone file format support
+
+### ☸️ Operations
+
+- **Kubernetes-Ready** - Helm charts with multi-pod safety
+- **Health Probes** - Liveness and readiness endpoints for orchestration
+- **Metrics** - Prometheus-compatible metrics endpoint
+- **Persistent Stats** - Query statistics survive server restarts
+- **Docker Compose** - Complete development stack included
+
+## 🚀 Quick Start
+
+### Option 1: Docker Compose (Recommended)
 
 ```bash
-docker pull ghcr.io/rogerwesterbo/godns:latest
-docker run -p 53:53/udp -p 53:53/tcp ghcr.io/rogerwesterbo/godns:latest
+# Clone the repository
+git clone https://github.com/rogerwesterbo/godns.git
+cd godns
+
+# Start all services (DNS + API + Web UI + Keycloak + Valkey)
+docker-compose up -d
+
+# Access services
+# - DNS Server: localhost:14053
+# - Web UI: http://localhost:14200
+# - API: http://localhost:14000
+# - Keycloak: http://localhost:14101
 ```
 
-#### Using Helm (Kubernetes)
+**Default credentials:**
+
+- Web UI/CLI: `testuser` / `password`
+- Keycloak Admin: `admin` / `admin`
+
+### Option 2: Standalone Docker
+
+```bash
+# Pull and run DNS server
+docker pull ghcr.io/rogerwesterbo/godns:latest
+docker run -p 53:53/udp -p 53:53/tcp ghcr.io/rogerwesterbo/godns:latest
+
+# Pull and run Web UI
+docker pull ghcr.io/rogerwesterbo/godns-web:latest
+docker run -p 8080:8080 ghcr.io/rogerwesterbo/godns-web:latest
+```
+
+### Option 3: Kubernetes (Helm)
 
 ```bash
 # Install DNS server
@@ -44,316 +89,232 @@ helm install godnsweb oci://ghcr.io/rogerwesterbo/helm/godnsweb \
   --set ingress.hosts[0].host=godns.example.com
 ```
 
-#### Download CLI Binary
+## 🎮 Usage Examples
 
-Download the latest release for your platform from the [releases page](https://github.com/rogerwesterbo/godns/releases/latest).
+### Web UI
 
-**Linux/macOS:**
+Navigate to `http://localhost:14200` and login with `testuser` / `password`
 
-```bash
-# Download (replace VERSION and PLATFORM)
-curl -LO https://github.com/rogerwesterbo/godns/releases/download/v1.0.0/godnscli-1.0.0-linux-amd64.tar.gz
-tar -xzf godnscli-1.0.0-linux-amd64.tar.gz
-sudo mv godnscli-1.0.0-linux-amd64 /usr/local/bin/godnscli
-chmod +x /usr/local/bin/godnscli
-```
+- View real-time query statistics
+- Manage DNS zones and records
+- Monitor cache performance
+- Check load balancer health
 
-**Windows:**
-
-```powershell
-# Download from releases page and add to PATH
-```
-
-### Start the Server
+### CLI Tool
 
 ```bash
-# Using Docker Compose (recommended)
-docker-compose up -d
+# Download CLI binary
+curl -LO https://github.com/rogerwesterbo/godns/releases/latest/download/godnscli-linux-amd64.tar.gz
+tar -xzf godnscli-linux-amd64.tar.gz
 
-# Or build and run locally
-make build
-./bin/godns
-```
+# Login
+./godnscli login
 
-### Test with CLI
-
-```bash
-# Build the CLI tool
-make build-cli
-
-# Login to API
-./bin/godnscli login
-
-# Check authentication status
-./bin/godnscli status
-
-# Export zones
-./bin/godnscli export --format bind
-
-# Query DNS directly
-./bin/godnscli query example.lan
+# Query DNS
+./godnscli query example.lan
 
 # Run tests
-./bin/godnscli test
+./godnscli test
+
+# Export zones
+./godnscli export --format bind
 ```
 
-## Authentication
-
-GoDNS uses **OAuth2/OIDC** authentication via Keycloak for API access:
+### REST API
 
 ```bash
-# Start all services (includes Keycloak)
-docker-compose up -d
-
-# Login with CLI
-./bin/godnscli login
-
-# Or get token for direct API access
+# Get access token
 TOKEN=$(curl -s -X POST "http://localhost:14101/realms/godns/protocol/openid-connect/token" \
   -d "client_id=godns-cli" \
   -d "username=testuser" \
   -d "password=password" \
   -d "grant_type=password" | jq -r '.access_token')
 
-# Use token with API
+# List zones
 curl -H "Authorization: Bearer $TOKEN" http://localhost:14000/api/v1/zones
+
+# Get admin stats
+curl -H "Authorization: Bearer $TOKEN" http://localhost:14000/api/v1/admin/stats
+
+# View API docs
+open http://localhost:14000/swagger/
 ```
 
-**Default credentials:**
+### DNS Queries
 
-- Keycloak Admin: `admin` / `admin` (http://localhost:14101)
-- Test User: `testuser` / `password`
+```bash
+# Standard dig
+dig @localhost -p 14053 example.lan
 
-See [Authentication Guide](docs/AUTHENTICATION.md) for complete details.
+# Check specific record type
+dig @localhost -p 14053 api.example.lan A
 
-## Documentation
+# Trace query
+dig @localhost -p 14053 +trace example.lan
+```
 
-### Getting Started
+## 📊 Admin Dashboard
 
-- **[Quick Start Guide](docs/QUICK_START.md)** - 5-minute setup walkthrough
-- **[Authentication Guide](docs/AUTHENTICATION.md)** - OAuth2/OIDC setup
-- **[Quick Auth Reference](docs/QUICK_AUTH_REFERENCE.md)** - Fast auth commands
+Access the admin dashboard at `http://localhost:14200/admin` to view:
 
-### API & CLI
+- **System Overview** - Uptime, zone/record counts, query totals
+- **Cache Statistics** - Hit rates, size, efficiency metrics
+- **Load Balancer** - Backend health, strategy, response times
+- **Health Checks** - Target status, last check times, errors
+- **Query Logs** - Real-time query analytics and statistics
+- **Rate Limiter** - Active limiters, blocked queries
 
+## 📚 Documentation
+
+### Essential Guides
+
+- **[Quick Start](docs/QUICK_START.md)** - 5-minute setup walkthrough
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - Complete testing documentation
 - **[API Documentation](docs/API_DOCUMENTATION.md)** - REST API reference
-- **[CLI Guide](docs/CLI_GUIDE.md)** - Complete guide for using godnscli
-- **[CLI Config](docs/CLI_CONFIG.md)** - CLI configuration management
-
-### Web UI
-
-- **[Web UI Documentation](web/godnsweb/README.md)** - React-based management interface
-- **[Web UI Deployment](web/godnsweb/docs/DOCKER.md)** - Docker and Kubernetes setup
+- **[DNS Record Types](docs/DNS_RECORD_TYPES.md)** - Complete record type reference
+- **[Helper Scripts](scripts/README.md)** - Setup, testing, and development scripts
 
 ### Configuration
 
-- **[Port Configuration](docs/PORT_CONFIGURATION.md)** - Port mappings and setup
-- **[Valkey Authentication](docs/VALKEY_AUTH.md)** - Valkey auth setup guide
+- **[Authentication](docs/AUTHENTICATION.md)** - OAuth2/OIDC setup and configuration
+- **[CLI Guide](docs/CLI_GUIDE.md)** - Command-line interface complete guide
+- **[Features Guide](docs/FEATURES_GUIDE.md)** - Detailed feature documentation
 
-## Building
+### Advanced
 
-```bash
-# Build server only
-make build
+- **[Keycloak Setup](docs/KEYCLOAK_SETUP.md)** - Custom Keycloak configuration
+- **[Web UI README](web/godnsweb/README.md)** - Web application documentation
 
-# Build CLI only
-make build-cli
-
-# Build everything
-make build-all
-
-# Build Docker image
-make docker-build
-
-# Build multi-arch Docker image (requires buildx)
-make docker-build-multiarch
-
-# Run linting
-make lint
-```
-
-## Docker & Container Images
-
-GoDNS uses **Google Distroless** base images for maximum security:
-
-- ✅ Minimal attack surface (no shell, no package manager)
-- ✅ Runs as non-root user (UID 65532)
-- ✅ Read-only root filesystem
-- ✅ Multi-arch support (linux/amd64, linux/arm64)
-- ✅ Signed with Cosign
-- ✅ Includes SBOM (Software Bill of Materials)
-
-### Available Images
-
-**DNS Server:**
-
-```bash
-# Latest release
-ghcr.io/rogerwesterbo/godns:latest
-
-# Specific version
-ghcr.io/rogerwesterbo/godns:1.0.0
-```
-
-**Web UI:**
-
-```bash
-# Latest release
-ghcr.io/rogerwesterbo/godns-web:latest
-
-# Specific version
-ghcr.io/rogerwesterbo/godns-web:1.0.0
-
-# Run Web UI
-docker run -p 8080:8080 \
-  -e VITE_KEYCLOAK_URL=http://keycloak:8080 \
-  -e VITE_API_BASE_URL=http://godns-api:8080 \
-  ghcr.io/rogerwesterbo/godns-web:latest
-```
-
-### Security Scanning
-
-All images are scanned with Trivy before release. View scan results in the [Security tab](https://github.com/rogerwesterbo/godns/security).
-
-## CLI Usage
-
-The `godnscli` tool provides easy testing and management:
-
-```bash
-# Quick test
-./bin/godnscli t
-
-# Query a domain
-./bin/godnscli q example.lan
-
-# Check health
-./bin/godnscli h
-
-# Show version
-./bin/godnscli v
-```
-
-See the [CLI Guide](docs/CLI_GUIDE.md) for complete documentation.
-
-## Configuration
-
-Configuration is managed via environment variables. See `.env.example` for available options.
-
-### Key Settings
-
-**Valkey:**
-
-- `VALKEY_ADDR` - Valkey server address (default: `localhost:14103`)
-- `VALKEY_USERNAME` - Valkey username
-- `VALKEY_PASSWORD` - Valkey password
-
-**DNS Server:**
-
-- `DNS_SERVER_PORT` - DNS server port (default: `53`)
-
-**HTTP API:**
-
-- `HTTP_API_PORT` - API server port (default: `:14000`)
-- `HTTP_API_CORS_ALLOWED_ORIGINS` - CORS allowed origins
-
-**Authentication:**
-
-- `AUTH_ENABLED` - Enable/disable authentication (default: `true`)
-- `KEYCLOAK_URL` - Keycloak server URL (default: `http://localhost:14101`)
-- `KEYCLOAK_REALM` - OAuth2 realm (default: `godns`)
-
-**Ports:**
-
-- DNS: `53`
-- HTTP API: `14000`
-- Keycloak: `14101` (HTTP), `14102` (HTTPS)
-- Valkey: `14103`
-- PostgreSQL: `14100`
-
-See [Port Configuration](docs/PORT_CONFIGURATION.md) for details.
-
-## Development
+## 🛠️ Development
 
 ### Prerequisites
 
-- Go 1.25.3 or later
+- Go 1.25.3+
 - Docker & Docker Compose
-- Make
+- Node.js 18+ (for Web UI development)
+
+### Build Commands
+
+```bash
+# Build DNS server
+make build
+
+# Build CLI tool
+make build-cli
+
+# Build Web UI
+cd web/godnsweb && npm run build
+
+# Run tests
+make test
+
+# Run linting
+make lint
+
+# Build Docker images
+make docker-build
+```
 
 ### Project Structure
 
 ```
 godns/
 ├── cmd/
-│   ├── godns/          # Main DNS server
-│   ├── godnsapi/       # HTTP API server
+│   ├── godns/          # DNS server with integrated HTTP API
 │   └── godnscli/       # CLI tool
-├── internal/           # Internal packages
-│   ├── dnsserver/      # DNS server logic
-│   ├── httpserver/     # HTTP API server
-│   └── services/       # Business logic
+├── internal/
+│   ├── dnsserver/      # DNS query handlers
+│   ├── httpserver/     # HTTP API & admin endpoints
+│   └── services/       # Core services (cache, rate limiting, etc.)
 ├── pkg/                # Public packages
-│   ├── auth/           # Authentication
-│   ├── clients/        # External clients (Valkey)
-│   └── options/        # Configuration options
-├── web/                # Web UI
-│   └── godnsweb/       # React application
+├── web/godnsweb/       # React Web UI
 ├── charts/             # Helm charts
-│   ├── godns/          # DNS server chart
-│   └── godnsweb/       # Web UI chart
 ├── docs/               # Documentation
-└── hack/               # Development utilities
+└── scripts/            # Helper scripts (seeding, setup, testing)
 ```
 
-## Releases
+## 🔧 Configuration
 
-Releases are automated via GitHub Actions. To create a new release:
+Configuration via environment variables. Key settings:
 
-1. Update `CHANGELOG.md` with release notes
-2. Create and push a new tag:
-   ```bash
-   git tag -a v1.0.0 -m "Release v1.0.0"
-   git push origin v1.0.0
-   ```
-3. Create a [new release](https://github.com/rogerwesterbo/godns/releases/new) in GitHub
-4. GitHub Actions will automatically:
-   - **Detect changes** - Build only what changed (DNS server, Web UI, or both)
-   - **Build DNS Server** (if backend changed):
-     - Multi-arch Docker images (linux/amd64, linux/arm64, linux/arm/v7)
-     - CLI binaries for Linux, macOS, Windows
-     - Helm chart package
-   - **Build Web UI** (if web files changed):
-     - Multi-arch Web UI Docker image
-     - Web UI Helm chart
-   - **Security & Quality**:
-     - Run security scans (Trivy)
-     - Generate SBOM
-     - Sign images with Cosign
-   - Attach all artifacts to the release
+```bash
+# DNS Server
+DNS_SERVER_PORT=14053
+DNS_UPSTREAM_SERVER=8.8.8.8:53
 
-### Release Artifacts
+# Caching
+DNS_CACHE_ENABLED=true
+DNS_CACHE_SIZE=10000
+DNS_CACHE_TTL_SECONDS=300
 
-Each release may include (depending on what changed):
+# Rate Limiting
+DNS_RATE_LIMIT_ENABLED=true
+DNS_RATE_LIMIT_QUERIES_PER_SEC=100
 
-**DNS Server:**
+# Load Balancing
+DNS_LOAD_BALANCER_ENABLED=true
+DNS_LOAD_BALANCER_STRATEGY=round-robin  # weighted-round-robin, least-connections, random
 
-- 🐳 Multi-arch Docker images (linux/amd64, linux/arm64, linux/arm/v7)
-- 📦 Helm chart package (godns)
-- 💻 CLI binaries (Linux, macOS, Windows)
+# Health Checks
+DNS_HEALTH_CHECK_ENABLED=true
+DNS_HEALTH_CHECK_INTERVAL_SEC=30
 
-**Web UI:**
+# Authentication
+AUTH_ENABLED=true
+KEYCLOAK_URL=http://localhost:14101
+KEYCLOAK_REALM=godns
 
-- 🌐 Web UI Docker image (linux/amd64, linux/arm64)
-- 📦 Helm chart package (godnsweb)
+# Valkey (Redis)
+VALKEY_HOST=localhost
+VALKEY_PORT=14103
+```
 
-**Common:**
+See `.env.example` for all options.
 
-- 🔒 SHA256 checksums
-- 📋 SBOM (SPDX format)
-- 🛡️ Security scan results
+## 🐳 Container Images
 
-See the [CHANGELOG](CHANGELOG.md) for release history and the [Security Policy](SECURITY.md) for security information.
+Built with Google Distroless for maximum security:
 
-## License
+```bash
+# DNS Server
+ghcr.io/rogerwesterbo/godns:latest
+ghcr.io/rogerwesterbo/godns:v1.0.0
+
+# Web UI
+ghcr.io/rogerwesterbo/godns-web:latest
+ghcr.io/rogerwesterbo/godns-web:v1.0.0
+```
+
+**Security Features:**
+
+- ✅ Distroless base (no shell, minimal attack surface)
+- ✅ Non-root user (UID 65532)
+- ✅ Read-only root filesystem
+- ✅ Multi-arch (amd64, arm64, arm/v7)
+- ✅ Trivy security scanning
+- ✅ Cosign image signing
+- ✅ SBOM included
+
+## 📦 Releases
+
+Automated releases via GitHub Actions. Each release includes:
+
+- Multi-arch Docker images
+- CLI binaries (Linux, macOS, Windows)
+- Helm charts
+- Security scan results
+- SBOM (Software Bill of Materials)
+
+See [CHANGELOG](CHANGELOG.md) for release history.
+
+## 🤝 Contributing
+
+Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+
+## 📄 License
 
 See [LICENSE](LICENSE) file.
+
+---
+
+**Made with ❤️ by the GoDNS team**

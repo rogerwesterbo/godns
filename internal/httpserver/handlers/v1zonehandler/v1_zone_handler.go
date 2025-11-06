@@ -162,3 +162,39 @@ func (h *ZoneHandler) DeleteZone(w http.ResponseWriter, req *http.Request, domai
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// @Summary Set zone status
+// @Description Enable or disable a DNS zone
+// @Tags Zones
+// @Accept json
+// @Param zone path string true "Zone name (e.g., example.lan)"
+// @Param status body map[string]bool true "Status object with 'enabled' field"
+// @Success 204 "Zone status updated"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 404 {object} map[string]string "Zone not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Security BearerAuth
+// @Security OAuth2Password
+// @Router /api/v1/zones/{zone}/status [patch]
+func (h *ZoneHandler) SetZoneStatus(w http.ResponseWriter, req *http.Request, domain string) {
+	var statusReq struct {
+		Enabled bool `json:"enabled"`
+	}
+	
+	if err := helpers.DecodeJSON(req.Body, &statusReq); err != nil {
+		helpers.SendError(w, http.StatusBadRequest, "Invalid request body: "+err.Error())
+		return
+	}
+
+	if err := h.zoneService.SetZoneEnabled(req.Context(), domain, statusReq.Enabled); err != nil {
+		vlog.Errorf("Failed to set zone status for %s: %v", domain, err)
+		if strings.Contains(err.Error(), "not found") {
+			helpers.SendError(w, http.StatusNotFound, "Zone not found")
+		} else {
+			helpers.SendError(w, http.StatusInternalServerError, "Failed to update zone status")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

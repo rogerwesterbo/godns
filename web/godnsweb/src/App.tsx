@@ -14,11 +14,14 @@ import {
   ZoneDetailPage,
   RecordsPage,
   SearchPage,
+  ExportPage,
   UnauthorizedPage,
   ForbiddenPage,
   NotFoundPage,
   ServerErrorPage,
 } from './pages';
+
+import { AdminDashboardPage, CachePage } from './pages/admin';
 
 function AppContent() {
   const { theme } = useTheme();
@@ -90,6 +93,38 @@ function AppContent() {
                 <ProtectedRoute>
                   <Layout>
                     <SearchPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/export"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ExportPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminDashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cache"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CachePage />
                   </Layout>
                 </ProtectedRoute>
               }

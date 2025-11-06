@@ -8,6 +8,11 @@ import (
 
 	"github.com/rogerwesterbo/godns/internal/httpserver/httproutes"
 	"github.com/rogerwesterbo/godns/internal/httpserver/middleware"
+	"github.com/rogerwesterbo/godns/internal/services/v1cacheservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1healthcheckservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1loadbalancerservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1querylogservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1ratelimitservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1zoneservice"
 	"github.com/vitistack/common/pkg/loggers/vlog"
 )
@@ -17,12 +22,25 @@ type HTTPServer struct {
 	address        string
 	server         *http.Server
 	zoneService    *v1zoneservice.V1ZoneService
+	cacheService   *v1cacheservice.DNSCache
+	rateLimiter    *v1ratelimitservice.RateLimiter
+	loadBalancer   *v1loadbalancerservice.LoadBalancer
+	healthCheck    *v1healthcheckservice.HealthCheckService
+	queryLog       *v1querylogservice.QueryLogService
 	authMiddleware *middleware.AuthMiddleware
 	corsMiddleware *middleware.CORSMiddleware
 }
 
 // New creates a new HTTP server instance
-func New(address string, zoneService *v1zoneservice.V1ZoneService) (*HTTPServer, error) {
+func New(
+	address string,
+	zoneService *v1zoneservice.V1ZoneService,
+	cacheService *v1cacheservice.DNSCache,
+	rateLimiter *v1ratelimitservice.RateLimiter,
+	loadBalancer *v1loadbalancerservice.LoadBalancer,
+	healthCheck *v1healthcheckservice.HealthCheckService,
+	queryLog *v1querylogservice.QueryLogService,
+) (*HTTPServer, error) {
 	// Initialize authentication middleware
 	authMiddleware, err := middleware.NewAuthMiddleware()
 	if err != nil {
@@ -35,6 +53,11 @@ func New(address string, zoneService *v1zoneservice.V1ZoneService) (*HTTPServer,
 	return &HTTPServer{
 		address:        address,
 		zoneService:    zoneService,
+		cacheService:   cacheService,
+		rateLimiter:    rateLimiter,
+		loadBalancer:   loadBalancer,
+		healthCheck:    healthCheck,
+		queryLog:       queryLog,
 		authMiddleware: authMiddleware,
 		corsMiddleware: corsMiddleware,
 	}, nil
@@ -43,7 +66,15 @@ func New(address string, zoneService *v1zoneservice.V1ZoneService) (*HTTPServer,
 // Start starts the HTTP server
 func (s *HTTPServer) Start() error {
 	// Create router with all routes
-	router := httproutes.NewRouter(s.zoneService, s.authMiddleware)
+	router := httproutes.NewRouter(
+		s.zoneService,
+		s.cacheService,
+		s.rateLimiter,
+		s.loadBalancer,
+		s.healthCheck,
+		s.queryLog,
+		s.authMiddleware,
+	)
 
 	// Wrap router with CORS middleware
 	handler := s.corsMiddleware.Handler(router)

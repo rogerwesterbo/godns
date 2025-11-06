@@ -28,6 +28,7 @@ export function CreateZoneDialog({ open, onOpenChange, onSuccess }: CreateZoneDi
       await api.createZone({
         domain: domain.trim(),
         records: [],
+        enabled: true,
       });
       setDomain('');
       onSuccess();

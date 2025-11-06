@@ -54,12 +54,6 @@ build-dns: ## Build the godns DNS server binary
 	@go build -o $(LOCALBIN)/godns ./cmd/godns
 	@printf "$(GREEN)✓ godns built at $(BOLD)$(LOCALBIN)/godns$(RESET)\n"
 
-.PHONY: build-api
-build-api: ## Build the godnsapi HTTP API server binary
-	@printf "$(CYAN)Building godnsapi...$(RESET)\n"
-	@go build -o $(LOCALBIN)/godnsapi ./cmd/godnsapi
-	@printf "$(GREEN)✓ godnsapi built at $(BOLD)$(LOCALBIN)/godnsapi$(RESET)\n"
-
 .PHONY: build-cli
 build-cli: ## Build the godnscli tool
 	@printf "$(CYAN)Building godnscli...$(RESET)\n"
@@ -67,13 +61,13 @@ build-cli: ## Build the godnscli tool
 	@printf "$(GREEN)✓ godnscli built at $(BOLD)$(LOCALBIN)/godnscli$(RESET)\n"
 
 .PHONY: build-all
-build-all: build-dns build-api build-cli ## Build all binaries
+build-all: build-dns build-cli ## Build all binaries
 	@printf "$(GREEN)$(BOLD)✓ All binaries built successfully!$(RESET)\n"
 
 .PHONY: clean
 clean: ## Clean build artifacts and binaries
 	@printf "$(YELLOW)Cleaning build artifacts...$(RESET)\n"
-	@rm -rf $(LOCALBIN)/godns $(LOCALBIN)/godnsapi $(LOCALBIN)/godnscli
+	@rm -rf $(LOCALBIN)/godns $(LOCALBIN)/godnscli
 	@rm -f coverage.out coverage.html bench.cpu bench.mem
 	@printf "$(GREEN)✓ Clean complete$(RESET)\n"
 

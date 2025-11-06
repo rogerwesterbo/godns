@@ -41,13 +41,12 @@ GoDNS includes comprehensive Swagger/OpenAPI documentation with an interactive U
 1. **Start the API Server:**
 
    ```bash
-   # Standalone API server
-   make build-api
-   ./bin/godnsapi
-
-   # Or integrated with DNS server
+   # The API is integrated with the DNS server
    make build-dns
    ./bin/godns
+
+   # Enable HTTP API in .env if not already enabled
+   # DNS_ENABLE_HTTP_API=true (default)
    ```
 
 2. **Open Swagger UI:**
@@ -348,27 +347,94 @@ Delete a specific DNS record from a zone.
 
 ### DNSRecord
 
+The DNSRecord model supports both simple records (A, AAAA, CNAME, etc.) and complex records with type-specific fields (MX, SRV, SOA, CAA).
+
+**Basic Record Structure:**
+
 ```json
 {
   "name": "string (required)",    // Fully qualified domain name
-  "type": "string (required)",    // Record type: A, AAAA, CNAME, MX, NS, TXT, PTR, SRV, SOA, CAA
+  "type": "string (required)",    // Record type: A, AAAA, CNAME, ALIAS, MX, NS, TXT, PTR, SRV, SOA, CAA
   "ttl": number,                  // Time to live in seconds (default: 300)
-  "value": "string (required)"    // Record value (IP address, hostname, text, etc.)
+  "value": "string"               // Record value - used for simple types (A, AAAA, CNAME, NS, TXT, PTR)
+}
+```
+
+**Type-Specific Fields:**
+
+For certain record types, you can use structured fields instead of (or in addition to) the `value` field:
+
+**MX Records:**
+
+```json
+{
+  "name": "example.lan.",
+  "type": "MX",
+  "ttl": 300,
+  "mx_priority": 10, // Mail server priority (0-65535)
+  "mx_host": "mail.example.lan." // Mail server hostname
+}
+```
+
+**SRV Records:**
+
+```json
+{
+  "name": "_http._tcp.example.lan.",
+  "type": "SRV",
+  "ttl": 300,
+  "srv_priority": 10, // Priority (0-65535)
+  "srv_weight": 60, // Weight for load balancing (0-65535)
+  "srv_port": 80, // Service port (0-65535)
+  "srv_target": "web.example.lan." // Target hostname
+}
+```
+
+**SOA Records:**
+
+```json
+{
+  "name": "example.lan.",
+  "type": "SOA",
+  "ttl": 3600,
+  "soa_mname": "ns1.example.lan.", // Primary nameserver
+  "soa_rname": "hostmaster.example.lan.", // Admin email (@ replaced with .)
+  "soa_serial": 2024110601, // Serial number (YYYYMMDDnn)
+  "soa_refresh": 3600, // Refresh interval (seconds)
+  "soa_retry": 1800, // Retry interval (seconds)
+  "soa_expire": 604800, // Expire time (seconds)
+  "soa_minimum": 300 // Minimum TTL (seconds)
+}
+```
+
+**CAA Records:**
+
+```json
+{
+  "name": "example.lan.",
+  "type": "CAA",
+  "ttl": 300,
+  "caa_flags": 0, // Flags (0 or 128 for critical)
+  "caa_tag": "issue", // Tag: issue, issuewild, iodef
+  "caa_value": "letsencrypt.org" // Value (CA domain or URL)
 }
 ```
 
 ### Supported Record Types
 
-- **A** - IPv4 address
-- **AAAA** - IPv6 address
-- **CNAME** - Canonical name (alias)
-- **MX** - Mail exchange
-- **NS** - Name server
-- **TXT** - Text record
-- **PTR** - Pointer record
-- **SRV** - Service record
-- **SOA** - Start of authority
-- **CAA** - Certification authority authorization
+- **A** - IPv4 address (use `value` field)
+- **AAAA** - IPv6 address (use `value` field)
+- **CNAME** - Canonical name alias (use `value` field)
+- **ALIAS** - Zone apex alias (use `value` field)
+- **MX** - Mail exchange (use `mx_priority` + `mx_host` or `value`)
+- **NS** - Name server (use `value` field)
+- **TXT** - Text record (use `value` field)
+- **PTR** - Pointer record (use `value` field)
+- **SRV** - Service record (use `srv_*` fields or `value`)
+- **SOA** - Start of authority (use `soa_*` fields or `value`)
+- **CAA** - Certification authority authorization (use `caa_*` fields or `value`)
+
+**Note:** For records with type-specific fields, you can use either the structured fields OR the `value` field with space-separated values. The structured approach is recommended for clarity and validation.
 
 ---
 
@@ -376,7 +442,7 @@ Delete a specific DNS record from a zone.
 
 ### Using curl
 
-#### Create a zone with records:
+#### Create a zone with simple records:
 
 ```bash
 curl -X POST http://localhost:14000/api/v1/zones \
@@ -400,6 +466,70 @@ curl -X POST http://localhost:14000/api/v1/zones \
   }'
 ```
 
+#### Create a zone with type-specific records:
+
+```bash
+curl -X POST http://localhost:14000/api/v1/zones \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain": "example.lan",
+    "records": [
+      {
+        "name": "example.lan.",
+        "type": "SOA",
+        "ttl": 3600,
+        "soa_mname": "ns1.example.lan.",
+        "soa_rname": "hostmaster.example.lan.",
+        "soa_serial": 2024110601,
+        "soa_refresh": 3600,
+        "soa_retry": 1800,
+        "soa_expire": 604800,
+        "soa_minimum": 300
+      },
+      {
+        "name": "example.lan.",
+        "type": "NS",
+        "ttl": 3600,
+        "value": "ns1.example.lan."
+      },
+      {
+        "name": "ns1.example.lan.",
+        "type": "A",
+        "ttl": 3600,
+        "value": "192.168.1.1"
+      },
+      {
+        "name": "example.lan.",
+        "type": "MX",
+        "ttl": 300,
+        "mx_priority": 10,
+        "mx_host": "mail.example.lan."
+      },
+      {
+        "name": "mail.example.lan.",
+        "type": "A",
+        "ttl": 300,
+        "value": "192.168.1.20"
+      },
+      {
+        "name": "_http._tcp.example.lan.",
+        "type": "SRV",
+        "ttl": 300,
+        "srv_priority": 10,
+        "srv_weight": 60,
+        "srv_port": 80,
+        "srv_target": "web.example.lan."
+      },
+      {
+        "name": "web.example.lan.",
+        "type": "A",
+        "ttl": 300,
+        "value": "192.168.1.100"
+      }
+    ]
+  }'
+```
+
 #### List all zones:
 
 ```bash
@@ -412,7 +542,7 @@ curl http://localhost:14000/api/v1/zones
 curl http://localhost:14000/api/v1/zones/example.lan
 ```
 
-#### Add a record to a zone:
+#### Add a simple A record to a zone:
 
 ```bash
 curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
@@ -422,6 +552,51 @@ curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
     "type": "A",
     "ttl": 300,
     "value": "192.168.1.150"
+  }'
+```
+
+#### Add an MX record with priority:
+
+```bash
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "example.lan.",
+    "type": "MX",
+    "ttl": 300,
+    "mx_priority": 10,
+    "mx_host": "mail.example.lan."
+  }'
+```
+
+#### Add an SRV record for service discovery:
+
+```bash
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "_ldap._tcp.example.lan.",
+    "type": "SRV",
+    "ttl": 300,
+    "srv_priority": 10,
+    "srv_weight": 100,
+    "srv_port": 389,
+    "srv_target": "ldap.example.lan."
+  }'
+```
+
+#### Add a CAA record for certificate authority:
+
+```bash
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "example.lan.",
+    "type": "CAA",
+    "ttl": 300,
+    "caa_flags": 0,
+    "caa_tag": "issue",
+    "caa_value": "letsencrypt.org"
   }'
 ```
 
@@ -448,6 +623,416 @@ curl -X DELETE http://localhost:14000/api/v1/zones/example.lan/records/api.examp
 
 ```bash
 curl -X DELETE http://localhost:14000/api/v1/zones/example.lan
+```
+
+---
+
+## DNS Record Type Examples
+
+This section provides complete examples for all supported DNS record types.
+
+### Simple Record Types
+
+These record types use only the `value` field:
+
+#### A Record (IPv4)
+
+```json
+{
+  "name": "www.example.lan.",
+  "type": "A",
+  "ttl": 300,
+  "value": "192.168.1.100"
+}
+```
+
+#### AAAA Record (IPv6)
+
+```json
+{
+  "name": "www.example.lan.",
+  "type": "AAAA",
+  "ttl": 300,
+  "value": "2001:db8::1"
+}
+```
+
+#### CNAME Record (Alias)
+
+```json
+{
+  "name": "www.example.lan.",
+  "type": "CNAME",
+  "ttl": 300,
+  "value": "web.example.lan."
+}
+```
+
+#### ALIAS Record (Zone Apex Alias)
+
+```json
+{
+  "name": "example.lan.",
+  "type": "ALIAS",
+  "ttl": 300,
+  "value": "lb.example.lan."
+}
+```
+
+#### NS Record (Name Server)
+
+```json
+{
+  "name": "example.lan.",
+  "type": "NS",
+  "ttl": 3600,
+  "value": "ns1.example.lan."
+}
+```
+
+#### TXT Record (Text)
+
+```json
+{
+  "name": "example.lan.",
+  "type": "TXT",
+  "ttl": 300,
+  "value": "v=spf1 mx -all"
+}
+```
+
+#### PTR Record (Reverse DNS)
+
+```json
+{
+  "name": "100.1.168.192.in-addr.arpa.",
+  "type": "PTR",
+  "ttl": 300,
+  "value": "www.example.lan."
+}
+```
+
+### Complex Record Types
+
+These record types support type-specific fields for better structure and validation:
+
+#### MX Record (Mail Exchange)
+
+**Structured format (recommended):**
+
+```json
+{
+  "name": "example.lan.",
+  "type": "MX",
+  "ttl": 300,
+  "mx_priority": 10,
+  "mx_host": "mail.example.lan."
+}
+```
+
+**Legacy format (also supported):**
+
+```json
+{
+  "name": "example.lan.",
+  "type": "MX",
+  "ttl": 300,
+  "value": "10 mail.example.lan."
+}
+```
+
+**Multiple MX records for redundancy:**
+
+```bash
+# Primary mail server
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "example.lan.",
+    "type": "MX",
+    "ttl": 300,
+    "mx_priority": 10,
+    "mx_host": "mail1.example.lan."
+  }'
+
+# Backup mail server
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "example.lan.",
+    "type": "MX",
+    "ttl": 300,
+    "mx_priority": 20,
+    "mx_host": "mail2.example.lan."
+  }'
+```
+
+#### SRV Record (Service Discovery)
+
+**Structured format (recommended):**
+
+```json
+{
+  "name": "_http._tcp.example.lan.",
+  "type": "SRV",
+  "ttl": 300,
+  "srv_priority": 10,
+  "srv_weight": 60,
+  "srv_port": 80,
+  "srv_target": "web.example.lan."
+}
+```
+
+**Legacy format (also supported):**
+
+```json
+{
+  "name": "_http._tcp.example.lan.",
+  "type": "SRV",
+  "ttl": 300,
+  "value": "10 60 80 web.example.lan."
+}
+```
+
+**Common SRV record examples:**
+
+```bash
+# LDAP service
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "_ldap._tcp.example.lan.",
+    "type": "SRV",
+    "ttl": 300,
+    "srv_priority": 10,
+    "srv_weight": 100,
+    "srv_port": 389,
+    "srv_target": "ldap.example.lan."
+  }'
+
+# HTTPS service with load balancing
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "_https._tcp.example.lan.",
+    "type": "SRV",
+    "ttl": 300,
+    "srv_priority": 10,
+    "srv_weight": 50,
+    "srv_port": 443,
+    "srv_target": "web1.example.lan."
+  }'
+
+# Kubernetes etcd service
+curl -X POST http://localhost:14000/api/v1/zones/k8s.local/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "_etcd-server._tcp.k8s.local.",
+    "type": "SRV",
+    "ttl": 300,
+    "srv_priority": 10,
+    "srv_weight": 100,
+    "srv_port": 2380,
+    "srv_target": "master.k8s.local."
+  }'
+```
+
+#### SOA Record (Start of Authority)
+
+**Structured format (recommended):**
+
+```json
+{
+  "name": "example.lan.",
+  "type": "SOA",
+  "ttl": 3600,
+  "soa_mname": "ns1.example.lan.",
+  "soa_rname": "hostmaster.example.lan.",
+  "soa_serial": 2024110601,
+  "soa_refresh": 3600,
+  "soa_retry": 1800,
+  "soa_expire": 604800,
+  "soa_minimum": 300
+}
+```
+
+**Legacy format (also supported):**
+
+```json
+{
+  "name": "example.lan.",
+  "type": "SOA",
+  "ttl": 3600,
+  "value": "ns1.example.lan. hostmaster.example.lan. 2024110601 3600 1800 604800 300"
+}
+```
+
+**Field descriptions:**
+
+- `soa_mname`: Primary nameserver for the zone
+- `soa_rname`: Email of zone administrator (@ replaced with .)
+- `soa_serial`: Zone serial number (format: YYYYMMDDnn)
+- `soa_refresh`: Secondary nameserver refresh interval (seconds)
+- `soa_retry`: Retry interval if refresh fails (seconds)
+- `soa_expire`: When zone data expires (seconds)
+- `soa_minimum`: Minimum TTL for negative caching (seconds)
+
+#### CAA Record (Certificate Authority Authorization)
+
+**Structured format (recommended):**
+
+```json
+{
+  "name": "example.lan.",
+  "type": "CAA",
+  "ttl": 300,
+  "caa_flags": 0,
+  "caa_tag": "issue",
+  "caa_value": "letsencrypt.org"
+}
+```
+
+**Legacy format (also supported):**
+
+```json
+{
+  "name": "example.lan.",
+  "type": "CAA",
+  "ttl": 300,
+  "value": "0 issue \"letsencrypt.org\""
+}
+```
+
+**Common CAA examples:**
+
+```bash
+# Allow Let's Encrypt to issue certificates
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "example.lan.",
+    "type": "CAA",
+    "ttl": 300,
+    "caa_flags": 0,
+    "caa_tag": "issue",
+    "caa_value": "letsencrypt.org"
+  }'
+
+# Allow wildcard certificates
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "example.lan.",
+    "type": "CAA",
+    "ttl": 300,
+    "caa_flags": 0,
+    "caa_tag": "issuewild",
+    "caa_value": "letsencrypt.org"
+  }'
+
+# Incident reporting
+curl -X POST http://localhost:14000/api/v1/zones/example.lan/records \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "example.lan.",
+    "type": "CAA",
+    "ttl": 300,
+    "caa_flags": 0,
+    "caa_tag": "iodef",
+    "caa_value": "mailto:security@example.lan"
+  }'
+```
+
+**CAA tag values:**
+
+- `issue`: Authorize CA to issue certificates for this domain
+- `issuewild`: Authorize CA to issue wildcard certificates
+- `iodef`: URL/email for reporting policy violations
+
+### Complete Zone Example
+
+Here's a complete zone with various record types:
+
+```bash
+curl -X POST http://localhost:14000/api/v1/zones \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain": "example.lan",
+    "records": [
+      {
+        "name": "example.lan.",
+        "type": "SOA",
+        "ttl": 3600,
+        "soa_mname": "ns1.example.lan.",
+        "soa_rname": "hostmaster.example.lan.",
+        "soa_serial": 2024110601,
+        "soa_refresh": 3600,
+        "soa_retry": 1800,
+        "soa_expire": 604800,
+        "soa_minimum": 300
+      },
+      {
+        "name": "example.lan.",
+        "type": "NS",
+        "ttl": 3600,
+        "value": "ns1.example.lan."
+      },
+      {
+        "name": "ns1.example.lan.",
+        "type": "A",
+        "ttl": 3600,
+        "value": "192.168.1.1"
+      },
+      {
+        "name": "example.lan.",
+        "type": "A",
+        "ttl": 300,
+        "value": "192.168.1.100"
+      },
+      {
+        "name": "www.example.lan.",
+        "type": "CNAME",
+        "ttl": 300,
+        "value": "example.lan."
+      },
+      {
+        "name": "example.lan.",
+        "type": "MX",
+        "ttl": 300,
+        "mx_priority": 10,
+        "mx_host": "mail.example.lan."
+      },
+      {
+        "name": "mail.example.lan.",
+        "type": "A",
+        "ttl": 300,
+        "value": "192.168.1.20"
+      },
+      {
+        "name": "example.lan.",
+        "type": "TXT",
+        "ttl": 300,
+        "value": "v=spf1 mx -all"
+      },
+      {
+        "name": "_http._tcp.example.lan.",
+        "type": "SRV",
+        "ttl": 300,
+        "srv_priority": 10,
+        "srv_weight": 60,
+        "srv_port": 80,
+        "srv_target": "www.example.lan."
+      },
+      {
+        "name": "example.lan.",
+        "type": "CAA",
+        "ttl": 300,
+        "caa_flags": 0,
+        "caa_tag": "issue",
+        "caa_value": "letsencrypt.org"
+      }
+    ]
+  }'
 ```
 
 ---
@@ -479,11 +1064,11 @@ All error responses follow this format:
 
 The HTTP API server can be configured using environment variables:
 
-| Variable        | Default | Description                              |
-| --------------- | ------- | ---------------------------------------- |
+| Variable        | Default  | Description                              |
+| --------------- | -------- | ---------------------------------------- |
 | `HTTP_API_PORT` | `:14000` | Port for the HTTP API server             |
-| `LOG_LEVEL`     | `info`  | Logging level (debug, info, warn, error) |
-| `LOG_JSON`      | `true`  | Enable JSON structured logging           |
+| `LOG_LEVEL`     | `info`   | Logging level (debug, info, warn, error) |
+| `LOG_JSON`      | `true`   | Enable JSON structured logging           |
 
 ---
 
@@ -613,8 +1198,8 @@ openapi-generator-cli generate \
 3. **Rebuild and test:**
 
    ```bash
-   make build-api
-   ./bin/godnsapi
+   make build-dns
+   ./bin/godns
    ```
 
 4. **Verify in Swagger UI:**
@@ -625,14 +1210,10 @@ openapi-generator-cli generate \
 **Test API endpoints:**
 
 ```bash
-./hack/test-api.sh
+./scripts/test-api.sh
 ```
 
-**Test Swagger UI:**
-
-```bash
-./hack/test-swagger.sh
-```
+This script demonstrates basic CRUD operations using the HTTP API.
 
 ---
 

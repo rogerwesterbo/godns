@@ -1,9 +1,11 @@
 package settings
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/rogerwesterbo/godns/pkg/consts"
 	"github.com/spf13/viper"
@@ -73,4 +75,46 @@ func SaveConfig() error {
 
 	configPath := filepath.Join(configDir, "config.yaml")
 	return viper.WriteConfigAs(configPath)
+}
+
+// GetAPIURL returns the API URL from config
+func GetAPIURL() string {
+	return viper.GetString("api.url")
+}
+
+// GetAccessToken returns the cached access token
+func GetAccessToken() (string, error) {
+	// Try to get from pkg/auth token cache
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	configDir := filepath.Join(homeDir, ".godns")
+	tokenPath := filepath.Join(configDir, "token.json")
+	cleanPath := filepath.Clean(tokenPath)
+	if !strings.HasPrefix(cleanPath, configDir+string(os.PathSeparator)) {
+		return "", fmt.Errorf("invalid token path")
+	}
+
+	data, err := os.ReadFile(cleanPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("not authenticated. Please run 'godnscli login' first")
+		}
+		return "", fmt.Errorf("failed to read token cache: %w", err)
+	}
+
+	var tokenCache struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.Unmarshal(data, &tokenCache); err != nil {
+		return "", fmt.Errorf("failed to parse token cache: %w", err)
+	}
+
+	if tokenCache.AccessToken == "" {
+		return "", fmt.Errorf("no access token found. Please run 'godnscli login' first")
+	}
+
+	return tokenCache.AccessToken, nil
 }
