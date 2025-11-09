@@ -1,6 +1,6 @@
 # Multi-stage build for secure, minimal Go binary
 # Stage 1: Build the Go binary
-FROM --platform=$BUILDPLATFORM golang:1.25.3-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25.4-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
