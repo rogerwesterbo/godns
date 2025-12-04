@@ -1,6 +1,6 @@
 module github.com/rogerwesterbo/godns
 
-go 1.25.5
+go 1.25.4
 
 require (
 	github.com/coreos/go-oidc/v3 v3.17.0
