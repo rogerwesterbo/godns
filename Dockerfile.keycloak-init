@@ -4,7 +4,7 @@ FROM alpine:latest
 RUN apk add --no-cache curl jq bash
 
 # Copy initialization script
-COPY init-keycloak.sh /init-keycloak.sh
+COPY scripts/init-keycloak.sh /init-keycloak.sh
 RUN chmod +x /init-keycloak.sh
 
 ENTRYPOINT ["/init-keycloak.sh"]

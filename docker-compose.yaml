@@ -95,8 +95,8 @@ services:
 
   keycloak-init:
     build:
-      context: ./hack
-      dockerfile: ../Dockerfile.keycloak-init
+      context: .
+      dockerfile: Dockerfile.keycloak-init
     container_name: keycloak-init
     networks:
       - godns-network
