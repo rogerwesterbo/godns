@@ -1,6 +1,6 @@
 module github.com/rogerwesterbo/godns
 
-go 1.25.4
+go 1.25.5
 
 require (
 	github.com/coreos/go-oidc/v3 v3.17.0
@@ -45,7 +45,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	github.com/valkey-io/valkey-go v1.0.68
-	github.com/vitistack/common v0.7.0
+	github.com/vitistack/common v0.8.4
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.30.0 // indirect
