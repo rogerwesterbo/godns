@@ -95,8 +95,11 @@ jobs:
       - name: Run linter
         run: make lint
 
-      - name: Run security scan
-        run: make go-security-scan
+      - name: Run gosec
+        run: make gosec
+
+      - name: Run govulncheck
+        run: make govulncheck
 
   build-and-test-web:
     name: Build, Test, and Lint (Web UI)

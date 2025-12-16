@@ -10,7 +10,7 @@ Use this checklist when creating a new release.
 - [ ] Review and merge all PRs for this release
 - [ ] Test locally with Docker Compose
 - [ ] Test CLI commands
-- [ ] Run security scan: `make go-security-scan`
+- [ ] Run security scan: `make gosec and make govulncheck`
 
 ## Creating the Release
 
