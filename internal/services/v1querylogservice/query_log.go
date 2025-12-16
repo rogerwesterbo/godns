@@ -323,5 +323,5 @@ func (qls *QueryLogService) logToConsoleFunc(log *QueryLog) {
 	}
 
 	// Log as JSON for easy parsing
-	vlog.Infof("DNS_QUERY: %s", string(jsonBytes))
+	vlog.Debugf("DNS_QUERY: %s", string(jsonBytes))
 }

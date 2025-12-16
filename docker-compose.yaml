@@ -115,6 +115,61 @@ services:
       TEST_EMAIL: ${TEST_EMAIL:-testuser@godns.local}
     restart: 'no'
 
+  godns:
+    profiles: ['api']
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: godns
+    ports:
+      - '53:53/udp'
+      - '53:53/tcp'
+      - '14000:14000' # API
+      - '14001:14001' # Liveness
+      - '14002:14002' # Readiness
+      - '14003:14003' # Metrics
+    environment:
+      - DEVELOPMENT=true
+      - LOG_LEVEL=debug
+      - LOG_JSON=false
+      - DNS_SERVER_PORT=:53
+      - DNS_SERVER_LIVENESS_PROBE_PORT=:14001
+      - DNS_SERVER_READYNESS_PROBE_PORT=:14002
+      - HTTP_API_PORT=:14000
+      - METRICS_ENABLED=true
+      - METRICS_PORT=:14003
+      - VALKEY_HOST=valkey
+      - VALKEY_PORT=6379
+      - VALKEY_USERNAME=${VALKEY_USERNAME:-default}
+      - VALKEY_TOKEN=${VALKEY_TOKEN:-mysecretpassword}
+      - AUTH_ENABLED=true
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM:-godns}
+      - KEYCLOAK_API_CLIENT_ID=${KEYCLOAK_API_CLIENT_ID:-godns-api}
+      - HTTP_API_CORS_ALLOWED_ORIGINS=*
+    depends_on:
+      valkey:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
+    networks:
+      - godns-network
+    restart: unless-stopped
+
+  godnsweb:
+    profiles: ['ui']
+    build:
+      context: ./web/godnsweb
+      dockerfile: Dockerfile
+    container_name: godnsweb
+    ports:
+      - '8080:8080'
+    environment:
+      - PORT=8080
+    networks:
+      - godns-network
+    restart: unless-stopped
+
 networks:
   godns-network:
     driver: bridge

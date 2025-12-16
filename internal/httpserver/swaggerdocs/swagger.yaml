@@ -88,6 +88,9 @@ definitions:
     type: object
   github_com_rogerwesterbo_godns_internal_models.DNSZone:
     properties:
+      dnssec_enabled:
+        description: DNSSEC fields
+        type: boolean
       domain:
         description: e.g., "example.lan."
         example: example.lan.
@@ -95,11 +98,23 @@ definitions:
       enabled:
         description: Whether the zone is enabled/active
         type: boolean
+      ksk:
+        description: Key Signing Key (PEM format or similar)
+        type: string
+      ksk_private_key:
+        description: Encrypted private key for KSK
+        type: string
       records:
         description: DNS records in this zone
         items:
           $ref: '#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord'
         type: array
+      zsk:
+        description: Zone Signing Key (PEM format or similar)
+        type: string
+      zsk_private_key:
+        description: Encrypted private key for ZSK
+        type: string
     type: object
   github_com_rogerwesterbo_godns_internal_services_v1searchservice.SearchResponse:
     properties:

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **DNSSEC Support**:
+  - Automatic ECDSA P-256 key generation (KSK/ZSK)
+  - On-the-fly zone signing with RRSIG records
+  - NSEC record generation for denial of existence
+  - Web UI management for enabling/disabling DNSSEC per zone
+- **Docker Compose Profiles**:
+  - Added `api` profile for backend services
+  - Added `ui` profile for frontend services
+- **Seeding**:
+  - Added `secure.lan` seeded zone with DNSSEC enabled by default
 - Release automation with GitHub Actions
 - Multi-arch Docker images (linux/amd64, linux/arm64)
 - Helm chart packaging and publishing to GHCR

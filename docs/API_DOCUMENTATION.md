@@ -341,7 +341,11 @@ Delete a specific DNS record from a zone.
 ```json
 {
   "domain": "string (required)",  // Domain name, will be normalized with trailing dot
-  "records": [DNSRecord]          // Array of DNS records
+  "records": [DNSRecord],         // Array of DNS records
+  "enabled": "boolean",           // Whether the zone is enabled
+  "dnssec_enabled": "boolean",    // Whether DNSSEC is enabled (triggers key generation)
+  "ksk": "string (readonly)",     // Key Signing Key (PEM)
+  "zsk": "string (readonly)"      // Zone Signing Key (PEM)
 }
 ```
 
@@ -1031,7 +1035,8 @@ curl -X POST http://localhost:14000/api/v1/zones \
         "caa_tag": "issue",
         "caa_value": "letsencrypt.org"
       }
-    ]
+    ],
+    "dnssec_enabled": true
   }'
 ```
 

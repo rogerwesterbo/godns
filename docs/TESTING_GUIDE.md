@@ -2,6 +2,8 @@
 
 Complete guide for testing your GoDNS server.
 
+> **Note:** For specific DNSSEC testing instructions, please refer to [DNSSEC_TESTING.md](DNSSEC_TESTING.md).
+
 ## Quick Start
 
 ```bash
@@ -294,7 +296,7 @@ watch -n 5 './bin/godnscli h'
 
 Use the seeding scripts to populate test data:
 
-```bash
+````bash
 # Automatic seeding (if DEVELOPMENT=true)
 # Data is seeded on startup
 
@@ -305,8 +307,9 @@ The project includes a comprehensive test data seeding script:
 
 ```bash
 ./scripts/seed-test-data.sh
-```
-```
+````
+
+````
 
 ## Continuous Testing
 
@@ -337,7 +340,7 @@ jobs:
 
       - name: Run comprehensive tests
         run: ./comprehensive-test.sh
-```
+````
 
 ## Troubleshooting
 

@@ -9,9 +9,10 @@ This guide covers the advanced features added to GoDNS for production deployment
 3. [Load Balancing](#load-balancing)
 4. [Health Checks](#health-checks)
 5. [Query Logging](#query-logging)
-6. [Prometheus Metrics](#prometheus-metrics)
-7. [Configuration Reference](#configuration-reference)
-8. [Testing Examples](#testing-examples)
+6. [DNSSEC](#dnssec)
+7. [Prometheus Metrics](#prometheus-metrics)
+8. [Configuration Reference](#configuration-reference)
+9. [Testing Examples](#testing-examples)
 
 ---
 
@@ -313,6 +314,30 @@ DNS_QUERY_LOG_FLUSH_INTERVAL=60
 - `cache_hit`: Whether response came from cache
 - `upstream`: Whether query was forwarded to upstream
 - `blocked`: Whether query was rate-limited
+
+---
+
+## DNSSEC
+
+### Overview
+
+DNSSEC (Domain Name System Security Extensions) adds cryptographic security to DNS records, preventing spoofing and cache poisoning attacks.
+
+### Features
+
+- **Automatic Key Generation**: Automatically generates ECDSA P-256 KSK (Key Signing Key) and ZSK (Zone Signing Key) when enabled for a zone.
+- **On-the-fly Signing**: Dynamically signs responses with RRSIG records.
+- **NSEC Support**: Generates NSEC records for authenticated denial of existence.
+- **Key Management**: Stores keys securely in the zone configuration.
+
+### How It Works
+
+1. **Enable DNSSEC**: Set `dnssec_enabled: true` when creating or updating a zone via API or UI.
+2. **Key Generation**: The system generates KSK and ZSK pairs.
+3. **Signing**:
+   - When a query comes in with the `DO` (DNSSEC OK) bit set, the server appends `RRSIG` records to the response.
+   - If the record doesn't exist, it returns an `NSEC` record proving non-existence.
+4. **Validation**: Resolvers use the DS record (which you must publish in the parent zone) to validate the chain of trust.
 
 ---
 

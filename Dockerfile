@@ -21,7 +21,7 @@ RUN go install github.com/swaggo/swag/cmd/swag@v1.16.6
 COPY . .
 
 # Generate Swagger documentation
-RUN /go/bin/swag init -g cmd/godnsapi/swagger.go --output docs
+RUN /go/bin/swag init -g internal/httpserver/swagger.go -o internal/httpserver/swaggerdocs --parseDependency --parseInternal
 
 # Build the binary with security hardening flags
 # - CGO_ENABLED=0: Static binary, no C dependencies

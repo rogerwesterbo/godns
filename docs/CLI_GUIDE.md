@@ -22,6 +22,8 @@ Complete guide for using the `godnscli` command-line tool to test and manage you
 ./bin/godnscli q example.lan -t MX      # Mail servers
 ./bin/godnscli q example.lan -t NS      # Name servers
 ./bin/godnscli q example.lan -t TXT     # Text records
+./bin/godnscli q secure.lan -t DNSKEY   # DNSSEC Public Keys
+./bin/godnscli q secure.lan -t RRSIG    # DNSSEC Signatures
 ```
 
 ### Query Different Servers

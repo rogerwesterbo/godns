@@ -1282,6 +1282,10 @@ const docTemplate = `{
         "github_com_rogerwesterbo_godns_internal_models.DNSZone": {
             "type": "object",
             "properties": {
+                "dnssec_enabled": {
+                    "description": "DNSSEC fields",
+                    "type": "boolean"
+                },
                 "domain": {
                     "description": "e.g., \"example.lan.\"",
                     "type": "string",
@@ -1291,12 +1295,28 @@ const docTemplate = `{
                     "description": "Whether the zone is enabled/active",
                     "type": "boolean"
                 },
+                "ksk": {
+                    "description": "Key Signing Key (PEM format or similar)",
+                    "type": "string"
+                },
+                "ksk_private_key": {
+                    "description": "Encrypted private key for KSK",
+                    "type": "string"
+                },
                 "records": {
                     "description": "DNS records in this zone",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_rogerwesterbo_godns_internal_models.DNSRecord"
                     }
+                },
+                "zsk": {
+                    "description": "Zone Signing Key (PEM format or similar)",
+                    "type": "string"
+                },
+                "zsk_private_key": {
+                    "description": "Encrypted private key for ZSK",
+                    "type": "string"
                 }
             }
         },

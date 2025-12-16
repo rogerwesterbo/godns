@@ -227,6 +227,35 @@ func (s *SeedingService) seedTestData(ctx context.Context) error {
 		return fmt.Errorf("failed to create example.lan zone: %w", err)
 	}
 
-	vlog.Info("successfully seeded 5 test zones with realistic DNS records")
+	// Seed Zone 6: secure.lan (DNSSEC enabled zone)
+	if err := s.zoneService.CreateZone(ctx, &models.DNSZone{
+		Domain:        "secure.lan",
+		DNSSECEnabled: true,
+		Records: []models.DNSRecord{
+			// Zone authority
+			models.NewSOARecord("secure.lan.", "ns1.secure.lan.", "hostmaster.secure.lan.", 2024110601, 3600, 1800, 604800, 300, 3600),
+			models.NewNSRecord("secure.lan.", "ns1.secure.lan.", 3600),
+			models.NewNSRecord("secure.lan.", "ns2.secure.lan.", 3600),
+			// Name servers
+			models.NewARecord("ns1.secure.lan.", "10.10.10.1", 3600),
+			models.NewARecord("ns2.secure.lan.", "10.10.10.2", 3600),
+			// Secure services
+			models.NewARecord("www.secure.lan.", "10.10.10.10", 300),
+			models.NewARecord("api.secure.lan.", "10.10.10.20", 300),
+			models.NewARecord("vault.secure.lan.", "10.10.10.30", 300),
+			// SSH Fingerprints (SSHFP) - simulated with TXT for now as SSHFP type might not be fully supported in helpers yet
+			models.NewTXTRecord("vault.secure.lan.", "SSHFP 1 1 1234567890ABCDEF", 300),
+			// CA Authorization
+			models.NewCAARecord("secure.lan.", 0, "issue", "letsencrypt.org", 300),
+			models.NewCAARecord("secure.lan.", 0, "iodef", "mailto:security@secure.lan", 300),
+			// SPF/DMARC
+			models.NewTXTRecord("secure.lan.", "v=spf1 mx -all", 300),
+			models.NewTXTRecord("_dmarc.secure.lan.", "v=DMARC1; p=reject; rua=mailto:dmarc@secure.lan", 300),
+		},
+	}); err != nil {
+		return fmt.Errorf("failed to create secure.lan zone: %w", err)
+	}
+
+	vlog.Info("successfully seeded 6 test zones with realistic DNS records")
 	return nil
 }

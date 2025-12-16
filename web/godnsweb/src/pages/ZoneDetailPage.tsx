@@ -183,6 +183,18 @@ export default function ZoneDetailPage() {
     }
   };
 
+  const handleToggleDNSSEC = async () => {
+    if (!zone) return;
+    try {
+      const updatedZone = { ...zone, dnssec_enabled: !zone.dnssec_enabled };
+      await api.updateZone(zone.domain, updatedZone);
+      await loadZone(zone.domain);
+    } catch (err) {
+      console.error('Failed to toggle DNSSEC:', err);
+      setError(err instanceof Error ? err.message : 'Failed to toggle DNSSEC');
+    }
+  };
+
   // Get unique record types from zone
   const recordTypes = zone
     ? ['All', ...Array.from(new Set(zone.records.map(r => r.type))).sort()]
@@ -336,6 +348,62 @@ export default function ZoneDetailPage() {
           </AlertDialog.Root>
         </Flex>
       </Flex>
+
+      {/* DNSSEC Configuration */}
+      <Card>
+        <Flex direction="column" gap="4">
+          <Flex justify="between" align="center">
+            <Flex align="center" gap="2">
+              <Heading size="4">DNSSEC</Heading>
+              <Badge color={zone.dnssec_enabled ? 'green' : 'gray'}>
+                {zone.dnssec_enabled ? 'Enabled' : 'Disabled'}
+              </Badge>
+            </Flex>
+            <Button
+              variant={zone.dnssec_enabled ? 'soft' : 'solid'}
+              color={zone.dnssec_enabled ? 'red' : 'green'}
+              onClick={handleToggleDNSSEC}
+            >
+              {zone.dnssec_enabled ? 'Disable DNSSEC' : 'Enable DNSSEC'}
+            </Button>
+          </Flex>
+
+          {zone.dnssec_enabled && (
+            <Flex direction="column" gap="3">
+              <Text size="2" color="gray">
+                DNSSEC is enabled for this zone. Below are the keys generated for this zone. You may
+                need to add the DS record to your parent zone.
+              </Text>
+
+              {zone.ksk && (
+                <Box>
+                  <Text size="2" weight="bold" mb="1">
+                    Key Signing Key (KSK)
+                  </Text>
+                  <Card variant="surface" style={{ backgroundColor: 'var(--gray-2)' }}>
+                    <Text size="1" style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      {zone.ksk}
+                    </Text>
+                  </Card>
+                </Box>
+              )}
+
+              {zone.zsk && (
+                <Box>
+                  <Text size="2" weight="bold" mb="1">
+                    Zone Signing Key (ZSK)
+                  </Text>
+                  <Card variant="surface" style={{ backgroundColor: 'var(--gray-2)' }}>
+                    <Text size="1" style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      {zone.zsk}
+                    </Text>
+                  </Card>
+                </Box>
+              )}
+            </Flex>
+          )}
+        </Flex>
+      </Card>
 
       <Card>
         <Flex direction="column" gap="4">

@@ -19,6 +19,7 @@
 
 ### 🔐 Security & Authentication
 
+- **DNSSEC Support** - Automatic zone signing with ECDSA P-256 keys (KSK/ZSK)
 - **OAuth2/OIDC** - Enterprise authentication via Keycloak integration
 - **Rate Limiting** - Per-IP query rate limiting with configurable thresholds
 - **ACL Support** - Valkey ACL-based access control
@@ -41,6 +42,8 @@
 - **Persistent Stats** - Query statistics survive server restarts
 - **Docker Compose** - Complete development stack included
 
+![GoDns Dashboard](./docs/godns-dashboard.png)
+
 ## 🚀 Quick Start
 
 ### Option 1: Docker Compose (Recommended)
@@ -51,7 +54,11 @@ git clone https://github.com/rogerwesterbo/godns.git
 cd godns
 
 # Start all services (DNS + API + Web UI + Keycloak + Valkey)
-docker-compose up -d
+docker-compose --profile api --profile ui up -d
+
+# Or start specific components:
+# docker-compose --profile api up -d  # Backend only
+# docker-compose --profile ui up -d   # Frontend only
 
 # Access services
 # - DNS Server: localhost:14053

@@ -40,6 +40,11 @@ export interface DNSZone {
   domain: string;
   records: DNSRecord[];
   enabled: boolean;
+  dnssec_enabled?: boolean;
+  ksk?: string;
+  zsk?: string;
+  ksk_private_key?: string;
+  zsk_private_key?: string;
 }
 
 export interface SearchResult {

@@ -31,7 +31,7 @@ godnscli built at /path/to/godns/bin/godnscli
 
 ```bash
 # Start GoDNS and Valkey with Docker Compose
-docker-compose up -d
+docker-compose --profile api --profile ui up -d
 ```
 
 **Verify it's running:**

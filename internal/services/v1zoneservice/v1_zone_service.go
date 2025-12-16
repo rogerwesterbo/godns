@@ -2,11 +2,14 @@ package v1zoneservice
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"strings"
 
 	"github.com/rogerwesterbo/godns/internal/models"
+	"github.com/rogerwesterbo/godns/internal/services/v1dnssecservice"
 	"github.com/rogerwesterbo/godns/pkg/interfaces/valkeyinterface"
 )
 
@@ -18,13 +21,15 @@ const (
 
 // V1ZoneService handles DNS zone and record operations
 type V1ZoneService struct {
-	client valkeyinterface.ValkeyInterface
+	client        valkeyinterface.ValkeyInterface
+	dnssecService *v1dnssecservice.DNSSECService
 }
 
 // NewV1ZoneService creates a new zone service
-func NewV1ZoneService(client valkeyinterface.ValkeyInterface) *V1ZoneService {
+func NewV1ZoneService(client valkeyinterface.ValkeyInterface, dnssecService *v1dnssecservice.DNSSECService) *V1ZoneService {
 	return &V1ZoneService{
-		client: client,
+		client:        client,
+		dnssecService: dnssecService,
 	}
 }
 
@@ -46,6 +51,11 @@ func (s *V1ZoneService) CreateZone(ctx context.Context, zone *models.DNSZone) er
 
 	// Set zone as enabled by default if not specified
 	zone.Enabled = true
+
+	// Ensure DNSSEC keys are generated if enabled
+	if err := s.ensureDNSSECKeys(zone); err != nil {
+		return fmt.Errorf("failed to ensure DNSSEC keys: %w", err)
+	}
 
 	// Check if zone already exists
 	zoneKey := zoneKeyPrefix + zone.Domain
@@ -177,6 +187,11 @@ func (s *V1ZoneService) UpdateZone(ctx context.Context, domain string, zone *mod
 
 	// Update domain to match the key
 	zone.Domain = domain
+
+	// Ensure DNSSEC keys are generated if enabled
+	if err := s.ensureDNSSECKeys(zone); err != nil {
+		return fmt.Errorf("failed to ensure DNSSEC keys: %w", err)
+	}
 
 	// Validate records
 	for _, record := range zone.Records {
@@ -351,6 +366,47 @@ func (s *V1ZoneService) validateRecord(record *models.DNSRecord) error {
 	if err := record.Validate(); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// ensureDNSSECKeys generates DNSSEC keys if enabled and missing
+func (s *V1ZoneService) ensureDNSSECKeys(zone *models.DNSZone) error {
+	if !zone.DNSSECEnabled {
+		return nil
+	}
+
+	// If keys already exist, don't regenerate
+	if zone.KSK != "" && zone.ZSK != "" && zone.KSKPrivateKey != "" && zone.ZSKPrivateKey != "" {
+		return nil
+	}
+
+	if s.dnssecService == nil {
+		return fmt.Errorf("DNSSEC service not initialized")
+	}
+
+	ksk, zsk, kskPriv, zskPriv, err := s.dnssecService.GenerateKeys(zone.Domain)
+	if err != nil {
+		return fmt.Errorf("failed to generate DNSSEC keys: %w", err)
+	}
+
+	zone.KSK = ksk.String()
+	zone.ZSK = zsk.String()
+
+	// Encode private keys to PEM
+	kskBytes, err := x509.MarshalECPrivateKey(kskPriv)
+	if err != nil {
+		return fmt.Errorf("failed to marshal KSK private key: %w", err)
+	}
+	kskPem := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: kskBytes})
+	zone.KSKPrivateKey = string(kskPem)
+
+	zskBytes, err := x509.MarshalECPrivateKey(zskPriv)
+	if err != nil {
+		return fmt.Errorf("failed to marshal ZSK private key: %w", err)
+	}
+	zskPem := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: zskBytes})
+	zone.ZSKPrivateKey = string(zskPem)
 
 	return nil
 }

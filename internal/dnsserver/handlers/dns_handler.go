@@ -11,6 +11,7 @@ import (
 
 	"github.com/rogerwesterbo/godns/internal/services/v1allowedlans"
 	"github.com/rogerwesterbo/godns/internal/services/v1cacheservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1dnssecservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1dnsservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1healthcheckservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1loadbalancerservice"
@@ -24,6 +25,7 @@ import (
 
 type DNSHandler struct {
 	dnsService         *v1dnsservice.DNSService
+	dnssecService      *v1dnssecservice.DNSSECService
 	allowedLANsService *v1allowedlans.AllowedLANsService
 	upstreamService    *v1upstream.UpstreamService
 	cacheService       *v1cacheservice.DNSCache
@@ -37,6 +39,7 @@ type DNSHandler struct {
 // NewDNSHandler creates a new DNS handler with all optional services
 func NewDNSHandler(
 	dnsService *v1dnsservice.DNSService,
+	dnssecService *v1dnssecservice.DNSSECService,
 	allowedLANsService *v1allowedlans.AllowedLANsService,
 	upstreamService *v1upstream.UpstreamService,
 	cacheService *v1cacheservice.DNSCache,
@@ -48,6 +51,7 @@ func NewDNSHandler(
 ) *DNSHandler {
 	return &DNSHandler{
 		dnsService:         dnsService,
+		dnssecService:      dnssecService,
 		allowedLANsService: allowedLANsService,
 		upstreamService:    upstreamService,
 		cacheService:       cacheService,
@@ -193,6 +197,18 @@ func (h *DNSHandler) HandleDNS(w dns.ResponseWriter, r *dns.Msg) {
 				} else {
 					// No load balancing needed, return all records
 					m.Answer = append(m.Answer, records...)
+				}
+
+				// DNSSEC: If DO bit is set, include RRSIGs
+				if opt := r.IsEdns0(); opt != nil && opt.Do() {
+					rrsigs, err := h.dnsService.LookupRecord(ctx, name, dns.TypeRRSIG)
+					if err == nil {
+						for _, sig := range rrsigs {
+							if rrsig, ok := sig.(*dns.RRSIG); ok && rrsig.TypeCovered == qtype {
+								m.Answer = append(m.Answer, sig)
+							}
+						}
+					}
 				}
 
 				// 5. Cache the successful response

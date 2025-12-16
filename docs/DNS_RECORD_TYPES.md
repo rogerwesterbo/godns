@@ -4,19 +4,22 @@ GoDNS supports multiple DNS record types with both legacy (simple `value` field)
 
 ## Supported Record Types
 
-| Type  | Purpose            | Structured Format | Legacy Format |
-| ----- | ------------------ | ----------------- | ------------- |
-| A     | IPv4 address       | ✓                 | ✓             |
-| AAAA  | IPv6 address       | ✓                 | ✓             |
-| CNAME | Canonical name     | ✓                 | ✓             |
-| ALIAS | Zone apex alias    | ✓                 | ✓             |
-| NS    | Name server        | ✓                 | ✓             |
-| MX    | Mail exchange      | ✓                 | ✓             |
-| TXT   | Text record        | ✓                 | ✓             |
-| SRV   | Service discovery  | ✓                 | ✓             |
-| SOA   | Start of authority | ✓                 | ✓             |
-| CAA   | CA authorization   | ✓                 | ✓             |
-| PTR   | Pointer (reverse)  | ✓                 | ✓             |
+| Type   | Purpose            | Structured Format | Legacy Format |
+| ------ | ------------------ | ----------------- | ------------- |
+| A      | IPv4 address       | ✓                 | ✓             |
+| AAAA   | IPv6 address       | ✓                 | ✓             |
+| CNAME  | Canonical name     | ✓                 | ✓             |
+| ALIAS  | Zone apex alias    | ✓                 | ✓             |
+| NS     | Name server        | ✓                 | ✓             |
+| MX     | Mail exchange      | ✓                 | ✓             |
+| TXT    | Text record        | ✓                 | ✓             |
+| SRV    | Service discovery  | ✓                 | ✓             |
+| SOA    | Start of authority | ✓                 | ✓             |
+| CAA    | CA authorization   | ✓                 | ✓             |
+| PTR    | Pointer (reverse)  | ✓                 | ✓             |
+| DNSKEY | DNS Public Key     | Auto-generated    | -             |
+| RRSIG  | Resource Signature | Auto-generated    | -             |
+| NSEC   | Next Secure Record | Auto-generated    | -             |
 
 ## Record Format Examples
 

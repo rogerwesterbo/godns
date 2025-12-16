@@ -13,6 +13,7 @@ import (
 	"github.com/rogerwesterbo/godns/internal/services/seeding"
 	"github.com/rogerwesterbo/godns/internal/services/v1allowedlans"
 	"github.com/rogerwesterbo/godns/internal/services/v1cacheservice"
+	"github.com/rogerwesterbo/godns/internal/services/v1dnssecservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1dnsservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1healthcheckservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1loadbalancerservice"
@@ -55,6 +56,9 @@ func main() {
 	// Initialize DNS service
 	dnsService := v1dnsservice.NewDNSService(clients.V1ValkeyClient)
 
+	// Initialize DNSSEC service
+	dnssecService := v1dnssecservice.NewDNSSECService()
+
 	// Initialize allowed LANs service with Valkey backend
 	allowedLANsService := v1allowedlans.NewAllowedLANsService(clients.V1ValkeyClient)
 
@@ -62,7 +66,7 @@ func main() {
 	upstreamService := v1upstream.NewUpstreamService(clients.V1ValkeyClient, 3*time.Second)
 
 	// Initialize zone service for HTTP API and seeding
-	zoneService := v1zoneservice.NewV1ZoneService(clients.V1ValkeyClient)
+	zoneService := v1zoneservice.NewV1ZoneService(clients.V1ValkeyClient, dnssecService)
 
 	// Initialize DNS cache service
 	var cacheService *v1cacheservice.DNSCache
@@ -176,6 +180,7 @@ func main() {
 	// Create DNS handler with all services
 	dnsHandler := handlers.NewDNSHandler(
 		dnsService,
+		dnssecService,
 		allowedLANsService,
 		upstreamService,
 		cacheService,

@@ -44,6 +44,13 @@ type DNSZone struct {
 	Domain  string      `json:"domain" example:"example.lan."` // e.g., "example.lan."
 	Records []DNSRecord `json:"records"`                       // DNS records in this zone
 	Enabled bool        `json:"enabled"`                       // Whether the zone is enabled/active
+
+	// DNSSEC fields
+	DNSSECEnabled bool   `json:"dnssec_enabled"`            // Whether DNSSEC is enabled for this zone
+	KSK           string `json:"ksk,omitempty"`             // Key Signing Key (PEM format or similar)
+	ZSK           string `json:"zsk,omitempty"`             // Zone Signing Key (PEM format or similar)
+	KSKPrivateKey string `json:"ksk_private_key,omitempty"` // Encrypted private key for KSK
+	ZSKPrivateKey string `json:"zsk_private_key,omitempty"` // Encrypted private key for ZSK
 }
 
 // GetRData returns the RDATA (resource data) string for the DNS record
