@@ -161,6 +161,14 @@ export default function ZonesPage() {
                       Records
                     </SortableColumnHeader>
                     <SortableColumnHeader
+                      column={'dnssec_enabled' as keyof api.DNSZone}
+                      currentSortKey={sortConfig.key as keyof api.DNSZone | null}
+                      currentSortDirection={sortConfig.direction}
+                      onSort={col => requestSort(col as string)}
+                    >
+                      DNSSEC
+                    </SortableColumnHeader>
+                    <SortableColumnHeader
                       column={'enabled' as keyof api.DNSZone}
                       currentSortKey={sortConfig.key as keyof api.DNSZone | null}
                       currentSortDirection={sortConfig.direction}
@@ -183,6 +191,11 @@ export default function ZonesPage() {
                         </Link>
                       </Table.Cell>
                       <Table.Cell>{zone.records.length}</Table.Cell>
+                      <Table.Cell>
+                        <Badge color={zone.dnssec_enabled ? 'blue' : 'gray'}>
+                          {zone.dnssec_enabled ? 'Enabled' : 'Disabled'}
+                        </Badge>
+                      </Table.Cell>
                       <Table.Cell>
                         <Badge color={(zone.enabled ?? true) ? 'green' : 'red'}>
                           {(zone.enabled ?? true) ? 'Active' : 'Disabled'}
