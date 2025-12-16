@@ -138,10 +138,10 @@ func (s *DNSSECService) signRRSet(rrSet []dns.RR, key *dns.DNSKEY, privKey *ecds
 		Hdr:         dns.RR_Header{Name: rrSet[0].Header().Name, Rrtype: dns.TypeRRSIG, Class: dns.ClassINET, Ttl: rrSet[0].Header().Ttl},
 		TypeCovered: rrSet[0].Header().Rrtype,
 		Algorithm:   key.Algorithm,
-		Labels:      uint8(dns.CountLabel(rrSet[0].Header().Name)),
+		Labels:      uint8(dns.CountLabel(rrSet[0].Header().Name)), /* #nosec G115 */
 		OrigTtl:     rrSet[0].Header().Ttl,
-		Expiration:  uint32(time.Now().Add(30 * 24 * time.Hour).Unix()), // 30 days
-		Inception:   uint32(time.Now().Add(-1 * time.Hour).Unix()),      // 1 hour ago
+		Expiration:  uint32(time.Now().Add(30 * 24 * time.Hour).Unix()), /* #nosec G115 */ // 30 days
+		Inception:   uint32(time.Now().Add(-1 * time.Hour).Unix()),      /* #nosec G115 */ // 1 hour ago
 		KeyTag:      key.KeyTag(),
 		SignerName:  key.Header().Name,
 	}
