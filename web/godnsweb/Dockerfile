@@ -1,6 +1,8 @@
 # Multi-stage build for secure, minimal web application
 # Stage 1: Build the React application
-FROM node:24-alpine AS builder
+# Using slim instead of alpine because rolldown requires native bindings
+# that have better compatibility with glibc-based images
+FROM node:24-slim AS builder
 
 # Set working directory
 WORKDIR /build
@@ -8,8 +10,8 @@ WORKDIR /build
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci --only=production=false
+# Install dependencies (clean install for CI)
+RUN npm ci
 
 # Copy source code
 COPY . .
