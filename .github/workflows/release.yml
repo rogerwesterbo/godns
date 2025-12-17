@@ -209,6 +209,11 @@ jobs:
         run: |
           VERSION=${{ needs.setup.outputs.version }}
 
+          if [ -z "$VERSION" ]; then
+            echo "Error: VERSION is empty"
+            exit 1
+          fi
+
           # Update Chart.yaml version
           sed -i "s/^version:.*/version: ${VERSION}/" charts/godns/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" charts/godns/Chart.yaml
@@ -219,18 +224,17 @@ jobs:
           echo "Updated Helm chart to version ${VERSION}"
           cat charts/godns/Chart.yaml
 
+          mkdir -p .helm-releases
           helm package charts/godns -d .helm-releases
 
+          echo "Contents of .helm-releases:"
           ls -la .helm-releases
 
       - name: Upload Helm Chart
         uses: actions/upload-artifact@v4
         with:
           name: helm-chart
-          path: .helm-releases/*.tgz
-          if-no-files-found: error
-          retention-days: 1
-
+          path: .helm-releases
   release:
     name: Publish & Release
     needs: [setup, build-binaries, build-images, package-helm]
