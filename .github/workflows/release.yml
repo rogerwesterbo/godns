@@ -135,7 +135,7 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
           helm push .helm-releases/godns-${VERSION}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
 
-      - name: Build CLI binaries
+      - name: Build Binaries
         env:
           VERSION: ${{ steps.version.outputs.version }}
           BUILD_TIME: ${{ github.event.release.created_at }}
@@ -152,32 +152,41 @@ jobs:
             "windows/amd64"
           )
 
-          for platform in "${platforms[@]}"; do
-            IFS='/' read -r -a array <<< "$platform"
-            GOOS="${array[0]}"
-            GOARCH="${array[1]}"
+          binaries=(
+            "godnscli:./cmd/godnscli"
+            "godns:./cmd/godns"
+          )
+
+          for binary_info in "${binaries[@]}"; do
+            IFS=':' read -r binary_name binary_path <<< "$binary_info"
             
-            output_name="godnscli-${VERSION}-${GOOS}-${GOARCH}"
-            if [ "$GOOS" = "windows" ]; then
-              output_name="${output_name}.exe"
-            fi
-            
-            echo "Building for $GOOS/$GOARCH..."
-            CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build \
-              -trimpath \
-              -ldflags="-s -w -X main.version=${VERSION} -X main.buildTime=${BUILD_TIME} -X main.gitCommit=${GIT_COMMIT}" \
-              -o "dist/${output_name}" \
-              ./cmd/godnscli
-            
-            # Create checksums
-            if [ "$GOOS" = "windows" ]; then
-              (cd dist && sha256sum "${output_name}" > "${output_name}.sha256")
-            else
-              # Create tar.gz for non-Windows platforms
-              tar -czf "dist/${output_name}.tar.gz" -C dist "${output_name}"
-              rm "dist/${output_name}"
-              (cd dist && sha256sum "${output_name}.tar.gz" > "${output_name}.tar.gz.sha256")
-            fi
+            for platform in "${platforms[@]}"; do
+              IFS='/' read -r -a array <<< "$platform"
+              GOOS="${array[0]}"
+              GOARCH="${array[1]}"
+              
+              output_name="${binary_name}-${VERSION}-${GOOS}-${GOARCH}"
+              if [ "$GOOS" = "windows" ]; then
+                output_name="${output_name}.exe"
+              fi
+              
+              echo "Building $binary_name for $GOOS/$GOARCH..."
+              CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build \
+                -trimpath \
+                -ldflags="-s -w -X main.version=${VERSION} -X main.buildTime=${BUILD_TIME} -X main.gitCommit=${GIT_COMMIT}" \
+                -o "dist/${output_name}" \
+                "${binary_path}"
+              
+              # Create checksums
+              if [ "$GOOS" = "windows" ]; then
+                (cd dist && sha256sum "${output_name}" > "${output_name}.sha256")
+              else
+                # Create tar.gz for non-Windows platforms
+                tar -czf "dist/${output_name}.tar.gz" -C dist "${output_name}"
+                rm "dist/${output_name}"
+                (cd dist && sha256sum "${output_name}.tar.gz" > "${output_name}.tar.gz.sha256")
+              fi
+            done
           done
 
           # Create a combined checksums file
@@ -226,9 +235,19 @@ jobs:
             - **macOS (Apple Silicon):** `godnscli-${{ steps.version.outputs.version }}-darwin-arm64.tar.gz`
             - **Windows (amd64):** `godnscli-${{ steps.version.outputs.version }}-windows-amd64.exe`
 
+            ### API Server Binaries
+
+            Download the appropriate binary for your platform:
+
+            - **Linux (amd64):** `godns-${{ steps.version.outputs.version }}-linux-amd64.tar.gz`
+            - **Linux (arm64):** `godns-${{ steps.version.outputs.version }}-linux-arm64.tar.gz`
+            - **macOS (Intel):** `godns-${{ steps.version.outputs.version }}-darwin-amd64.tar.gz`
+            - **macOS (Apple Silicon):** `godns-${{ steps.version.outputs.version }}-darwin-arm64.tar.gz`
+            - **Windows (amd64):** `godns-${{ steps.version.outputs.version }}-windows-amd64.exe`
+
             **Verify checksums:**
             ```bash
-            sha256sum -c godnscli-${{ steps.version.outputs.version }}-<platform>.tar.gz.sha256
+            sha256sum -c <binary_name>-${{ steps.version.outputs.version }}-<platform>.tar.gz.sha256
             ```
 
             ### Installation
@@ -291,7 +310,7 @@ jobs:
 
           - 🐳 **Docker Image**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}\`
           - 📦 **Helm Chart**: \`oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm/godns:${{ steps.version.outputs.version }}\`
-          - 💻 **CLI Binaries**: Available for Linux, macOS, and Windows
+          - 💻 **Binaries**: CLI and API Server binaries available for Linux, macOS, and Windows
 
           ## Image Details
 
