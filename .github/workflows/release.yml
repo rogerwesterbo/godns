@@ -235,6 +235,8 @@ jobs:
         with:
           name: helm-chart
           path: .helm-releases
+          if-no-files-found: error
+          retention-days: 1
   release:
     name: Publish & Release
     needs: [setup, build-binaries, build-images, package-helm]
