@@ -96,6 +96,12 @@ helm install godnsweb oci://ghcr.io/rogerwesterbo/helm/godnsweb \
   --set ingress.hosts[0].host=godns.example.com
 ```
 
+### Option 4: Binary Installation
+
+Download the latest binary from the [Releases page](https://github.com/rogerwesterbo/godns/releases).
+
+See the **[Binary Installation Guide](docs/BINARY_INSTALLATION.md)** for detailed instructions on how to run GoDNS as a standalone binary or systemd service.
+
 ## 🎮 Usage Examples
 
 ### Web UI

@@ -355,6 +355,17 @@ jobs:
             sudo mv godnscli-${{ needs.setup.outputs.version }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m) /usr/local/bin/godnscli
             ```
 
+            #### API Server Installation (Binary):
+            See the [Binary Installation Guide](https://github.com/${{ github.repository }}/blob/main/docs/BINARY_INSTALLATION.md) for detailed instructions.
+
+            ```bash
+            # Quick install (Linux/macOS)
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ needs.setup.outputs.tag }}/godns-${{ needs.setup.outputs.version }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz
+            tar -xzf godns-${{ needs.setup.outputs.version }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz
+            chmod +x godns-${{ needs.setup.outputs.version }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)
+            sudo mv godns-${{ needs.setup.outputs.version }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m) /usr/local/bin/godns
+            ```
+
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
