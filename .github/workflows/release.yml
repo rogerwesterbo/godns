@@ -223,17 +223,17 @@ jobs:
           # Update values.yaml with new image tag
           sed -i "s|tag:.*|tag: \"${VERSION}\"|" charts/godns/values.yaml
 
-          mkdir -p .helm-releases
-          helm package charts/godns -d .helm-releases
+          mkdir -p helm-releases
+          helm package charts/godns -d helm-releases
 
           echo "Packaged chart:"
-          ls -la .helm-releases
+          ls -la helm-releases
 
       - name: Upload Helm Chart
         uses: actions/upload-artifact@v4
         with:
           name: helm-chart
-          path: .helm-releases/*.tgz
+          path: helm-releases/
           if-no-files-found: error
           retention-days: 1
   release:
@@ -258,7 +258,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: helm-chart
-          path: .helm-releases
+          path: helm-releases
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -290,14 +290,14 @@ jobs:
       - name: Push Helm Chart
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
-          helm push .helm-releases/*.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
+          helm push helm-releases/*.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/*
-            .helm-releases/*.tgz
+            helm-releases/*.tgz
           generate_release_notes: true
           body: |
             ## Release ${{ needs.setup.outputs.tag }}
