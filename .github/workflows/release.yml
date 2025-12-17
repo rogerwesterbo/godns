@@ -194,7 +194,7 @@ jobs:
 
   package-helm:
     name: Package Helm Chart
-    needs: setup
+    needs: [setup, build-images]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -207,7 +207,7 @@ jobs:
 
       - name: Update and Package Chart
         run: |
-          set -ex
+          set -e
 
           VERSION=${{ needs.setup.outputs.version }}
 
@@ -216,10 +216,6 @@ jobs:
             exit 1
           fi
 
-          echo "Checking if charts directory exists..."
-          ls -la charts/
-          ls -la charts/godns/
-
           # Update Chart.yaml version
           sed -i "s/^version:.*/version: ${VERSION}/" charts/godns/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" charts/godns/Chart.yaml
@@ -227,24 +223,10 @@ jobs:
           # Update values.yaml with new image tag
           sed -i "s|tag:.*|tag: \"${VERSION}\"|" charts/godns/values.yaml
 
-          echo "Updated Helm chart to version ${VERSION}"
-          cat charts/godns/Chart.yaml
-
-          # Lint the chart first
-          helm lint charts/godns
-
           mkdir -p .helm-releases
+          helm package charts/godns -d .helm-releases
 
-          # Run package with debug output
-          echo "Running helm package..."
-          helm package charts/godns -d .helm-releases --debug
-
-          echo "Exit code: $?"
-
-          echo "Current directory contents:"
-          ls -la
-
-          echo "Contents of .helm-releases:"
+          echo "Packaged chart:"
           ls -la .helm-releases
 
       - name: Upload Helm Chart
