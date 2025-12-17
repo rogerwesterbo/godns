@@ -221,11 +221,14 @@ jobs:
 
           helm package charts/godns -d .helm-releases
 
+          ls -la .helm-releases
+
       - name: Upload Helm Chart
         uses: actions/upload-artifact@v4
         with:
           name: helm-chart
           path: .helm-releases/*.tgz
+          if-no-files-found: error
           retention-days: 1
 
   release:
