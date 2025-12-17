@@ -36,12 +36,11 @@ jobs:
               - 'web/godnsweb/**'
               - '.github/workflows/ci.yml'
 
-  build-and-test:
-    name: Build, Test, and Lint (Go)
+  build:
+    name: Build (Go)
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -53,15 +52,32 @@ jobs:
           cache: true
           cache-dependency-path: go.sum
 
-      - name: Cache Go build cache
+      - name: Cache tools
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          path: bin/
+          key: ${{ runner.os }}-tools-${{ hashFiles('Makefile') }}
           restore-keys: |
-            ${{ runner.os }}-go-
+            ${{ runner.os }}-tools-
+
+      - name: Build
+        run: make build
+
+  test:
+    name: Test (Go)
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+          cache: true
+          cache-dependency-path: go.sum
 
       - name: Cache tools
         uses: actions/cache@v5
@@ -71,14 +87,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-tools-
 
-      - name: Install dependencies
-        run: go mod download
-
-      - name: Build
-        run: make build
-
       - name: Run tests
         run: make test
+
+  lint:
+    name: Lint (Go)
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Cache tools
+        uses: actions/cache@v5
+        with:
+          path: bin/
+          key: ${{ runner.os }}-tools-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-tools-
 
       - name: Run go vet
         run: make vet
@@ -94,6 +128,22 @@ jobs:
 
       - name: Run linter
         run: make lint
+
+  security:
+    name: Security (Go)
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+          cache: true
+          cache-dependency-path: go.sum
 
       - name: Run gosec
         run: make gosec
