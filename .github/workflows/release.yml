@@ -207,12 +207,18 @@ jobs:
 
       - name: Update and Package Chart
         run: |
+          set -ex
+
           VERSION=${{ needs.setup.outputs.version }}
 
           if [ -z "$VERSION" ]; then
             echo "Error: VERSION is empty"
             exit 1
           fi
+
+          echo "Checking if charts directory exists..."
+          ls -la charts/
+          ls -la charts/godns/
 
           # Update Chart.yaml version
           sed -i "s/^version:.*/version: ${VERSION}/" charts/godns/Chart.yaml
