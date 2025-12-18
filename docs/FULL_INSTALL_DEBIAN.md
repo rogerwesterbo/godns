@@ -30,7 +30,7 @@ Complete installation guide for GoDNS with Keycloak authentication, PostgreSQL, 
 sudo apt update && sudo apt upgrade -y
 
 # Install required packages
-sudo apt install -y curl wget gnupg2 software-properties-common \
+sudo apt install -y curl wget gnupg2 \
     apt-transport-https ca-certificates lsb-release
 ```
 
@@ -91,7 +91,7 @@ valkey-cli -a your_valkey_secure_password ping
 
 ```bash
 # Install OpenJDK 17
-sudo apt install -y openjdk-17-jdk
+sudo apt install -y openjdk-21-jdk (keycloak must have openjdk-21 ...)
 
 # Verify
 java -version
@@ -101,7 +101,7 @@ java -version
 
 ```bash
 # Download Keycloak
-KEYCLOAK_VERSION="24.0.1"
+KEYCLOAK_VERSION="26.4.7"
 cd /opt
 sudo wget "https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-${KEYCLOAK_VERSION}.tar.gz"
 sudo tar -xzf "keycloak-${KEYCLOAK_VERSION}.tar.gz"
@@ -129,9 +129,11 @@ db-username=keycloak
 db-password=keycloak_secure_password
 
 # HTTP
+hostname=<ip or hostname>
 http-enabled=true
 http-port=8180
 hostname-strict=false
+proxy-headers=xforwarded
 
 # Production settings (uncomment for production)
 # https-certificate-file=/path/to/cert.pem
@@ -224,6 +226,34 @@ Access Keycloak admin console at `http://your-server:8180`
 8. Click "Next"
 9. Valid redirect URIs: `http://localhost:*`
 10. Click "Save"
+
+### Create Web Client
+
+This client is for the GoDNS Web Application frontend (SPA). It uses PKCE for secure authentication without exposing client secrets.
+
+1. Go to Clients → Create client
+2. Client ID: `godns-web`
+3. Client type: `OpenID Connect`
+4. Click "Next"
+5. Client authentication: `OFF` (public client)
+6. Standard flow: `ON`
+7. Direct access grants: `OFF`
+8. Click "Next"
+9. Root URL: `http://localhost:14200`
+10. Home URL: `http://localhost:14200`
+11. Valid redirect URIs: `http://localhost:14200/*`
+12. Valid post logout redirect URIs: `http://localhost:14200`
+13. Web origins: `http://localhost:14200`
+14. Click "Save"
+
+After saving, configure PKCE:
+
+1. Go to Clients → `godns-web` → Settings
+2. Scroll to "Advanced" section (or click Advanced tab)
+3. Under "Proof Key for Code Exchange Code Challenge Method", select `S256`
+4. Click "Save"
+
+> **Note**: For production, replace `http://localhost:14200` with your actual web application URL.
 
 ### Create User
 
