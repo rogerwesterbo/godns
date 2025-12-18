@@ -170,10 +170,6 @@ func runSingleTestWithOptional(server, domain string, qtype uint16, setDO, verbo
 	return "passed"
 }
 
-func runSingleTest(server, domain string, qtype uint16, setDO, verbose bool) string {
-	return runSingleTestWithOptional(server, domain, qtype, setDO, verbose, false)
-}
-
 func runDNSSECValidationTest(server, domain string, qtype uint16, verbose bool) string {
 	m := new(dns.Msg)
 	m.SetQuestion(domain, qtype)
