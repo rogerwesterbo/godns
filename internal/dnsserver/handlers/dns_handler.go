@@ -9,6 +9,8 @@ import (
 	"github.com/miekg/dns"
 	"github.com/spf13/viper"
 
+	"strings"
+
 	"github.com/rogerwesterbo/godns/internal/services/v1allowedlans"
 	"github.com/rogerwesterbo/godns/internal/services/v1cacheservice"
 	"github.com/rogerwesterbo/godns/internal/services/v1dnssecservice"
@@ -168,7 +170,12 @@ func (h *DNSHandler) HandleDNS(w dns.ResponseWriter, r *dns.Msg) {
 			// We have this zone - lookup record from Valkey
 			records, err := h.dnsService.LookupRecord(ctx, name, qtype)
 			if err != nil {
-				vlog.Warnf("failed to lookup record %s: %v", name, err)
+				// Only log as warning if it's not a "key not found" error (which is expected for non-existent records)
+				if strings.Contains(err.Error(), "key not found") {
+					vlog.Debugf("record not found for %s type %s", name, dns.TypeToString[qtype])
+				} else {
+					vlog.Warnf("failed to lookup record %s: %v", name, err)
+				}
 			} else if len(records) > 0 {
 				vlog.Debugf("Found %d records for %s", len(records), name)
 
