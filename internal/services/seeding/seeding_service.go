@@ -39,18 +39,17 @@ func NewSeedingService(
 func (s *SeedingService) SeedDefaults(ctx context.Context, config SeedConfig) error {
 	vlog.Info("starting configuration seeding...")
 
-	// Seed test data if in development mode
+	// Always seed essential configuration (allowed LANs and upstream)
+	if err := s.allowedLANsService.SeedDefaults(ctx, config.DefaultAllowedPrefixes); err != nil {
+		return err
+	}
+
+	if err := s.upstreamService.SeedDefault(ctx, config.DefaultUpstreamServer); err != nil {
+		return err
+	}
+
+	// Seed test data only if in development mode
 	if viper.GetBool(consts.DEVELOPMENT) {
-		// Seed allowed LANs
-		if err := s.allowedLANsService.SeedDefaults(ctx, config.DefaultAllowedPrefixes); err != nil {
-			return err
-		}
-
-		// Seed upstream DNS server
-		if err := s.upstreamService.SeedDefault(ctx, config.DefaultUpstreamServer); err != nil {
-			return err
-		}
-
 		vlog.Info("development mode detected - seeding test data...")
 		if err := s.seedTestData(ctx); err != nil {
 			vlog.Warnf("failed to seed test data: %v", err)

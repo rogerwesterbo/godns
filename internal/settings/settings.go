@@ -53,7 +53,7 @@ func Init() {
 	viper.SetDefault(consts.METRICS_ENABLED, true)
 	viper.SetDefault(consts.METRICS_PORT, ":9090")
 
-	viper.SetDefault(consts.VALKEY_HOST, "localhost")
+	viper.SetDefault(consts.VALKEY_HOST, "valkey.example.com")
 	viper.SetDefault(consts.VALKEY_PORT, "6379")
 	viper.SetDefault(consts.VALKEY_TOKEN, "")
 	viper.SetDefault(consts.VALKEY_MAX_RETRIES, 3)
@@ -61,7 +61,7 @@ func Init() {
 
 	// Authentication settings
 	viper.SetDefault(consts.AUTH_ENABLED, true)
-	viper.SetDefault(consts.KEYCLOAK_URL, "http://localhost:14101")
+	viper.SetDefault(consts.KEYCLOAK_URL, "http://keycloak.example.com")
 	viper.SetDefault(consts.KEYCLOAK_REALM, "godns")
 	viper.SetDefault(consts.KEYCLOAK_API_CLIENT_ID, "godns-api")
 	viper.SetDefault(consts.KEYCLOAK_CLI_CLIENT_ID, "godns-cli")
