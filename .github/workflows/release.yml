@@ -293,11 +293,19 @@ jobs:
           helm push helm-releases/*.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
 
       - name: Upload Release Assets
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            gh release upload ${{ needs.setup.outputs.tag }} dist/* helm-releases/*.tgz --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Release Notes
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/*
-            helm-releases/*.tgz
           generate_release_notes: true
           body: |
             ## Release ${{ needs.setup.outputs.tag }}
