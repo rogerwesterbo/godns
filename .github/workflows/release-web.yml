@@ -150,8 +150,8 @@ jobs:
 
       - name: Package Helm Chart
         run: |
-          mkdir -p .helm-releases
-          helm package charts/godnsweb -d .helm-releases
+          mkdir -p helm-releases
+          helm package charts/godnsweb -d helm-releases
 
       - name: Log in to Helm registry
         run: |
@@ -160,14 +160,18 @@ jobs:
       - name: Push Helm Chart
         run: |
           VERSION=${{ needs.detect-changes.outputs.version }}
-          helm push .helm-releases/godnsweb-${VERSION}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
+          helm push helm-releases/godnsweb-${VERSION}.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
 
       - name: Upload Web Release Assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            .helm-releases/godnsweb-*.tgz
+            helm-releases/godnsweb-*.tgz
+          append_body: true
           body: |
+
+            ---
+
             ## Web UI Release ${{ needs.detect-changes.outputs.tag }}
 
             ### Docker Image
