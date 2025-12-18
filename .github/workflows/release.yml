@@ -299,7 +299,7 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 30
           command: |
-            gh release upload ${{ needs.setup.outputs.tag }} dist/* helm-releases/*.tgz --clobber
+            gh release upload ${{ needs.setup.outputs.tag }} dist/* helm-releases/*.tgz --clobber -R ${{ github.repository }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
