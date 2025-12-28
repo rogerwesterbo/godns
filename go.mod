@@ -11,7 +11,7 @@ require (
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
 	github.com/valkey-io/valkey-go v1.0.69
-	github.com/vitistack/common v0.8.20
+	github.com/vitistack/common v0.8.26
 	golang.org/x/time v0.14.0
 )
 
