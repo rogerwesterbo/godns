@@ -10,8 +10,8 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
-	github.com/valkey-io/valkey-go v1.0.69
-	github.com/vitistack/common v0.8.16
+	github.com/valkey-io/valkey-go v1.0.70
+	github.com/vitistack/common v0.8.26
 	golang.org/x/time v0.14.0
 )
 
@@ -24,7 +24,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-openapi/jsonpointer v0.22.4 // indirect
 	github.com/go-openapi/jsonreference v0.21.4 // indirect
-	github.com/go-openapi/spec v0.22.2 // indirect
+	github.com/go-openapi/spec v0.22.3 // indirect
 	github.com/go-openapi/swag/conv v0.25.4 // indirect
 	github.com/go-openapi/swag/jsonname v0.25.4 // indirect
 	github.com/go-openapi/swag/jsonutils v0.25.4 // indirect
