@@ -36,6 +36,7 @@ GOSEC_VERSION ?= latest
 GOLANGCI_LINT_VERSION ?= latest
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 GOVULNCHECK_VERSION ?= latest
+SWAG ?= $(LOCALBIN)/swag
 
 ##@ Help
 .PHONY: help
@@ -74,17 +75,14 @@ clean: ## Clean build artifacts and binaries
 	@printf "$(GREEN)✓ Clean complete$(RESET)\n"
 
 .PHONY: swagger
-swagger: ## Generate Swagger documentation
+swagger: $(SWAG) ## Generate Swagger documentation
 	@printf "$(CYAN)Generating Swagger documentation...$(RESET)\n"
-	@if command -v swag >/dev/null 2>&1; then \
-		swag init -g internal/httpserver/swagger.go -o internal/httpserver/swaggerdocs --parseDependency --parseInternal; \
-		printf "$(GREEN)✓ Swagger docs generated in internal/httpserver/swaggerdocs/$(RESET)\n"; \
-	else \
-		printf "$(YELLOW)swag not found. Installing...$(RESET)\n"; \
-		go install github.com/swaggo/swag/cmd/swag@latest; \
-		swag init -g internal/httpserver/swagger.go -o internal/httpserver/swaggerdocs --parseDependency --parseInternal; \
-		printf "$(GREEN)✓ Swagger docs generated in internal/httpserver/swaggerdocs/$(RESET)\n"; \
-	fi
+	@$(SWAG) init -g internal/httpserver/swagger.go -o internal/httpserver/swaggerdocs --parseDependency --parseInternal
+	@printf "$(GREEN)✓ Swagger docs generated in internal/httpserver/swaggerdocs/$(RESET)\n"
+
+$(SWAG): $(LOCALBIN)
+	@printf "$(YELLOW)Installing swag...$(RESET)\n"
+	GOBIN=$(LOCALBIN) go install github.com/swaggo/swag/cmd/swag@latest
 
 .PHONY: generate-swagger
 generate-swagger: ## Generate Swagger documentation (alias for swagger)
