@@ -1,6 +1,6 @@
 module github.com/rogerwesterbo/godns
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/coreos/go-oidc/v3 v3.17.0
@@ -11,7 +11,7 @@ require (
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
 	github.com/valkey-io/valkey-go v1.0.70
-	github.com/vitistack/common v0.8.32
+	github.com/vitistack/common v0.8.35
 	golang.org/x/time v0.14.0
 )
 
