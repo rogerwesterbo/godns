@@ -202,7 +202,7 @@ Access the admin dashboard at `http://localhost:14200/admin` to view:
 
 ### Prerequisites
 
-- Go 1.25.3+
+- Go 1.25.x+
 - Docker & Docker Compose
 - Node.js 18+ (for Web UI development)
 

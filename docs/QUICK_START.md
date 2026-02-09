@@ -6,7 +6,7 @@ Get up and running with GoDNS in 5 minutes.
 
 - Docker & Docker Compose
 - Make
-- Go 1.25.3+ (for building)
+- Go 1.25.x+ (for building)
 
 ## Step 1: Clone and Build
 
@@ -205,12 +205,10 @@ docker-compose exec valkey valkey-cli ping
 ## Next Steps
 
 1. **Read the Documentation**
-
    - [CLI Guide](CLI_GUIDE.md) - Complete CLI documentation
    - [Valkey Auth](VALKEY_AUTH.md) - Authentication setup
 
 2. **Customize Configuration**
-
    - Edit `.env` file
    - Configure Valkey ACLs
    - Add your DNS zones
