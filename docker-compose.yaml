@@ -1,6 +1,6 @@
 services:
   valkey:
-    image: valkey/valkey:8-alpine
+    image: valkey/valkey:9-alpine
     container_name: valkey
     ports:
       - '${VALKEY_PORT:-14103}:6379'
@@ -21,7 +21,7 @@ services:
       - VALKEY_TOKEN=${VALKEY_TOKEN:-mysecretpassword}
 
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: postgres
     restart: unless-stopped
     networks:
