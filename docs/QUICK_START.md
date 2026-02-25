@@ -6,7 +6,7 @@ Get up and running with GoDNS in 5 minutes.
 
 - Docker & Docker Compose
 - Make
-- Go 1.25.x+ (for building)
+- Go 1.26.x+ (for building)
 
 ## Step 1: Clone and Build
 
