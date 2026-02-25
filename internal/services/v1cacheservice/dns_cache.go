@@ -2,6 +2,7 @@ package v1cacheservice
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"time"
 
@@ -207,10 +208,8 @@ func (al *accessList) add(key string) {
 	defer al.mu.Unlock()
 
 	// Check if already exists
-	for _, k := range al.keys {
-		if k == key {
-			return
-		}
+	if slices.Contains(al.keys, key) {
+		return
 	}
 
 	al.keys = append(al.keys, key)

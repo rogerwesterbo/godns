@@ -149,7 +149,7 @@ func (lb *LoadBalancer) RemoveBackend(ctx context.Context, name, recordType, val
 }
 
 // Stats returns load balancer statistics
-func (lb *LoadBalancer) Stats() map[string]interface{} {
+func (lb *LoadBalancer) Stats() map[string]any {
 	lb.mu.RLock()
 	defer lb.mu.RUnlock()
 
@@ -168,7 +168,7 @@ func (lb *LoadBalancer) Stats() map[string]interface{} {
 		group.mu.RUnlock()
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"groups":           groups,
 		"total_backends":   totalBackends,
 		"healthy_backends": healthyBackends,

@@ -124,13 +124,13 @@ func init() {
 	recordListCmd.Flags().String("type-filter", "", "Filter by record type")
 }
 
-func buildRecordJSON(cmd *cobra.Command) (map[string]interface{}, error) {
+func buildRecordJSON(cmd *cobra.Command) (map[string]any, error) {
 	name, _ := cmd.Flags().GetString("name")
 	recordType, _ := cmd.Flags().GetString("type")
 	ttl, _ := cmd.Flags().GetInt("ttl")
 	value, _ := cmd.Flags().GetString("value")
 
-	record := map[string]interface{}{
+	record := map[string]any{
 		"name": name,
 		"type": recordType,
 		"ttl":  ttl,
@@ -257,12 +257,12 @@ func runRecordList(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("API request failed (%d): %s", resp.StatusCode, string(body))
 	}
 
-	var zone map[string]interface{}
+	var zone map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&zone); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	records, ok := zone["records"].([]interface{})
+	records, ok := zone["records"].([]any)
 	if !ok || len(records) == 0 {
 		fmt.Println("No records found")
 		return nil
@@ -271,9 +271,9 @@ func runRecordList(cmd *cobra.Command, args []string) error {
 	// Apply type filter if specified
 	typeFilter, _ := cmd.Flags().GetString("type-filter")
 	if typeFilter != "" {
-		var filtered []interface{}
+		var filtered []any
 		for _, r := range records {
-			rec := r.(map[string]interface{})
+			rec := r.(map[string]any)
 			if rec["type"] == typeFilter {
 				filtered = append(filtered, r)
 			}
@@ -285,7 +285,7 @@ func runRecordList(cmd *cobra.Command, args []string) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	_, _ = fmt.Fprintln(w, "NAME\tTYPE\tVALUE\tTTL")
 	for _, r := range records {
-		rec := r.(map[string]interface{})
+		rec := r.(map[string]any)
 		name := rec["name"]
 		recordType := rec["type"]
 		ttl := rec["ttl"]
@@ -354,7 +354,7 @@ func runRecordGet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("API request failed (%d): %s", resp.StatusCode, string(body))
 	}
 
-	var record map[string]interface{}
+	var record map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}

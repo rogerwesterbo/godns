@@ -21,8 +21,8 @@ func NewCORSMiddleware() *CORSMiddleware {
 
 	allowedOrigins := make(map[string]bool)
 	if allowedOriginsStr != "" {
-		origins := strings.Split(allowedOriginsStr, ",")
-		for _, origin := range origins {
+		origins := strings.SplitSeq(allowedOriginsStr, ",")
+		for origin := range origins {
 			trimmedOrigin := strings.TrimSpace(origin)
 			if trimmedOrigin != "" {
 				allowedOrigins[trimmedOrigin] = true

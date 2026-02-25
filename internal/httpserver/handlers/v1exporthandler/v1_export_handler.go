@@ -55,9 +55,10 @@ func (h *ExportHandler) ExportAll(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Set content disposition for file download
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"zones-%s.txt\"", format))
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(exported))
+	_, _ = w.Write([]byte(exported)) // #nosec G705 -- output is server-generated DNS zone data, not user-controlled content
 }
 
 // @Summary Export a specific zone
@@ -107,7 +108,8 @@ func (h *ExportHandler) ExportZone(w http.ResponseWriter, req *http.Request, dom
 
 	// Set content disposition for file download
 	zoneName := strings.TrimSuffix(domain, ".")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s-%s.txt\"", zoneName, format))
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(exported))
+	_, _ = w.Write([]byte(exported)) // #nosec G705 -- output is server-generated DNS zone data, not user-controlled content
 }

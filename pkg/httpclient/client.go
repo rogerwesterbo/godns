@@ -81,5 +81,5 @@ func (c *AuthenticatedClient) Do(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	// Execute request
-	return c.httpClient.Do(req)
+	return c.httpClient.Do(req) // #nosec G704 -- URL is constructed from user-configured API endpoint, not untrusted input
 }

@@ -110,7 +110,7 @@ func FormatPowerDNSZone(zone *models.DNSZone) string {
 
 	var sb strings.Builder
 	sb.WriteString("# PowerDNS API Zone Configuration\n")
-	sb.WriteString(fmt.Sprintf("# Zone: %s\n", zone.Domain))
+	fmt.Fprintf(&sb, "# Zone: %s\n", zone.Domain)
 	sb.WriteString("# Use this with: pdnsutil load-zone <zone-name> <file>\n")
 	sb.WriteString("# Or via API: POST /api/v1/servers/localhost/zones\n\n")
 	sb.WriteString(string(jsonData))

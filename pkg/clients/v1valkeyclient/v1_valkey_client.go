@@ -76,10 +76,7 @@ func (c *V1ValkeyClient) retry(ctx context.Context, operation string, fn func() 
 		// Calculate backoff delay with exponential increase
 		// delay = initialDelay * 2^attempt
 		// Cap the attempt to prevent overflow (max 30 to avoid 2^31+ overflow)
-		cappedAttempt := attempt
-		if cappedAttempt > 30 {
-			cappedAttempt = 30
-		}
+		cappedAttempt := min(attempt, 30)
 		delay := c.initialRetryDelay * time.Duration(1<<cappedAttempt)
 
 		// Wait before retrying, but respect context cancellation

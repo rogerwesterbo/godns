@@ -161,10 +161,7 @@ func (qls *QueryLogService) GetRecentQueries(ctx context.Context, count int) []*
 	}
 
 	// Return the last N entries
-	start := len(qls.buffer) - count
-	if start < 0 {
-		start = 0
-	}
+	start := max(len(qls.buffer)-count, 0)
 
 	result := make([]*QueryLog, count)
 	copy(result, qls.buffer[start:])
@@ -173,7 +170,7 @@ func (qls *QueryLogService) GetRecentQueries(ctx context.Context, count int) []*
 }
 
 // Stats returns query logging statistics
-func (qls *QueryLogService) Stats() map[string]interface{} {
+func (qls *QueryLogService) Stats() map[string]any {
 	total := qls.totalQueries.Load()
 	cached := qls.cachedQueries.Load()
 	blocked := qls.blockedQueries.Load()
@@ -192,7 +189,7 @@ func (qls *QueryLogService) Stats() map[string]interface{} {
 	bufferSize := len(qls.buffer)
 	qls.mu.RUnlock()
 
-	return map[string]interface{}{
+	return map[string]any{
 		"total_queries":   total,
 		"cached_queries":  cached,
 		"blocked_queries": blocked,

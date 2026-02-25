@@ -13,23 +13,23 @@ func FormatCoreDNSZone(zone *models.DNSZone) string {
 	var sb strings.Builder
 
 	// CoreDNS Corefile block for this zone
-	_, _ = sb.WriteString(fmt.Sprintf("# Zone: %s\n", zone.Domain))
-	_, _ = sb.WriteString(fmt.Sprintf("%s {\n", strings.TrimSuffix(zone.Domain, ".")))
+	fmt.Fprintf(&sb, "# Zone: %s\n", zone.Domain)
+	fmt.Fprintf(&sb, "%s {\n", strings.TrimSuffix(zone.Domain, "."))
 	_, _ = sb.WriteString("    file /etc/coredns/zones/db." + strings.TrimSuffix(zone.Domain, ".") + "\n")
 	_, _ = sb.WriteString("    log\n")
 	_, _ = sb.WriteString("    errors\n")
 	_, _ = sb.WriteString("}\n\n")
 
 	// Zone file content
-	_, _ = sb.WriteString(fmt.Sprintf("# Zone file: db.%s\n", strings.TrimSuffix(zone.Domain, ".")))
-	_, _ = sb.WriteString(fmt.Sprintf("$ORIGIN %s\n", zone.Domain))
+	fmt.Fprintf(&sb, "# Zone file: db.%s\n", strings.TrimSuffix(zone.Domain, "."))
+	fmt.Fprintf(&sb, "$ORIGIN %s\n", zone.Domain)
 	_, _ = sb.WriteString("$TTL 300\n\n")
 
 	// Add SOA record if exists, otherwise create a default one
 	hasSOA := false
 	for _, record := range zone.Records {
 		if record.Type == "SOA" && !record.Disabled {
-			sb.WriteString(fmt.Sprintf("@\t%d\tIN\tSOA\t%s\n", record.TTL, record.Value))
+			fmt.Fprintf(&sb, "@\t%d\tIN\tSOA\t%s\n", record.TTL, record.Value)
 			hasSOA = true
 			break
 		}
@@ -37,7 +37,7 @@ func FormatCoreDNSZone(zone *models.DNSZone) string {
 
 	if !hasSOA {
 		// Default SOA record
-		_, _ = sb.WriteString(fmt.Sprintf("@\t300\tIN\tSOA\tns1.%s hostmaster.%s 1 3600 1800 604800 300\n", zone.Domain, zone.Domain))
+		fmt.Fprintf(&sb, "@\t300\tIN\tSOA\tns1.%s hostmaster.%s 1 3600 1800 604800 300\n", zone.Domain, zone.Domain)
 	}
 	_, _ = sb.WriteString("\n")
 
@@ -50,13 +50,13 @@ func FormatCoreDNSZone(zone *models.DNSZone) string {
 		name := record.Name
 		if name == zone.Domain {
 			name = "@"
-		} else if strings.HasSuffix(name, "."+zone.Domain) {
+		} else if before, ok := strings.CutSuffix(name, "."+zone.Domain); ok {
 			// Make it relative to the zone
-			name = strings.TrimSuffix(name, "."+zone.Domain)
+			name = before
 		}
 
-		_, _ = sb.WriteString(fmt.Sprintf("%s\t%d\tIN\t%s\t%s\n",
-			name, record.TTL, record.Type, record.Value))
+		fmt.Fprintf(&sb, "%s\t%d\tIN\t%s\t%s\n",
+			name, record.TTL, record.Type, record.Value)
 	}
 
 	return sb.String()

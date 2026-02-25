@@ -129,7 +129,6 @@ func TestValidateFormat(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
 		t.Run(tt.format, func(t *testing.T) {
 			result := ValidateFormat(tt.format)
 			if result != tt.valid {

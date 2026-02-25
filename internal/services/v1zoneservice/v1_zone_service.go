@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/rogerwesterbo/godns/internal/models"
@@ -88,13 +89,7 @@ func (s *V1ZoneService) CreateZone(ctx context.Context, zone *models.DNSZone) er
 	}
 
 	// Add domain if not already in list
-	found := false
-	for _, z := range zones {
-		if z == zone.Domain {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(zones, zone.Domain)
 	if !found {
 		zones = append(zones, zone.Domain)
 		zonesData, err := json.Marshal(zones)
@@ -137,7 +132,7 @@ func (s *V1ZoneService) GetZone(ctx context.Context, domain string) (*models.DNS
 	// check if it exists in the raw JSON. If not, default to true.
 	// This handles zones created before the enabled field was added.
 	if !zone.Enabled {
-		var rawZone map[string]interface{}
+		var rawZone map[string]any
 		if err := json.Unmarshal([]byte(data), &rawZone); err == nil {
 			if _, exists := rawZone["enabled"]; !exists {
 				// Field doesn't exist in storage, default to enabled

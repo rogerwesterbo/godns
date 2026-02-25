@@ -78,7 +78,7 @@ func makeAPIRequest(method, url string, body io.Reader) (*http.Response, error) 
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
-	return client.Do(req)
+	return client.Do(req) // #nosec G704 -- URL is constructed from user-configured API endpoint, not untrusted input
 }
 
 func runZoneList(cmd *cobra.Command, args []string) error {
@@ -96,7 +96,7 @@ func runZoneList(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("API request failed (%d): %s", resp.StatusCode, string(body))
 	}
 
-	var zones []map[string]interface{}
+	var zones []map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&zones); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -112,7 +112,7 @@ func runZoneList(cmd *cobra.Command, args []string) error {
 	for _, zone := range zones {
 		domain := zone["domain"]
 		recordCount := 0
-		if records, ok := zone["records"].([]interface{}); ok {
+		if records, ok := zone["records"].([]any); ok {
 			recordCount = len(records)
 		}
 		_, _ = fmt.Fprintf(w, "%s\t%d\n", domain, recordCount)
@@ -138,7 +138,7 @@ func runZoneGet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("API request failed (%d): %s", resp.StatusCode, string(body))
 	}
 
-	var zone map[string]interface{}
+	var zone map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&zone); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}

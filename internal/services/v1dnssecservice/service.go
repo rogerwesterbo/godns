@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -54,14 +55,13 @@ func (s *DNSSECService) GenerateKeys(domain string) (*dns.DNSKEY, *dns.DNSKEY, *
 }
 
 func (s *DNSSECService) setPublicKey(k *dns.DNSKEY, pub *ecdsa.PublicKey) {
-	// ECDSA P-256 public key is 64 bytes (32 bytes X + 32 bytes Y)
-	buf := make([]byte, 64)
-	x := pub.X.Bytes()
-	y := pub.Y.Bytes()
-
-	// Pad X and Y to 32 bytes if needed
-	copy(buf[32-len(x):32], x)
-	copy(buf[64-len(y):64], y)
+	// ECDSA P-256 public key: Bytes() returns uncompressed form (0x04 || X || Y)
+	uncompressed, err := pub.Bytes()
+	if err != nil {
+		return
+	}
+	// Skip the 0x04 prefix to get the raw 64-byte X||Y concatenation
+	buf := uncompressed[1:]
 
 	k.PublicKey = base64.StdEncoding.EncodeToString(buf)
 }
@@ -185,9 +185,7 @@ func (s *DNSSECService) generateNSEC(records []dns.RR, zoneDomain string) []dns.
 		for t := range typeMap {
 			types = append(types, t)
 		}
-		sort.Slice(types, func(i, j int) bool {
-			return types[i] < types[j]
-		})
+		slices.Sort(types)
 
 		nsec := &dns.NSEC{
 			Hdr:        dns.RR_Header{Name: owner, Rrtype: dns.TypeNSEC, Class: dns.ClassINET, Ttl: 3600},

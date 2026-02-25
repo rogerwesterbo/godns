@@ -265,7 +265,7 @@ func (hcs *HealthCheckService) checkICMP(host string, timeout time.Duration) (bo
 }
 
 // Stats returns health check statistics
-func (hcs *HealthCheckService) Stats() map[string]interface{} {
+func (hcs *HealthCheckService) Stats() map[string]any {
 	hcs.mu.RLock()
 	defer hcs.mu.RUnlock()
 
@@ -278,7 +278,7 @@ func (hcs *HealthCheckService) Stats() map[string]interface{} {
 		}
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"total_checks":    totalChecks,
 		"healthy_count":   healthyCount,
 		"unhealthy_count": totalChecks - healthyCount,

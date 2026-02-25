@@ -147,6 +147,12 @@ vet: ## Run go vet against code.
 	@go vet ./...
 	@printf "$(GREEN)✓ Vet complete$(RESET)\n"
 
+.PHONY: fix
+fix: ## Run go fix against code.
+	@printf "$(CYAN)Running go fix...$(RESET)\n"
+	@go fix ./...
+	@printf "$(GREEN)✓ Fix complete$(RESET)\n"
+
 .PHONY: lint
 lint: golangci-lint ## Run go vet against code.
 	@printf "$(CYAN)Running golangci-lint...$(RESET)\n"

@@ -9,7 +9,7 @@ type ValkeyOptions struct {
 	Host              string
 	Port              string
 	Username          string
-	APIToken          string
+	APIToken          string // #nosec G117 -- configuration field for Valkey API authentication, not a hardcoded secret
 	TimeoutSec        int
 	MaxRetries        int
 	InitialRetryDelay time.Duration

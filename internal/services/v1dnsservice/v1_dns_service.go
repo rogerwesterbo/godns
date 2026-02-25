@@ -167,7 +167,7 @@ func (s *DNSService) HasZone(ctx context.Context, name string) (string, bool) {
 	parts := strings.Split(strings.TrimSuffix(name, "."), ".")
 
 	// Try progressively larger domain parts
-	for i := 0; i < len(parts); i++ {
+	for i := range parts {
 		domain := strings.Join(parts[i:], ".") + "."
 
 		_, err := s.GetZone(ctx, domain)

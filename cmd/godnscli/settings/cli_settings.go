@@ -106,7 +106,7 @@ func GetAccessToken() (string, error) {
 	}
 
 	var tokenCache struct {
-		AccessToken string `json:"access_token"`
+		AccessToken string `json:"access_token"` // #nosec G117 -- standard OAuth2 token field for deserialization
 	}
 	if err := json.Unmarshal(data, &tokenCache); err != nil {
 		return "", fmt.Errorf("failed to parse token cache: %w", err)

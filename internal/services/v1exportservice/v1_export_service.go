@@ -3,6 +3,7 @@ package v1exportservice
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/rogerwesterbo/godns/internal/models"
 	"github.com/rogerwesterbo/godns/internal/services/v1zoneservice"
@@ -53,7 +54,7 @@ func (s *V1ExportService) ExportAllZones(ctx context.Context, format ExportForma
 		return "", fmt.Errorf("failed to list zones: %w", err)
 	}
 
-	result := ""
+	var result strings.Builder
 	exportedCount := 0
 	for _, zone := range zones {
 		// Skip disabled zones
@@ -67,13 +68,13 @@ func (s *V1ExportService) ExportAllZones(ctx context.Context, format ExportForma
 		}
 
 		if exportedCount > 0 {
-			result += "\n\n"
+			result.WriteString("\n\n")
 		}
-		result += formatted
+		result.WriteString(formatted)
 		exportedCount++
 	}
 
-	return result, nil
+	return result.String(), nil
 }
 
 // formatZone formats a zone according to the specified format

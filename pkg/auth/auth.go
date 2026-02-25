@@ -21,8 +21,8 @@ import (
 
 // TokenCache represents cached OAuth2 tokens
 type TokenCache struct {
-	AccessToken  string    `json:"access_token"`
-	RefreshToken string    `json:"refresh_token"`
+	AccessToken  string    `json:"access_token"`  // #nosec G117 -- standard OAuth2 token field
+	RefreshToken string    `json:"refresh_token"` // #nosec G117 -- standard OAuth2 token field
 	ExpiresAt    time.Time `json:"expires_at"`
 	TokenType    string    `json:"token_type"`
 }
@@ -39,8 +39,8 @@ type DeviceAuthResponse struct {
 
 // TokenResponse represents the OAuth2 token response
 type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken  string `json:"access_token"`  // #nosec G117 -- standard OAuth2 token response field
+	RefreshToken string `json:"refresh_token"` // #nosec G117 -- standard OAuth2 token response field
 	ExpiresIn    int    `json:"expires_in"`
 	TokenType    string `json:"token_type"`
 	Error        string `json:"error,omitempty"`
