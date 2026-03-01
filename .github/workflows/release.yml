@@ -116,7 +116,7 @@ jobs:
           (cd dist && sha256sum * > checksums.txt)
 
       - name: Upload Binaries
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: binaries
           path: dist/*
@@ -185,7 +185,7 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: digests-${{ matrix.arch }}
           path: /tmp/digests/*
@@ -230,7 +230,7 @@ jobs:
           ls -la helm-releases
 
       - name: Upload Helm Chart
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: helm-chart
           path: helm-releases/
