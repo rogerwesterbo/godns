@@ -91,7 +91,7 @@ func SaveTokenCache(cache *TokenCache) error {
 		return err
 	}
 
-	data, err := json.MarshalIndent(cache, "", "  ")
+	data, err := json.MarshalIndent(cache, "", "  ") // #nosec G117 -- intentionally marshaling token cache to disk
 	if err != nil {
 		return fmt.Errorf("failed to marshal token cache: %w", err)
 	}
