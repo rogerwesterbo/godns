@@ -12,7 +12,7 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/valkey-io/valkey-go v1.0.72
 	github.com/vitistack/common v0.8.44
-	golang.org/x/time v0.14.0
+	golang.org/x/time v0.15.0
 )
 
 require (
