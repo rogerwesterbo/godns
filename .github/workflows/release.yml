@@ -293,7 +293,7 @@ jobs:
           helm push helm-releases/*.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/helm
 
       - name: Upload Release Assets
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           timeout_minutes: 10
           max_attempts: 3
