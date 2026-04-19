@@ -19,10 +19,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    initializeAuth();
-  }, []);
-
   const initializeAuth = async () => {
     try {
       const token = await authService.getValidAccessToken();
@@ -46,6 +42,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    initializeAuth();
+  }, []);
 
   const login = async () => {
     try {

@@ -9,10 +9,6 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadStats();
-  }, []);
-
   const loadStats = async () => {
     try {
       setIsLoading(true);
@@ -32,6 +28,11 @@ export default function AdminDashboardPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadStats();
+  }, []);
 
   const formatPercentage = (value: number | string): string => {
     // If already a string with %, return it

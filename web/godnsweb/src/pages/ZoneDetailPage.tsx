@@ -33,7 +33,6 @@ export default function ZoneDetailPage() {
   const { domain } = useParams<{ domain: string }>();
   const navigate = useNavigate();
   const [zone, setZone] = useState<api.DNSZone | null>(null);
-  const [filteredRecords, setFilteredRecords] = useState<api.DNSRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
@@ -46,23 +45,34 @@ export default function ZoneDetailPage() {
   const [togglingRecord, setTogglingRecord] = useState<api.DNSRecord | null>(null);
   const itemsPerPage = 15;
 
+  const loadZone = async (zoneDomain: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await api.getZone(zoneDomain);
+      setZone(data);
+    } catch (err) {
+      console.error('Failed to load zone:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load zone');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (domain) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadZone(decodeURIComponent(domain));
     }
   }, [domain]);
 
-  useEffect(() => {
-    if (!zone) return;
-
+  // Derive filtered records from state rather than storing them separately.
+  const filteredRecords = (() => {
+    if (!zone) return [] as api.DNSRecord[];
     let records = zone.records;
-
-    // Apply type filter
     if (typeFilter !== 'All') {
       records = records.filter(r => r.type === typeFilter);
     }
-
-    // Apply text filter
     if (filter.trim()) {
       records = records.filter(
         r =>
@@ -72,10 +82,8 @@ export default function ZoneDetailPage() {
           formatRecordValue(r).toLowerCase().includes(filter.toLowerCase())
       );
     }
-
-    setFilteredRecords(records);
-    setCurrentPage(1);
-  }, [zone, filter, typeFilter]);
+    return records;
+  })();
 
   // Sortable data
   const {
@@ -84,26 +92,23 @@ export default function ZoneDetailPage() {
     sortConfig,
   } = useSortableData<api.DNSRecord>(filteredRecords, 'name');
 
+  // Reset to page 1 when filters or zone change — set state during render to avoid a cascading effect.
+  // See https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [prevFilter, setPrevFilter] = useState(filter);
+  const [prevTypeFilter, setPrevTypeFilter] = useState(typeFilter);
+  const [prevZone, setPrevZone] = useState(zone);
+  if (prevFilter !== filter || prevTypeFilter !== typeFilter || prevZone !== zone) {
+    setPrevFilter(filter);
+    setPrevTypeFilter(typeFilter);
+    setPrevZone(zone);
+    setCurrentPage(1);
+  }
+
   // Pagination
   const totalPages = Math.ceil(sortedRecords.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentRecords = sortedRecords.slice(startIndex, endIndex);
-
-  const loadZone = async (zoneDomain: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await api.getZone(zoneDomain);
-      setZone(data);
-      setFilteredRecords(data.records);
-    } catch (err) {
-      console.error('Failed to load zone:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load zone');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleDeleteZone = async () => {
     if (!zone) return;

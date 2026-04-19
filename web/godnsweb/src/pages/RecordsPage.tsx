@@ -48,10 +48,6 @@ export default function RecordsPage() {
     null
   );
 
-  useEffect(() => {
-    loadZones();
-  }, []);
-
   const loadZones = async () => {
     try {
       setIsLoading(true);
@@ -65,6 +61,11 @@ export default function RecordsPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadZones();
+  }, []);
 
   const handleCreateRecord = () => {
     if (zones.length === 0) {
@@ -153,10 +154,15 @@ export default function RecordsPage() {
     return colors[type] || 'gray';
   };
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
+  // Reset to page 1 when filters change — set state during render to avoid a cascading effect.
+  // See https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [prevFilter, setPrevFilter] = useState(filter);
+  const [prevTypeFilter, setPrevTypeFilter] = useState(typeFilter);
+  if (prevFilter !== filter || prevTypeFilter !== typeFilter) {
+    setPrevFilter(filter);
+    setPrevTypeFilter(typeFilter);
     setCurrentPage(1);
-  }, [filter, typeFilter]);
+  }
 
   return (
     <Flex direction="column" gap="6">

@@ -8,11 +8,6 @@ export default function CallbackPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    handleCallback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const handleCallback = async () => {
     try {
       const code = searchParams.get('code');
@@ -46,6 +41,12 @@ export default function CallbackPage() {
       setTimeout(() => navigate('/login', { replace: true }), 3000);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    handleCallback();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (error) {
     return (

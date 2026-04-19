@@ -59,6 +59,7 @@ export function RecordDialog({
 
   useEffect(() => {
     if (record && mode === 'edit') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(record.name);
       setType(record.type);
       setValue(record.value || '');

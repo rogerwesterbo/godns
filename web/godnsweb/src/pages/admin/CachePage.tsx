@@ -10,10 +10,6 @@ export default function CachePage() {
   const [error, setError] = useState<string | null>(null);
   const [clearSuccess, setClearSuccess] = useState(false);
 
-  useEffect(() => {
-    loadStats();
-  }, []);
-
   const loadStats = async () => {
     try {
       setIsLoading(true);
@@ -27,6 +23,11 @@ export default function CachePage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadStats();
+  }, []);
 
   const handleClearCache = async () => {
     if (!window.confirm('Are you sure you want to clear the DNS cache?')) {

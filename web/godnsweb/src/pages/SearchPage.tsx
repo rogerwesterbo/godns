@@ -22,14 +22,6 @@ export function SearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const q = searchParams.get('q');
-    if (q) {
-      setQuery(q);
-      performSearch(q);
-    }
-  }, [searchParams]);
-
   const performSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setResults(null);
@@ -49,6 +41,15 @@ export function SearchPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQuery(q);
+      performSearch(q);
+    }
+  }, [searchParams]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

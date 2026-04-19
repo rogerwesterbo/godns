@@ -8,10 +8,6 @@ export default function LoadBalancerPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadStats();
-  }, []);
-
   const loadStats = async () => {
     try {
       setIsLoading(true);
@@ -25,6 +21,11 @@ export default function LoadBalancerPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadStats();
+  }, []);
 
   return (
     <Flex direction="column" gap="6">

@@ -19,13 +19,36 @@ import { useSortableData } from '../hooks';
 
 export default function ZonesPage() {
   const [zones, setZones] = useState<api.DNSZone[]>([]);
-  const [filteredZones, setFilteredZones] = useState<api.DNSZone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const itemsPerPage = 10;
+
+  const loadZones = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await api.listZones();
+      setZones(data);
+    } catch (err) {
+      console.error('Failed to load zones:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load zones');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadZones();
+  }, []);
+
+  // Derive filtered zones from state rather than storing them separately.
+  const filteredZones = filter.trim()
+    ? zones.filter(zone => zone.domain.toLowerCase().includes(filter.toLowerCase()))
+    : zones;
 
   // Sortable data hook with custom comparator for records count
   const {
@@ -36,36 +59,13 @@ export default function ZonesPage() {
     recordCount: (a, b) => a.records.length - b.records.length,
   });
 
-  useEffect(() => {
-    loadZones();
-  }, []);
-
-  useEffect(() => {
-    if (filter.trim()) {
-      const filtered = zones.filter(zone =>
-        zone.domain.toLowerCase().includes(filter.toLowerCase())
-      );
-      setFilteredZones(filtered);
-    } else {
-      setFilteredZones(zones);
-    }
+  // Reset to page 1 when filter changes — set state during render to avoid a cascading effect.
+  // See https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [prevFilter, setPrevFilter] = useState(filter);
+  if (prevFilter !== filter) {
+    setPrevFilter(filter);
     setCurrentPage(1);
-  }, [filter, zones]);
-
-  const loadZones = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await api.listZones();
-      setZones(data);
-      setFilteredZones(data);
-    } catch (err) {
-      console.error('Failed to load zones:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load zones');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }
 
   // Pagination
   const totalPages = Math.ceil(sortedZones.length / itemsPerPage);
