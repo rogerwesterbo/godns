@@ -10,7 +10,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
-	github.com/valkey-io/valkey-go v1.0.74
+	github.com/valkey-io/valkey-go v1.0.75
 	github.com/vitistack/common v0.8.60
 	golang.org/x/time v0.15.0
 )
