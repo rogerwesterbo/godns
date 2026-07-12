@@ -3,7 +3,7 @@ module github.com/rogerwesterbo/godns
 go 1.26.2
 
 require (
-	github.com/coreos/go-oidc/v3 v3.18.0
+	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/miekg/dns v1.1.72
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spf13/cobra v1.10.2
