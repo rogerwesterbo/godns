@@ -86,10 +86,9 @@ func (s *UpstreamService) LoadFromValkey(ctx context.Context) error {
 // Forward forwards a DNS query to the upstream server
 func (s *UpstreamService) Forward(ctx context.Context, query *dns.Msg) (*dns.Msg, error) {
 	c := &dns.Client{
-		Net:            "udp",
-		Timeout:        s.timeout,
-		Dialer:         &net.Dialer{Timeout: s.timeout},
-		SingleInflight: true,
+		Net:     "udp",
+		Timeout: s.timeout,
+		Dialer:  &net.Dialer{Timeout: s.timeout},
 	}
 
 	type result struct {
