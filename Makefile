@@ -32,7 +32,7 @@ GOSEC ?= $(LOCALBIN)/gosec
 # Use the Go toolchain version declared in go.mod when building tools
 GO_VERSION := $(shell awk '/^go /{print $$2}' go.mod)
 GO_TOOLCHAIN := go$(GO_VERSION)
-GOSEC_VERSION ?= latest
+GOSEC_VERSION ?= master
 GOLANGCI_LINT_VERSION ?= latest
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 GOVULNCHECK_VERSION ?= latest
@@ -196,6 +196,66 @@ update-deps: ## Update dependencies
 	@go get -u ./...
 	@go mod tidy
 	@printf "$(GREEN)✓ Dependencies updated!$(RESET)\n"
+
+##@ Frontend
+WEB_DIR ?= web/godnsweb
+NPM_AUDIT_LEVEL ?= high
+
+.PHONY: web-deps
+web-deps: ## Install frontend dependencies (npm ci)
+	@printf "$(CYAN)Installing frontend dependencies...$(RESET)\n"
+	@cd $(WEB_DIR) && npm ci --no-audit --no-fund
+	@printf "$(GREEN)✓ Frontend dependencies installed$(RESET)\n"
+
+.PHONY: web-lint
+web-lint: ## Run frontend lint and format check
+	@printf "$(CYAN)Running frontend lint...$(RESET)\n"
+	@cd $(WEB_DIR) && npm run lint
+	@cd $(WEB_DIR) && npm run format:check
+	@printf "$(GREEN)✓ Frontend lint complete$(RESET)\n"
+
+.PHONY: web-typecheck
+web-typecheck: ## Run frontend type check
+	@printf "$(CYAN)Running frontend type check...$(RESET)\n"
+	@cd $(WEB_DIR) && npm run type-check
+	@printf "$(GREEN)✓ Frontend type check complete$(RESET)\n"
+
+.PHONY: web-build
+web-build: ## Build frontend
+	@printf "$(CYAN)Building frontend...$(RESET)\n"
+	@cd $(WEB_DIR) && npm run build
+	@printf "$(GREEN)✓ Frontend build complete$(RESET)\n"
+
+.PHONY: web-audit
+web-audit: ## Run npm audit on frontend dependencies (override level with NPM_AUDIT_LEVEL=<low|moderate|high|critical>)
+	@printf "$(CYAN)Running npm audit (level: $(NPM_AUDIT_LEVEL))...$(RESET)\n"
+	@cd $(WEB_DIR) && npm audit --audit-level=$(NPM_AUDIT_LEVEL)
+	@printf "$(GREEN)✓ Frontend audit complete$(RESET)\n"
+
+##@ Precheck
+.PHONY: precheck-backend
+precheck-backend: ## Run all backend checks (lint, test, build, gosec, govulncheck)
+	@$(MAKE) lint
+	@$(MAKE) test
+	@$(MAKE) build
+	@$(MAKE) gosec
+	@$(MAKE) govulncheck
+	@printf "$(GREEN)$(BOLD)✓ Backend precheck passed$(RESET)\n"
+
+.PHONY: precheck-frontend
+precheck-frontend: ## Run all frontend checks (deps, lint, type-check, build, audit)
+	@$(MAKE) web-deps
+	@$(MAKE) web-lint
+	@$(MAKE) web-typecheck
+	@$(MAKE) web-build
+	@$(MAKE) web-audit
+	@printf "$(GREEN)$(BOLD)✓ Frontend precheck passed$(RESET)\n"
+
+.PHONY: precheck
+precheck: ## Run all checks for backend and frontend (lint, test, build, security)
+	@$(MAKE) precheck-backend
+	@$(MAKE) precheck-frontend
+	@printf "$(GREEN)$(BOLD)✓ All prechecks passed!$(RESET)\n"
 
 ##@ Tools
 
