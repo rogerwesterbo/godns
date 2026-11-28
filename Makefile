@@ -306,14 +306,14 @@ govulncheck: install-govulncheck ## Run govulncheck vulnerability scan (fails on
 # $2 - package url which can be installed
 # $3 - specific version of package
 define go-install-tool
-@[ -f "$(1)-$(3)" ] || { \
+@[ -f "$(1)-$(3)-$(GO_TOOLCHAIN)" ] || { \
 set -e; \
 package=$(2)@$(3) ;\
-printf "$(CYAN)Downloading $${package}...$(RESET)\n" ;\
-rm -f $(1) || true ;\
+printf "$(CYAN)Downloading $${package} (built with $(GO_TOOLCHAIN))...$(RESET)\n" ;\
+rm -f $(1) $(1)-$(3) $(1)-$(3)-go* || true ;\
 GOTOOLCHAIN=$(GO_TOOLCHAIN) GOBIN=$(LOCALBIN) go install $${package} ;\
-mv $(1) $(1)-$(3) ;\
-printf "$(GREEN)✓ Installed $(BOLD)$(1)-$(3)$(RESET)\n" ;\
+mv $(1) $(1)-$(3)-$(GO_TOOLCHAIN) ;\
+printf "$(GREEN)✓ Installed $(BOLD)$(1)-$(3)-$(GO_TOOLCHAIN)$(RESET)\n" ;\
 } ;\
-ln -sf $(1)-$(3) $(1)
+ln -sf $(1)-$(3)-$(GO_TOOLCHAIN) $(1)
 endef
